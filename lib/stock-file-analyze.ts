@@ -31,7 +31,6 @@ import {
 import type { StockThesis } from "./stock-thesis-types";
 import { STOCK_THESIS_STATUS_LABELS } from "./stock-thesis-types";
 import {
-  buildEntrySolverMechanicsBrief,
   describeExistingNoFillLearningSurfaces,
   ENTRY_SOLVER_PIPELINE,
 } from "./entry-solver";
@@ -40,10 +39,6 @@ import {
   emptyOptimizedEntryAdviseTemplate,
   resolveRiskBudgetUsd,
 } from "./optimized-entry";
-import {
-  buildRSemanticsBrief,
-  buildTargetTimeframeGovernanceBrief,
-} from "./r-semantics";
 import type { ThesisT0Freeze } from "./thesis-t0-types";
 import { wrapSnapshotText } from "./snapshot-verification";
 
@@ -76,11 +71,11 @@ export function buildStockFileOperativePrompt(): string {
     "Do NOT ask the human to re-explain Matrix architecture.",
     "",
     "SELF-CONTAINED HANDOFF (HARD RULE)",
-    "This single clipboard package already includes Mechanics, MTAE protocol,",
-    "selected TF map/roles, Stock File dossier, active Scout, T0 (or explicit absence),",
+    "This single clipboard package already includes Mechanics (MAF, Entry Solver, R$, TF governance),",
+    "MTAE protocol, selected TF map/roles, Stock File dossier, active Scout, T0 (or explicit absence),",
     "latest accepted MTAE when present, and the scoped Apply contract.",
     "FORBIDDEN responses: ask the human to copy MTAE protocol, Apply schema,",
-    "Mechanics, Scout Desk, Library rows, or any other Control snapshot.",
+    "Mechanics, MAF protocol, Entry Solver, Scout Desk, Library rows, or any other Control snapshot.",
     "If something is missing from THIS package, say what field is absent —",
     "do not invent it and do not send the human back to Control for another copy.",
     "",
@@ -280,27 +275,13 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     input.latestMtaeAssessment?.timeframeMapId ??
     "swing-6m";
   const riskBudgetUsd = resolveRiskBudgetUsd(input.riskBudgetUsd);
-  const mapPreset =
-    mtaePresets.find((p) => p.id === timeframeMapId) ?? mtaePresets[0];
-  const roles = mapPreset?.roles ?? {
-    strategic_tf: "6M",
-    opportunity_tf: "W",
-    refinement_tf: "D",
-    execution_tf: "60",
-  };
 
   const parts: string[] = [
     buildStockFileOperativePrompt(),
     "",
     formatIdentityBanner(thesis, focusPlan),
     "",
-    buildRSemanticsBrief(riskBudgetUsd),
-    "",
-    buildTargetTimeframeGovernanceBrief(roles),
-    "",
     buildMatrixMechanicsBrief(),
-    "",
-    buildEntrySolverMechanicsBrief(),
     "",
     describeExistingNoFillLearningSurfaces(),
     "",

@@ -36,20 +36,15 @@ export const VISIBLE_SNAPSHOT_MENU = [
     label: "MTA Mechanics",
     kind: "copy_row",
     where: "Control → MTA Mechanics",
-    purpose: "rules primer — paste once per new AI chat",
+    purpose:
+      "canonical operating constitution — MAF, Entry Solver, R$, TF governance, Apply discipline (paste once per new AI chat)",
   },
   {
     label: "Apply schema contract",
     kind: "copy_row",
     where: "Control → MTA Mechanics (second copy row in that drawer)",
-    purpose: "schema-first keys/enums — not a primary Control nav item",
-  },
-  {
-    label: "Entry Solver",
-    kind: "copy_row",
-    where: "Control → MTA Mechanics (third copy row in that drawer)",
     purpose:
-      "Target → Stop → R Map → Participation → Entry — optimize participation, not max R",
+      "schema-first keys/enums for Apply Mode only — not a primary Control nav item",
   },
   {
     label: "Snapshot general",
@@ -80,12 +75,6 @@ export const VISIBLE_SNAPSHOT_MENU = [
     kind: "copy_row",
     where: "Control → Library → Scout Desk",
     purpose: "stock files + scouts + monthly risk room",
-  },
-  {
-    label: "MAF attribution protocol",
-    kind: "copy_row",
-    where: "Control → Library → MAF",
-    purpose: "component attribution — exclusive Learning/MAF copy target",
   },
   {
     label: "Dashboard snapshot",
@@ -122,7 +111,8 @@ export const VISIBLE_SNAPSHOT_MENU = [
     label: "Analyze with AI",
     kind: "cta",
     where: "Stock File window (primary CTA)",
-    purpose: "one package: operative prompt + Mechanics + MTAE + dossier + active Scout",
+    purpose:
+      "one package: full Mechanics (incl. MAF, Entry Solver, R$, TF governance) + MTAE + dossier + active Scout — no separate MAF/Entry Solver paste",
   },
   {
     label: "Apply",
@@ -155,11 +145,19 @@ export const INTERNAL_RESOURCES_WITHOUT_DEDICATED_COPY_ROW = [
   },
   {
     resource: "MAF protocol body",
-    note: "Copied only via the visible row MAF attribution protocol under Library → MAF.",
+    note: "Embedded inside MTA Mechanics — no separate Control copy row.",
+  },
+  {
+    resource: "Entry Solver pipeline body",
+    note: "Embedded inside MTA Mechanics — no separate Control copy row.",
+  },
+  {
+    resource: "R$ / timeframe governance rules",
+    note: "Embedded inside MTA Mechanics — no separate Control copy row.",
   },
   {
     resource: "MTAE protocol body",
-    note: "Copied only via the visible row MTAE protocol under Library → Technical Analysis.",
+    note: "Copied only via the visible row MTAE protocol under Library → Technical Analysis (technical procedure; also summarized in Mechanics).",
   },
   {
     resource: "Snapshot IDs (e.g. mechanics, mtae-protocol)",
@@ -178,7 +176,9 @@ export function formatSnapshotMenuForMechanics(): string {
     "There is NO Request / Universal Request layer — the human already stated the task in chat.",
     "Control primary nav (opens drawers; not copy buttons): MTA Mechanics · Stock Files · Apply.",
     "Control Library nav (opens drawers; not copy buttons): Technical Analysis · Playbook · Scout Desk · MAF.",
-    "FORBIDDEN: do not ask the human to copy nav names Technical Analysis, Playbook, Scout Desk, Insights, MAF, or Stock Files — open the section, then name the exact copy row below.",
+    "MECHANICS vs DATA: MTA Mechanics = how to operate MXT. Library/window snapshots = concrete data. Apply schema contract = write contract for Apply Mode only.",
+    "FORBIDDEN: do not ask for separate MAF protocol or Entry Solver copies — both live inside MTA Mechanics.",
+    "FORBIDDEN: do not ask the human to copy nav names Technical Analysis, Playbook, Scout Desk, Insights, MAF, Learning, or Stock Files — open the section, then name the exact copy row below.",
     "FORBIDDEN: do not ask for Control → Closed trade / Session / Case / Request / Update / Train AI — retired labels.",
     "Human copies via Control, Dashboard, Stock File CTA, or the Trade window.",
   ];

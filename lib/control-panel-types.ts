@@ -30,8 +30,6 @@ export type ControlPanelData = {
   trainAi: {
     mechanicsBrief: string;
     schemaContractBrief: string;
-    /** Compact Entry Solver pipeline — Control → MTA Mechanics. */
-    entrySolverBrief: string;
     snapshotItems: SnapshotMenuItem[];
   };
   mtae: {
@@ -49,9 +47,8 @@ export type ControlPanelData = {
   scouting: {
     snapshotItems: SnapshotMenuItem[];
   };
-  /** Existing MAF protocol only — no invented Learning mega-package. */
+  /** MAF Library drawer — protocol lives in Mechanics; no redundant copy row. */
   learning: {
-    mafProtocolBrief: string;
     snapshotItems: SnapshotMenuItem[];
   };
 };

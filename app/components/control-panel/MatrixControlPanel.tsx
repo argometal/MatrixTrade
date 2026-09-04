@@ -63,7 +63,7 @@ const LIBRARY: {
   {
     id: "learning",
     label: "MAF",
-    hint: "MAF attribution protocol — copy row inside",
+    hint: "Data drawer — protocol lives in MTA Mechanics",
   },
 ];
 
@@ -285,13 +285,6 @@ export function MatrixControlPanel() {
           label: "Apply schema contract",
           description: "Schema-first — required fields, allowed keys, layer ownership, examples",
           text: data.trainAi.schemaContractBrief,
-        },
-        {
-          id: "train-ai-entry-solver-brief",
-          label: "Entry Solver",
-          description:
-            "Target → Stop → R Map → Participation → Optimized Entry + 1R $ — not max R",
-          text: data.trainAi.entrySolverBrief,
         }
       );
     }
@@ -301,14 +294,6 @@ export function MatrixControlPanel() {
         label: "MTAE protocol",
         description: "Technical procedure — not Mechanics, not Playbook, not Scout",
         text: data.mtae.protocolBrief,
-      });
-    }
-    if (section === "learning" && data.learning.mafProtocolBrief) {
-      plainSources.push({
-        id: "learning-maf-protocol-brief",
-        label: "MAF attribution protocol",
-        description: "Component attribution — not a journal; never invent prices",
-        text: data.learning.mafProtocolBrief,
       });
     }
 
@@ -514,11 +499,6 @@ export function MatrixControlPanel() {
                   description="Schema-first — required fields, allowed keys, layer ownership, examples"
                   text={data.trainAi.schemaContractBrief}
                 />
-                <PlainCopyRow
-                  label="Entry Solver"
-                  description="Target → Stop → R Map → Participation → Optimized Entry + 1R $ — not max R"
-                  text={data.trainAi.entrySolverBrief}
-                />
               </>
             ) : null}
             {section === "mtae" ? (
@@ -528,12 +508,11 @@ export function MatrixControlPanel() {
                 text={data.mtae.protocolBrief}
               />
             ) : null}
-            {section === "learning" && data.learning.mafProtocolBrief ? (
-              <PlainCopyRow
-                label="MAF attribution protocol"
-                description="Component attribution — not a journal; never invent prices"
-                text={data.learning.mafProtocolBrief}
-              />
+            {section === "learning" ? (
+              <p className="rounded-xl border border-dashed border-zinc-800 px-4 py-6 text-center text-sm text-zinc-500">
+                MAF protocol is inside MTA Mechanics — copy that row. This drawer is for
+                future MAF experiment/data snapshots only.
+              </p>
             ) : null}
             {detailSnapshots.map((item) => (
               <SnapshotCopyRow key={item.id} item={item} />

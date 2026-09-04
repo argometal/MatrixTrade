@@ -1,13 +1,11 @@
 import { cache } from "react";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { buildApplySchemaContractText } from "./apply-schema-contract";
-import { buildEntrySolverMechanicsBrief } from "./entry-solver";
 import { wrapSnapshotText } from "./snapshot-verification";
 import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
 import type { ControlPanelData } from "./control-panel-types";
 import { buildMtaeProtocolBrief } from "./mtae-brief";
-import { buildMafProtocolBrief } from "./maf-brief";
 import { mtaeControlSnapshotItems, mtaeTickerRequestItem } from "./mtae-snapshot";
 import { getMtaeTimeframeMaps } from "./mtae-store";
 import { getPlans } from "./plans";
@@ -98,7 +96,6 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
   const mechanicsSnapshot = mechanicsSnapshotItem();
   const playbookSnapshots = playbookSnapshotItems(playbooks, trades);
   const mtaeSnapshots = mtaeControlSnapshotItems(mtaePresets);
-  const mafProtocolBrief = buildMafProtocolBrief();
 
   const scoutingSnapshots = scoutDeskSnapshotItems({
     playbooks,
@@ -117,7 +114,6 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     trainAi: {
       mechanicsBrief: buildMatrixMechanicsBrief(),
       schemaContractBrief: buildApplySchemaContractText(),
-      entrySolverBrief: buildEntrySolverMechanicsBrief(),
       snapshotItems: [
         mechanicsSnapshot,
         {
@@ -125,13 +121,6 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
           label: "Apply schema contract",
           description: "Schema-first handshake — required fields, allowed keys, examples",
           text: wrapSnapshotText("MTA Apply schema contract", buildApplySchemaContractText()),
-        },
-        {
-          id: "entry-solver",
-          label: "Entry Solver",
-          description:
-            "Target → Stop → R Map → Participation → Optimized Entry + 1R $ — not max R",
-          text: wrapSnapshotText("Entry Solver", buildEntrySolverMechanicsBrief()),
         },
       ],
     },
@@ -157,7 +146,6 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
       snapshotItems: scoutingSnapshots,
     },
     learning: {
-      mafProtocolBrief,
       snapshotItems: [],
     },
   };

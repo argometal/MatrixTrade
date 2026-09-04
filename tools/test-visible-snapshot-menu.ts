@@ -41,15 +41,20 @@ for (const nav of CONTROL_NAV_LABELS_NOT_COPY_TARGETS) {
   );
 }
 
-assert.ok(library.includes("Copy row: MAF attribution protocol"));
+assert.ok(library.includes("No separate protocol copy row"));
 assert.ok(library.includes("Copy row: MTAE protocol"));
 assert.ok(library.includes("do not ask the human to copy Learning"));
+assert.ok(!library.includes("Copy row: MAF attribution protocol"));
+assert.ok(!library.includes("Copy row: Entry Solver"));
+assert.ok(library.includes("MTA Mechanics — canonical constitution"));
 
 assert.ok(
   VISIBLE_SNAPSHOT_MENU.some((e) => e.label === "Apply schema contract" && e.kind === "copy_row")
 );
 assert.ok(
-  VISIBLE_SNAPSHOT_MENU.some((e) => e.label === "MAF attribution protocol" && e.kind === "copy_row")
+  !VISIBLE_SNAPSHOT_MENU.some((e) => (e.label as string) === "MAF attribution protocol")
 );
+assert.ok(!VISIBLE_SNAPSHOT_MENU.some((e) => (e.label as string) === "Entry Solver"));
+assert.match(menu, /do not ask for separate MAF protocol or Entry Solver/);
 
 console.log("test-visible-snapshot-menu: ok");

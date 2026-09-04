@@ -46,10 +46,23 @@ import type { Trade } from "../lib/types";
 
   assert.ok(brief.includes("Apply schema contract"), "brief lists Apply schema contract");
   assert.ok(brief.includes("Dashboard snapshot"), "brief lists Dashboard snapshot");
-  assert.ok(brief.includes("MAF attribution protocol"), "brief lists MAF attribution protocol copy row");
+  assert.ok(
+    brief.includes("MAF · MATRIX ATTRIBUTION FRAMEWORK") ||
+      brief.includes("MAF — MATRIX ATTRIBUTION FRAMEWORK"),
+    "brief embeds MAF protocol inside Mechanics"
+  );
+  assert.ok(
+    !brief.includes("Control → Library → MAF"),
+    "brief must not instruct Library → MAF protocol copy"
+  );
+  assert.ok(
+    !/\n- Entry Solver —/.test(brief) && !brief.includes("third copy row"),
+    "brief must not list Entry Solver as a separate copy target"
+  );
   assert.ok(brief.includes("MTAE protocol"), "brief lists MTAE protocol copy row");
   assert.ok(
-    /FORBIDDEN:.*copy nav names.*Learning/i.test(brief),
+    /FORBIDDEN: do not ask the human to copy nav names[\s\S]*Learning/i.test(brief) ||
+      brief.includes("Learning, or Stock Files"),
     "brief forbids copying Learning as a nav name"
   );
   assert.ok(!/\n- Learning —/.test(brief), "brief must not list Learning as a copy target");
@@ -70,7 +83,6 @@ import type { Trade } from "../lib/types";
     "Apply schema contract",
     "Dashboard snapshot",
     "Apply",
-    "MAF attribution protocol",
     "MTAE protocol",
   ] as const) {
     assert.ok(
@@ -78,6 +90,14 @@ import type { Trade } from "../lib/types";
       `visible menu missing ${label}`
     );
   }
+  assert.ok(
+    !VISIBLE_SNAPSHOT_MENU_LABELS.includes("MAF attribution protocol"),
+    "MAF protocol is not a separate copy label"
+  );
+  assert.ok(
+    !VISIBLE_SNAPSHOT_MENU_LABELS.includes("Entry Solver"),
+    "Entry Solver is not a separate copy label"
+  );
   assert.ok(
     !VISIBLE_SNAPSHOT_MENU_LABELS.includes("Learning"),
     "Learning is not a copy label"

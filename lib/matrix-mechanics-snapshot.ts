@@ -99,7 +99,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "Do not maintain a second divergent menu here.",
     "Closed-trade forensic export lives ONLY on the trade detail window — never as a Control home section.",
     "MTAE copy row is MTAE protocol under Control → Library → Technical Analysis.",
-    "MAF copy row is MAF attribution protocol under Control → Library → MAF.",
+    "MAF protocol and Entry Solver live inside MTA Mechanics — no separate Library/Mechanics copy rows.",
     "Scout PLAN snapshot includes strategy_stop + planned_rr (never structural stop for R).",
     "Stock profile snapshot includes thesis_invalidation (structural) — do not substitute for strategy stop.",
     "",

@@ -19,6 +19,20 @@ import {
   buildEntrySolverMechanicsBrief,
   ENTRY_SOLVER_PIPELINE,
 } from "./entry-solver";
+import { buildMafProtocolBrief } from "./maf-brief";
+import { DEFAULT_RISK_BUDGET_USD } from "./layered-entry-risk";
+import {
+  buildRSemanticsBrief,
+  buildTargetTimeframeGovernanceBrief,
+} from "./r-semantics";
+
+/** Default TF role map for Mechanics (same as swing-6m preset — not a second governance system). */
+const MECHANICS_DEFAULT_TF_ROLES = {
+  strategic_tf: "6M",
+  opportunity_tf: "3M",
+  refinement_tf: "1M",
+  execution_tf: "1W",
+} as const;
 
 export interface MatrixTrainingContextInput {
   playbooks?: Playbook[];
@@ -37,6 +51,19 @@ export function buildMatrixMechanicsBrief(): string {
     "MTA is NOT a conventional trading journal.",
     "It is a strategic planning pipeline: proven method → per-ticker profile → go/no-go decision with quantified risk → execution and review.",
     "Trade recording is the floor of the building, not the mission.",
+    "",
+    "SELF-CONTAINED CONSTITUTION",
+    "MTA Mechanics is the ONLY required rules paste for general MXT operation.",
+    "It includes: core Mechanics, MTAE ownership, MAF protocol, Entry Solver,",
+    "R$ / fixed-risk semantics, timeframe governance, Analysis/Apply discipline,",
+    "layer ownership, and learning/attribution boundaries.",
+    "Do NOT ask the human to also copy MAF protocol or Entry Solver separately.",
+    "DATA snapshots (Stock File, Playbook, Scout, Trades) remain separate when needed.",
+    "Apply schema contract stays a second Mechanics row — only for explicit Apply Mode.",
+    "",
+    buildRSemanticsBrief(DEFAULT_RISK_BUDGET_USD),
+    "",
+    buildTargetTimeframeGovernanceBrief(MECHANICS_DEFAULT_TF_ROLES),
     "",
     "AI RESPONSE DISCIPLINE",
     "Complements Mechanics — does not change Matrix behavior, Apply gate, or layer ownership.",
@@ -151,6 +178,8 @@ export function buildMatrixMechanicsBrief(): string {
     "Study completion: 90-day end or earlier thesis invalidation (status concluded) — then attribution stays a separate Accept.",
     "Legacy date correction (closed reconstructed fills): trade-update with datesReconstructed + dateCorrectionNote; audit prior dates; realign postStopStudy 90d window.",
     "Deterministic rule hints (e.g. stop hit + target later → stop_too_tight) are suggestions only until human Accept attribution.",
+    "",
+    buildMafProtocolBrief(),
     "",
     "RULE OF GOLD",
     "Playbook → Stock File (optionally filled via MTAE) → Scouting Desk → Trade → Attribution (MAF).",
