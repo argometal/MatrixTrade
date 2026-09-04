@@ -14,18 +14,19 @@ import type { TradePlan } from "./plan-types";
 import { isWarReadyScoutPlan } from "./plan-helpers";
 import type { MonthlyRisk } from "./monthly-risk";
 import type { Experiment } from "./types";
+import { buildTargetDisciplineBrief } from "./target-discipline";
+import { buildExecutableSwingPlanBrief } from "./executable-swing-plan";
+import { resolveRiskBudgetUsd } from "./optimized-entry";
 import { formatSnapshotMenuForMechanics } from "./visible-snapshot-menu";
 import {
   buildEntrySolverMechanicsBrief,
   ENTRY_SOLVER_PIPELINE,
 } from "./entry-solver";
 import { buildMafProtocolBrief } from "./maf-brief";
-import { DEFAULT_RISK_BUDGET_USD } from "./layered-entry-risk";
 import {
   buildRSemanticsBrief,
   buildTargetTimeframeGovernanceBrief,
 } from "./r-semantics";
-import { buildTargetDisciplineBrief } from "./target-discipline";
 
 /** Default TF role map for Mechanics (same as swing-6m preset — not a second governance system). */
 const MECHANICS_DEFAULT_TF_ROLES = {
@@ -43,8 +44,16 @@ export interface MatrixTrainingContextInput {
   monthly?: MonthlyRisk;
 }
 
+export type MatrixMechanicsBriefOptions = {
+  /** Live rules.defaultRiskBudget when known (Analyze / Control). */
+  riskBudgetUsd?: number;
+};
+
 /** Stable primer — read by AI before any case-specific payload. */
-export function buildMatrixMechanicsBrief(): string {
+export function buildMatrixMechanicsBrief(
+  options?: MatrixMechanicsBriefOptions
+): string {
+  const riskBudgetUsd = resolveRiskBudgetUsd(options?.riskBudgetUsd);
   return [
     "=== MATRIX MECHANICS ===",
     "",
@@ -56,17 +65,20 @@ export function buildMatrixMechanicsBrief(): string {
     "SELF-CONTAINED CONSTITUTION",
     "MTA Mechanics is the ONLY required rules paste for general MXT operation.",
     "It includes: core Mechanics, MTAE ownership, MAF protocol, Entry Solver,",
-    "R$ / fixed-risk semantics, timeframe governance, Analysis/Apply discipline,",
+    "R$ / fixed-risk semantics, timeframe governance, TARGET DISCIPLINE,",
+    "EXECUTABLE SWING PLAN (one-pass), Analysis/Apply discipline,",
     "layer ownership, and learning/attribution boundaries.",
     "Do NOT ask the human to also copy MAF protocol or Entry Solver separately.",
     "DATA snapshots (Stock File, Playbook, Scout, Trades) remain separate when needed.",
     "Apply schema contract stays a second Mechanics row — only for explicit Apply Mode.",
     "",
-    buildRSemanticsBrief(DEFAULT_RISK_BUDGET_USD),
+    buildRSemanticsBrief(riskBudgetUsd),
     "",
     buildTargetTimeframeGovernanceBrief(MECHANICS_DEFAULT_TF_ROLES),
     "",
     buildTargetDisciplineBrief(),
+    "",
+    buildExecutableSwingPlanBrief(riskBudgetUsd),
     "",
     "AI RESPONSE DISCIPLINE",
     "Complements Mechanics — does not change Matrix behavior, Apply gate, or layer ownership.",
@@ -233,7 +245,9 @@ export function buildMatrixMechanicsBrief(): string {
     "- A valid thesis, support zone, or minimum 3R does not automatically produce a go decision.",
     "- Challenge the opportunity cost of using monthly risk room on the setup.",
     "",
-    "The primary objective in Analysis Mode is Entry Solver + participation-aware Entry Optimization.",
+    "The primary objective in Analysis Mode is a complete EXECUTABLE SWING PLAN",
+    "(see EXECUTABLE SWING PLAN section) via Entry Solver + participation-aware optimization.",
+    "Lead with the EXECUTABLE PLAN math block; put WHY THIS ENTRY after — never the reverse.",
     "maximumEntry defines the admissible ceiling, not the recommended entry.",
     `Mandatory order: ${ENTRY_SOLVER_PIPELINE}.`,
     "Forbidden: ZONE → arbitrary midpoint/round number → post-hoc R justification.",
@@ -249,6 +263,7 @@ export function buildMatrixMechanicsBrief(): string {
     "- If waiting materially increases the probability of missing the move, explain that trade-off instead of blindly waiting.",
     "- Never present maximumEntry as the suggested fill price unless it is also the best feasible optimized entry.",
     "- Deeper Opportunity 2 requires reassessment — never auto-execute for higher R.",
+    "- After a stop: realized loss → reassess → optional NEW geometry; show trade-level R and episode cumulative R; no martingale.",
     "",
     "Apply Mode begins ONLY after explicit user intent.",
     "Explicit intents include: Save, Create, Update, Record, Apply, Import, Generate Inbox block, Propose JSON, Persist to Matrix.",

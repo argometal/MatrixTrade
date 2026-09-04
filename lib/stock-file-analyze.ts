@@ -132,18 +132,13 @@ export function buildStockFileOperativePrompt(): string {
 export const STOCK_FILE_ANALYZE_REQUEST = `CHARTS: Use attached charts + Stock File / MarketEvidence / accepted MTAE first.
 Do NOT auto-request extra W/M/3M/6M. Only ask for ONE additional timeframe when a named uncertainty remains (see TARGET + TIMEFRAME GOVERNANCE), and state exactly what it would resolve.
 
-Then:
+Then — ONE PASS when evidence already covers target + zone + stop geometry (do not fragment):
 1. TECHNICAL — Evidence First for required role TFs already covered; Integrated; Profile Notes. Patch via technical-assessment when levels/invalidation need refresh (Phase A when volume visible). VP levels need analysisRange + purpose.
-2. TARGET DISCIPLINE — If the defensible probableTarget is already reached/exceeded: state TARGET REACHED + TARGET REASSESSMENT REQUIRED. Do NOT invent a next probableTarget/extendedTarget from bullish plausibility, Fib, or lack of higher historical resistance. Plausibility ≠ evidence. Do not run Entry Solver R geometry on a consumed target.
-3. ENTRY SOLVER / OPTIMIZED ENTRY (only with a LIVE defensible target) — worksheet in mandatory order:
-   TARGET → TACTICAL STOP → RISK/REWARD GEOMETRY → FEASIBILITY BOUND → PARTICIPATION → OPTIMIZED ENTRY → R$ sizing.
-   1R = R$ = configured USD risk budget (see R SEMANTICS). riskPerShare = abs(entry−tacticalStop) ≠ 1R.
-   shares = floor(R$/riskPerShare). actualRisk$ = shares×riskPerShare. rewardRiskRatio ≠ R$.
-   maximumEntry (long) / minimumEntry (short) = feasibility bound only — NEVER auto recommendedEntry.
-   MAX R ≠ OPTIMIZED ENTRY. Forbidden: pick entry first then justify with R.
-   Apply claim requires optimizedEntryClaim + entrySolver worksheet. Bare plannedEntry ≠ optimized.
-4. OPPORTUNITY + ENTRY + DECISION — dossier + active Scout. Current mutable ≠ frozen T0. Never invent T0.
-5. Apply / Save / Propose JSON → ONE AI Block using SCOPED APPLY CONTRACT in this package only.
+2. TARGET DISCIPLINE — If the defensible probableTarget is already reached/exceeded: state TARGET REACHED + TARGET REASSESSMENT REQUIRED. Do NOT invent a next probableTarget/extendedTarget from bullish plausibility, Fib, or lack of higher historical resistance. Plausibility ≠ evidence.
+3. EXECUTABLE SWING PLAN (Analysis Mode primary deliverable when evidence suffices) — lead with the EXECUTABLE PLAN block (shares, exact tactical stop, max loss, expected reward, R:R, IF STOPPED / re-entry / episode R). Then WHY THIS ENTRY. Use configured 1R$ from this package — never ask the human to recall it. STOP only if an indispensable input is truly missing (name it). Exact tacticalStop required for an executable claim — never "~approx".
+4. ENTRY SOLVER / OPTIMIZED ENTRY — live defensible target only; may conclude single entry OR LayeredEntry distribution (totalRisk$ ≤ 1R$). MAX R ≠ OPTIMIZED ENTRY. Apply claim requires optimizedEntryClaim + entrySolver worksheet when claiming optimized. Bare plannedEntry ≠ optimized.
+5. OPPORTUNITY + DECISION — dossier + active Scout. Current mutable ≠ frozen T0. Never invent T0. Never invent Stock File existence or UI routes.
+6. Apply / Save / Propose JSON → ONE AI Block using SCOPED APPLY CONTRACT in this package only.
 
 Preferred Apply types:
 - technical-assessment | decision-update | scout-plan-create | file-update / evidence-add
@@ -282,7 +277,7 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     "",
     formatIdentityBanner(thesis, focusPlan),
     "",
-    buildMatrixMechanicsBrief(),
+    buildMatrixMechanicsBrief({ riskBudgetUsd }),
     "",
     describeExistingNoFillLearningSurfaces(),
     "",

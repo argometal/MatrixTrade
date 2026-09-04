@@ -16,7 +16,7 @@ import {
   scoutDeskSnapshotItems,
   stockProfileSnapshotItems,
 } from "./snapshot-packages";
-import { getExperiment, getMonthlyRisk, getTrades } from "./storage";
+import { getExperiment, getMonthlyRisk, getRules, getTrades } from "./storage";
 import { getStockTheses } from "./stock-theses";
 import { isActiveStockThesisStatus } from "./stock-thesis-types";
 import { listAllPendingInboxItems } from "./trading-inbox-storage";
@@ -75,6 +75,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     marketEvidence,
     workerInbox,
     mtaePresets,
+    rules,
   ] = await Promise.all([
     getExperiment(),
     getMonthlyRisk(),
@@ -85,6 +86,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     getMarketEvidence(),
     fetchBridgeInbox(),
     getMtaeTimeframeMaps(),
+    getRules(),
   ]);
 
   const pendingInbox = await listAllPendingInboxItems(workerInbox);
@@ -112,7 +114,9 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     activePlanCount: activePlans.length,
     pendingInboxCount: pendingInbox.length,
     trainAi: {
-      mechanicsBrief: buildMatrixMechanicsBrief(),
+      mechanicsBrief: buildMatrixMechanicsBrief({
+        riskBudgetUsd: rules.defaultRiskBudget,
+      }),
       schemaContractBrief: buildApplySchemaContractText(),
       snapshotItems: [
         mechanicsSnapshot,
