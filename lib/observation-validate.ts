@@ -24,6 +24,10 @@ export const OBSERVATION_UPDATE_ALLOWED_KEYS = [
   "mfeMaeUnit",
   "betterEntryAvailable",
   "betterEntryPrice",
+  /** Optional capture for future fill learning — do not invent; human/AI supply when observed. */
+  "closestApproach",
+  "closestApproachAt",
+  "entryTouched",
   "notes",
   "status",
   "dataSource",
@@ -42,6 +46,9 @@ export const OBSERVATION_UPDATE_MEASURABLE_KEYS = [
   "mfeMaeUnit",
   "betterEntryAvailable",
   "betterEntryPrice",
+  "closestApproach",
+  "closestApproachAt",
+  "entryTouched",
   "notes",
   "status",
 ] as const;
@@ -143,6 +150,27 @@ export function validateObservationUpdateProposal(
     "betterEntryPrice",
     errors
   );
+  patch.closestApproach = parseOptionalNumber(
+    proposal.closestApproach,
+    "closestApproach",
+    errors
+  );
+  patch.entryTouched = parseOptionalBoolean(
+    proposal.entryTouched,
+    "entryTouched",
+    errors
+  );
+
+  if (proposal.closestApproachAt !== undefined) {
+    const raw = String(proposal.closestApproachAt).trim();
+    if (!raw) {
+      patch.closestApproachAt = undefined;
+    } else if (!isIsoTimestamp(raw)) {
+      errors.push("closestApproachAt must be ISO-8601 UTC (…Z)");
+    } else {
+      patch.closestApproachAt = raw;
+    }
+  }
 
   if (proposal.targetReachedAt !== undefined) {
     const raw = String(proposal.targetReachedAt).trim();

@@ -40,6 +40,10 @@ import {
   emptyOptimizedEntryAdviseTemplate,
   resolveRiskBudgetUsd,
 } from "./optimized-entry";
+import {
+  buildRSemanticsBrief,
+  buildTargetTimeframeGovernanceBrief,
+} from "./r-semantics";
 import type { ThesisT0Freeze } from "./thesis-t0-types";
 import { wrapSnapshotText } from "./snapshot-verification";
 
@@ -130,25 +134,23 @@ export function buildStockFileOperativePrompt(): string {
   ].join("\n");
 }
 
-export const STOCK_FILE_ANALYZE_REQUEST = `Attach charts for EVERY required MTAE role timeframe listed in MTAE REQUEST (include volume bars when possible).
+export const STOCK_FILE_ANALYZE_REQUEST = `CHARTS: Use attached charts + Stock File / MarketEvidence / accepted MTAE first.
+Do NOT auto-request extra W/M/3M/6M. Only ask for ONE additional timeframe when a named uncertainty remains (see TARGET + TIMEFRAME GOVERNANCE), and state exactly what it would resolve.
 
 Then:
-1. TECHNICAL — Evidence First per TF, then Integrated, then Profile Notes. If levels/invalidation need refresh, prepare technical-assessment (include Phase A participation when volume is visible).
-2. ENTRY SOLVER / OPTIMIZED ENTRY (mandatory before Scout plannedEntry) — fill the worksheet:
-   Probable target (not bare Fib/projection) → Tactical stop → R map across zone candidates →
-   Participation/fill (FILL EVIDENCE: INSUFFICIENT if no sample) → Optimized Entry → size with Risk Budget 1R=$N.
-   riskPerShare = Entry−Stop. 1R = configured USD budget (NOT riskPerShare). shares ≈ R$ / riskPerShare.
-   Forbidden: pick a visually nice price inside a zone then justify R afterward.
-   MAX R ≠ OPTIMIZED ENTRY. maximumEntry is ceiling only. Deeper Opportunity 2 = reassessment.
-   To claim optimized on Apply: include optimizedEntryClaim + entrySolver worksheet.
-3. OPPORTUNITY + ENTRY + DECISION — using updated technical + Entry Solver + this dossier + active Scout. Distinguish current mutable state from frozen T0.
-4. When the human says Apply / Save / Propose JSON: return ONE AI Block only — use the SCOPED APPLY CONTRACT in this package (do not ask for another schema copy).
+1. TECHNICAL — Evidence First for required role TFs already covered; Integrated; Profile Notes. Patch via technical-assessment when levels/invalidation need refresh (Phase A when volume visible). VP levels need analysisRange + purpose.
+2. ENTRY SOLVER / OPTIMIZED ENTRY (before Scout plannedEntry) — worksheet in mandatory order:
+   TARGET → TACTICAL STOP → RISK/REWARD GEOMETRY → FEASIBILITY BOUND → PARTICIPATION → OPTIMIZED ENTRY → R$ sizing.
+   1R = R$ = configured USD risk budget (see R SEMANTICS). riskPerShare = abs(entry−tacticalStop) ≠ 1R.
+   shares = floor(R$/riskPerShare). actualRisk$ = shares×riskPerShare. rewardRiskRatio ≠ R$.
+   maximumEntry (long) / minimumEntry (short) = feasibility bound only — NEVER auto recommendedEntry.
+   MAX R ≠ OPTIMIZED ENTRY. Forbidden: pick entry first then justify with R.
+   Apply claim requires optimizedEntryClaim + entrySolver worksheet. Bare plannedEntry ≠ optimized.
+3. OPPORTUNITY + ENTRY + DECISION — dossier + active Scout. Current mutable ≠ frozen T0. Never invent T0.
+4. Apply / Save / Propose JSON → ONE AI Block using SCOPED APPLY CONTRACT in this package only.
 
-Preferred Apply types for this package:
-- technical-assessment (MTAE only — no capital fields)
-- decision-update (existing PLAN)
-- scout-plan-create (no active PLAN — NEW PLAN-xxx on this Stock File)
-- file-update / evidence-add when dossier needs patch without a full scout decision
+Preferred Apply types:
+- technical-assessment | decision-update | scout-plan-create | file-update / evidence-add
 
 ${SCOUTING_AI_BLOCK_REQUEST.trim()}`;
 
@@ -278,11 +280,23 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     input.latestMtaeAssessment?.timeframeMapId ??
     "swing-6m";
   const riskBudgetUsd = resolveRiskBudgetUsd(input.riskBudgetUsd);
+  const mapPreset =
+    mtaePresets.find((p) => p.id === timeframeMapId) ?? mtaePresets[0];
+  const roles = mapPreset?.roles ?? {
+    strategic_tf: "6M",
+    opportunity_tf: "W",
+    refinement_tf: "D",
+    execution_tf: "60",
+  };
 
   const parts: string[] = [
     buildStockFileOperativePrompt(),
     "",
     formatIdentityBanner(thesis, focusPlan),
+    "",
+    buildRSemanticsBrief(riskBudgetUsd),
+    "",
+    buildTargetTimeframeGovernanceBrief(roles),
     "",
     buildMatrixMechanicsBrief(),
     "",

@@ -1,8 +1,9 @@
 /**
- * Optimized Entry resolver (MXT 021 Punto 2).
+ * Optimized Entry resolver (MXT 021 Punto 2 / 023 R semantics).
  *
- * Executable: Target + Tactical Stop → R Map → Participation → Optimized Entry → R$ sizing.
- * MAXIMUM R ≠ OPTIMIZED ENTRY.
+ * TARGET → TACTICAL STOP → RISK/REWARD GEOMETRY → FEASIBILITY BOUND →
+ * PARTICIPATION → OPTIMIZED ENTRY → R$ sizing.
+ * MAXIMUM R ≠ OPTIMIZED ENTRY. Feasibility bound ≠ recommended entry.
  * Does not invent fill probabilities.
  */
 
@@ -74,7 +75,7 @@ export type ResolveOptimizedEntryInput = {
   familyHint?: "A" | "B" | null;
 };
 
-/** shares = floor(R$ / riskPerShare); riskPerShare is NOT 1R. */
+/** shares = floor(R$ / riskPerShare); riskPerShare is NOT 1R. Works long/short via abs. */
 export function sharesForRiskBudget(
   entry: number,
   stop: number,
@@ -82,7 +83,7 @@ export function sharesForRiskBudget(
 ): number | null {
   if (![entry, stop, riskBudgetUsd].every((n) => Number.isFinite(n))) return null;
   if (!(riskBudgetUsd > 0)) return null;
-  const riskPerShare = entry - stop;
+  const riskPerShare = Math.abs(entry - stop);
   if (!(riskPerShare > 0)) return null;
   const shares = Math.floor(riskBudgetUsd / riskPerShare);
   return shares > 0 ? shares : null;
@@ -157,7 +158,7 @@ export function resolveOptimizedEntry(
   const participationNote =
     participationEvidence === "qualitative_only"
       ? `Historical Cases: missed_opportunity=${histMiss}, Possible Over-Optimization=${histOver}. Deeper entries raise R but risk non-participation — no calibrated fill-rate. MAX R ≠ OPTIMIZED ENTRY.`
-      : "FILL EVIDENCE: INSUFFICIENT — no calibrated fill-rate. Qualitatively: higher entry → lower R / greater participation likelihood; lower entry → higher R / lower fill likelihood. Do not invent fill %.";
+      : "FILL EVIDENCE: INSUFFICIENT — no calibrated fill-rate. Qualitatively: higher entry → lower R / greater participation likelihood; lower entry → higher R / lower fill likelihood. MAX R ≠ OPTIMIZED ENTRY. Do not invent fill %.";
 
   const candidates = input.candidates.map((c) =>
     enrichCandidate(c.price, c.role, stop, target, input.minimumRR, riskBudgetUsd)
@@ -485,9 +486,11 @@ export function auditOptimizedEntryLearningSurfaces(): string {
     "- T0 freeze geometry when present (originalEntry / plannedEntry)",
     "PARTIAL:",
     "- Family/Playbook on plans often null historically",
-    "MISSING FOR closestApproach vs plannedEntry with T0:",
-    "- systematic closestApproach field linked to T0 freeze",
-    "- calibrated fill-rate by Family/Playbook",
-    "Future discrimination A–F requires those gaps — do not invent metrics yet.",
+    "CLOSEST APPROACH vs plannedEntry (MXT 023):",
+    "- MEASURABLE NOW: observation-update may carry closestApproach / closestApproachAt / entryTouched",
+    "  → measureClosestApproach() distance only when both prices finite (lib/entry-learning-closest-approach.ts)",
+    "- INSUFFICIENT DATA: no calibrated fill-rate; do not invent fill probability",
+    "- T0-anchored claims require persisted freeze id — Missing T0 → Indeterminate",
+    "Future Family/Playbook fill-rate still blocked without comparable sample.",
   ].join("\n");
 }

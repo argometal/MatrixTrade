@@ -26,9 +26,9 @@ assert.ok(ceiling != null && ceiling < 360 && ceiling > 280);
 
 // --- Mechanics / Control surface ---
 const esBrief = buildEntrySolverMechanicsBrief();
-assert.match(esBrief, /Target → Stop → R Map → Participation → Entry/);
+assert.match(esBrief, /TARGET → TACTICAL STOP → RISK\/REWARD GEOMETRY → FEASIBILITY BOUND → PARTICIPATION → OPTIMIZED ENTRY/);
 assert.match(esBrief, /Optimize executable participation, not maximum theoretical R/);
-assert.match(esBrief, /MAX R ≠ OPTIMAL ENTRY/);
+assert.match(esBrief, /MAX R ≠ OPTIMIZED ENTRY/);
 
 const mechanics = buildMatrixMechanicsBrief();
 assert.match(mechanics, /ENTRY SOLVER/);

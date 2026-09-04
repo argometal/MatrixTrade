@@ -1,18 +1,23 @@
 /**
- * Entry Solver — Mechanics + Scout advising (MXT 021 Entry Solver repair).
+ * Entry Solver — Mechanics + Scout advising (MXT 021/023).
  *
  * Mandatory order:
- * Target → Stop → R Map → Participation → Entry
+ * TARGET → TACTICAL STOP → RISK/REWARD GEOMETRY → FEASIBILITY BOUND → PARTICIPATION → OPTIMIZED ENTRY
  *
- * Forbidden:
- * Zone → arbitrary price → post-hoc R justification
- *
+ * Forbidden: Zone → arbitrary price → post-hoc R justification
  * Optimize executable participation under minimumRR — not maximum theoretical R.
  * Does not invent fill probabilities when sample is insufficient.
  */
 
+import {
+  computeLongMaximumEntry,
+  computeShortMinimumEntry,
+} from "./r-semantics";
+
+export { computeShortMinimumEntry };
+
 export const ENTRY_SOLVER_PIPELINE =
-  "Target → Stop → R Map → Participation → Entry" as const;
+  "TARGET → TACTICAL STOP → RISK/REWARD GEOMETRY → FEASIBILITY BOUND → PARTICIPATION → OPTIMIZED ENTRY" as const;
 
 export type ProbableTargetKind =
   | "observed_structural"
@@ -71,17 +76,15 @@ export function longRewardRiskR(
 }
 
 /**
- * Feasibility ceiling — never the recommended entry.
- * maximumEntry = target - (minimumRR × (target - stop)) / (minimumRR + 1)
+ * Feasibility ceiling for LONG — never the recommended entry.
+ * E_max = (target + k×stop)/(1+k)
  */
 export function computeMaximumEntryCeiling(
   target: number,
   stop: number,
   minimumRR: number
 ): number | null {
-  if (![target, stop, minimumRR].every((n) => Number.isFinite(n))) return null;
-  if (!(stop < target) || !(minimumRR > 0)) return null;
-  return target - (minimumRR * (target - stop)) / (minimumRR + 1);
+  return computeLongMaximumEntry(target, stop, minimumRR);
 }
 
 export function buildCandidateRMap(input: {
@@ -115,21 +118,21 @@ export function buildEntrySolverMechanicsBrief(): string {
     "   If no defendable probable target: say so — do not fabricate definitive R.",
     "2. TACTICAL STOP — price/event that proves THIS setup/entry failed.",
     "   Distinct from Stock File structural invalidation (thesis death).",
-    "3. R MAP — compute R across candidate prices in the opportunity zone.",
+    "3. RISK/REWARD GEOMETRY — riskPerShare, rewardPerShare, rewardRiskRatio (see R SEMANTICS).",
     "   Do NOT pick plannedEntry from zone aesthetics (midpoint, round number).",
     "   Forbidden: ZONE → arbitrary price → post-hoc R justification.",
-    "4. MINIMUM R FILTER — drop candidates below riskRules.minimumRR.",
-    "   maximumEntry = feasibility CEILING only — never auto-recommendedEntry.",
+    "4. FEASIBILITY BOUND — drop candidates below riskRules.minimumRR.",
+    "   Long maximumEntry / short minimumEntry = acceptance bound only — never auto-recommendedEntry.",
     "5. PARTICIPATION / FILL — among R-valid candidates, weigh participation cost.",
-    "   Higher entry → lower R / greater fill likelihood.",
-    "   Lower entry → higher R / lower fill likelihood.",
-    "   MAX R ≠ OPTIMAL ENTRY.",
+    "   Higher entry → lower R / greater fill likelihood (long).",
+    "   Lower entry → higher R / lower fill likelihood (long).",
+    "   MAX R ≠ OPTIMIZED ENTRY.",
     "   If sample insufficient: FILL EVIDENCE: INSUFFICIENT (no invented %).",
     "   Reuse historical Cases / missed_opportunity / Possible Over-Optimization",
     "   when present — do not invent fill-rate statistics.",
-    "6. ENTRY — select Optimized Entry only after 1–5 + R$ sizing context.",
-    "   Conceptual quality: R quality × participation quality (structure, not fake fill %).",
-    "   shares ≈ riskBudgetUsd / (entry − stop). riskPerShare ≠ 1R.",
+    "6. OPTIMIZED ENTRY — select only after 1–5 + R$ sizing context.",
+    "   Conceptual quality: rewardRiskRatio quality × participation (structure, not fake fill %).",
+    "   shares = floor(R$ / riskPerShare); riskPerShare = abs(entry−tacticalStop) ≠ 1R.",
     "7. DEEPER OPPORTUNITY — Opportunity 2 is a NEW market state.",
     "   Reassess structure/target/stop/playbook/thesis — never auto-execute for higher R.",
     "   Attempt 1 tactical stop ≈ −1R does not auto-invalidate Stock File thesis.",
@@ -441,9 +444,10 @@ export function describeExistingNoFillLearningSurfaces(): string {
     "- Insights no-entry diagnosis: GOOD_FILTER vs Possible Over-Optimization",
     "- Learning Outcome kinds + Observation on planId for missed-scout path",
     "- Historical completion notes: ENTRY_NOT_REACHED / NON-ADAPTATION (practical layer)",
-    "MINIMUM FIELD STILL MISSING FOR CALIBRATED FILL-RATE:",
-    "- systematic closestApproach vs plannedEntry across Cases with T0",
-    "- sample size of comparable Family/Playbook waits with known fill/no-fill",
-    "Until those exist: FILL EVIDENCE: INSUFFICIENT — qualitative tradeoff only.",
+    "CLOSEST APPROACH (MXT 023 capture):",
+    "- MEASURABLE NOW: observation closestApproach/entryTouched → measureClosestApproach() distance",
+    "- INSUFFICIENT DATA: calibrated fill-rate / Family×Playbook fill probability — do not invent %",
+    "- Missing T0 → Indeterminate for T0-anchored claims",
+    "Until fill sample exists: FILL EVIDENCE: INSUFFICIENT — qualitative tradeoff only.",
   ].join("\n");
 }

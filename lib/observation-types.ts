@@ -50,6 +50,11 @@ export type ObservationRecord = {
   mfeMaeUnit?: "price" | "r";
   betterEntryAvailable?: boolean;
   betterEntryPrice?: number;
+  /** Closest price to plannedEntry while waiting — capture only; do not invent. */
+  closestApproach?: number;
+  closestApproachAt?: string;
+  /** True when price touched plannedEntry (observable fill opportunity). */
+  entryTouched?: boolean;
   dataSource?: ObservationDataSource;
   notes?: string;
   /**
@@ -84,6 +89,9 @@ export type ObservationUpdateInput = {
   mfeMaeUnit?: "price" | "r";
   betterEntryAvailable?: boolean;
   betterEntryPrice?: number;
+  closestApproach?: number;
+  closestApproachAt?: string;
+  entryTouched?: boolean;
   notes?: string;
   status?: ObservationStatus;
   dataSource?: ObservationDataSource;
