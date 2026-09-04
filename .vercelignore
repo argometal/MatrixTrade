@@ -1,0 +1,4 @@
+# Keep local one-off scripts and dumps from polluting Vercel uploads / typecheck.
+tools/audit-*.ts
+tools/_*.ts
+tools/_live-snapshot-out.txt

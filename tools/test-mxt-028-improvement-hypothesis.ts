@@ -34,7 +34,7 @@ function samplePlan(id: string, ticker = "TSLA"): TradePlan {
     id,
     ticker,
     status: "watching",
-    analysisTimeframes: ["1h", "5m"],
+    analysisTimeframes: ["1H", "5m"],
     entryTimeframe: "5m",
     plannedEntry: 100,
     stopPrice: 95,
@@ -70,10 +70,23 @@ function sampleMaf(overrides: Partial<MafExperiment> = {}): MafExperiment {
 }
 
 async function main() {
+  const prevNodeEnv = process.env.NODE_ENV;
   process.env.NODE_ENV = "test";
   process.env.IMPROVEMENT_HYPOTHESES_STORE = "memory";
   process.env.MAF_EXPERIMENTS_STORE = "memory";
 
+  try {
+    await runTests();
+  } finally {
+    if (prevNodeEnv === undefined) delete process.env.NODE_ENV;
+    else process.env.NODE_ENV = prevNodeEnv;
+    __setImprovementHypothesesStoreForTests(null, null);
+    __setMafExperimentsStoreForTests(null, null);
+    __setPlansStoreForTests(null);
+  }
+}
+
+async function runTests() {
   // 1) OLE default candidate
   {
     const d = defaultCandidateForComponent("entry_quality", null);
