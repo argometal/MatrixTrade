@@ -30,6 +30,12 @@ import {
 } from "./stock-profile-synthesis";
 import type { StockThesis } from "./stock-thesis-types";
 import { STOCK_THESIS_STATUS_LABELS } from "./stock-thesis-types";
+import {
+  buildEntrySolverMechanicsBrief,
+  describeExistingNoFillLearningSurfaces,
+  emptyEntrySolverAdviseTemplate,
+  ENTRY_SOLVER_PIPELINE,
+} from "./entry-solver";
 import type { ThesisT0Freeze } from "./thesis-t0-types";
 import { wrapSnapshotText } from "./snapshot-verification";
 
@@ -82,8 +88,11 @@ export function buildStockFileOperativePrompt(): string {
     "   Volume Profile–derived levels MUST carry provenance (analysisRange + purpose).",
     "2. OPPORTUNITY QUALITY — asymmetry, distance to entry, zone reach probability,",
     "   realistic R:R, relative quality vs other candidates (qualitative ok).",
-    "3. ENTRY — max admissible, recommended, entry type, stop (strategy stop for R),",
-    "   probable target, extended target, activation conditions.",
+    "3. ENTRY — after Entry Solver only:",
+    `   ${ENTRY_SOLVER_PIPELINE}.`,
+    "   Forbidden: ZONE → arbitrary price → post-hoc R. MAX R ≠ OPTIMAL ENTRY.",
+    "   maximumEntry is ceiling only. Projections ≠ probable target.",
+    "   Opportunity 2 (deeper) requires reassessment, not auto higher-R entry.",
     "4. DECISION — go | wait | probe | no (+ confidence + challenges).",
     "5. STRUCTURED EXIT — short rationale, uncertainties, conditions,",
     "   then ONE valid Apply JSON block when the human requests Apply.",
@@ -93,11 +102,12 @@ export function buildStockFileOperativePrompt(): string {
     "B. If charts are attached: run MTAE for the REQUIRED role timeframes listed below",
     "   (geometry + Phase A participation when volume visible).",
     "C. Patch technical into Stock File via technical-assessment (Apply) when levels/invalidation need update.",
-    "D. Evaluate opportunity + entry + capital decision against Stock File + Playbook rules.",
-    "E. Prefer decision-update on the active PLAN; if no active plan, use scout-plan-create",
+    "D. Before Scout plannedEntry: complete ENTRY SOLVER section (template below).",
+    "E. Evaluate opportunity + entry + capital decision against Stock File + Playbook rules.",
+    "F. Prefer decision-update on the active PLAN; if no active plan, use scout-plan-create",
     "   (never stock-case-create for an existing ticker).",
-    "F. Default is Analysis Mode (natural language). Apply Mode only after explicit Apply intent.",
-    "G. Never mutate or reconstruct T0. Current Stock File ≠ frozen T0.",
+    "G. Default is Analysis Mode (natural language). Apply Mode only after explicit Apply intent.",
+    "H. Never mutate or reconstruct T0. Current Stock File ≠ frozen T0.",
     "",
     "WRITE PATH (unchanged)",
     "Human pastes your JSON in Control → Apply → Validate → Accept.",
@@ -120,8 +130,13 @@ export const STOCK_FILE_ANALYZE_REQUEST = `Attach charts for EVERY required MTAE
 
 Then:
 1. TECHNICAL — Evidence First per TF, then Integrated, then Profile Notes. If levels/invalidation need refresh, prepare technical-assessment (include Phase A participation when volume is visible).
-2. OPPORTUNITY + ENTRY + DECISION — using updated technical + this dossier + active Scout. Distinguish current mutable state from frozen T0.
-3. When the human says Apply / Save / Propose JSON: return ONE AI Block only — use the SCOPED APPLY CONTRACT in this package (do not ask for another schema copy).
+2. ENTRY SOLVER (mandatory before Scout plannedEntry) — fill the ENTRY SOLVER section:
+   Probable target (not bare Fib/projection) → Tactical stop → R map across zone candidates →
+   Participation/fill consideration (FILL EVIDENCE: INSUFFICIENT if no sample) → Selected entry.
+   Forbidden: pick a visually nice price inside a zone then justify R afterward.
+   MAX R ≠ OPTIMAL ENTRY. maximumEntry is ceiling only. Deeper Opportunity 2 = reassessment.
+3. OPPORTUNITY + ENTRY + DECISION — using updated technical + Entry Solver + this dossier + active Scout. Distinguish current mutable state from frozen T0.
+4. When the human says Apply / Save / Propose JSON: return ONE AI Block only — use the SCOPED APPLY CONTRACT in this package (do not ask for another schema copy).
 
 Preferred Apply types for this package:
 - technical-assessment (MTAE only — no capital fields)
@@ -262,6 +277,10 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     "",
     buildMatrixMechanicsBrief(),
     "",
+    buildEntrySolverMechanicsBrief(),
+    "",
+    describeExistingNoFillLearningSurfaces(),
+    "",
     buildMtaeProtocolBrief(mtaePresets),
     "",
     buildMtaeTickerRequest({
@@ -367,6 +386,8 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
   }
 
   parts.push(
+    "",
+    emptyEntrySolverAdviseTemplate(thesis.riskRules.minimumRR),
     "",
     buildScopedAnalyzeApplyContractText(),
     "",

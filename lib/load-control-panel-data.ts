@@ -1,6 +1,7 @@
 import { cache } from "react";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 import { buildApplySchemaContractText } from "./apply-schema-contract";
+import { buildEntrySolverMechanicsBrief } from "./entry-solver";
 import { wrapSnapshotText } from "./snapshot-verification";
 import { getMarketEvidence } from "./market-evidence";
 import type { MarketEvidence } from "./market-evidence-types";
@@ -116,6 +117,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
     trainAi: {
       mechanicsBrief: buildMatrixMechanicsBrief(),
       schemaContractBrief: buildApplySchemaContractText(),
+      entrySolverBrief: buildEntrySolverMechanicsBrief(),
       snapshotItems: [
         mechanicsSnapshot,
         {
@@ -123,6 +125,13 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
           label: "Apply schema contract",
           description: "Schema-first handshake — required fields, allowed keys, examples",
           text: wrapSnapshotText("MTA Apply schema contract", buildApplySchemaContractText()),
+        },
+        {
+          id: "entry-solver",
+          label: "Entry Solver",
+          description:
+            "Target → Stop → R Map → Participation → Entry — not max theoretical R",
+          text: wrapSnapshotText("Entry Solver", buildEntrySolverMechanicsBrief()),
         },
       ],
     },

@@ -45,6 +45,13 @@ export const VISIBLE_SNAPSHOT_MENU = [
     purpose: "schema-first keys/enums — not a primary Control nav item",
   },
   {
+    label: "Entry Solver",
+    kind: "copy_row",
+    where: "Control → MTA Mechanics (third copy row in that drawer)",
+    purpose:
+      "Target → Stop → R Map → Participation → Entry — optimize participation, not max R",
+  },
+  {
     label: "Snapshot general",
     kind: "copy_row",
     where: "Control detail drawers (first row when present)",

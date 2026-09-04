@@ -285,6 +285,13 @@ export function MatrixControlPanel() {
           label: "Apply schema contract",
           description: "Schema-first — required fields, allowed keys, layer ownership, examples",
           text: data.trainAi.schemaContractBrief,
+        },
+        {
+          id: "train-ai-entry-solver-brief",
+          label: "Entry Solver",
+          description:
+            "Target → Stop → R Map → Participation → Entry — optimize participation, not max R",
+          text: data.trainAi.entrySolverBrief,
         }
       );
     }
@@ -506,6 +513,11 @@ export function MatrixControlPanel() {
                   label="Apply schema contract"
                   description="Schema-first — required fields, allowed keys, layer ownership, examples"
                   text={data.trainAi.schemaContractBrief}
+                />
+                <PlainCopyRow
+                  label="Entry Solver"
+                  description="Target → Stop → R Map → Participation → Entry — not max theoretical R"
+                  text={data.trainAi.entrySolverBrief}
                 />
               </>
             ) : null}
