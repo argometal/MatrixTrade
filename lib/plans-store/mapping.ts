@@ -10,11 +10,15 @@ type LayeredEntryRow = LayeredEntryPlan & {
   familyBAssessment?: FamilyBEntryAssessment;
   /** Sidecar — AI Plan Map instruction when dedicated column absent. */
   executionInstruction?: string;
+  /** Sidecar — MXT 028 Improvement Hypothesis when decision jsonb absent. */
+  improvementHypothesisId?: string;
 };
 
 type DecisionRow = ScoutDecision & {
   /** Sidecar — AI Plan Map instruction when dedicated column absent. */
   executionInstruction?: string;
+  /** Sidecar — MXT 028 Improvement Hypothesis link (no dedicated column yet). */
+  improvementHypothesisId?: string;
 };
 
 interface PlanRow {
@@ -66,6 +70,7 @@ export function planRowToPlan(row: PlanRow): TradePlan {
     const {
       familyBAssessment: nested,
       executionInstruction: fromLayered,
+      improvementHypothesisId: _layeredHypothesis,
       ...rest
     } = layeredRaw;
     layeredEntry = rest;
@@ -75,11 +80,18 @@ export function planRowToPlan(row: PlanRow): TradePlan {
   const decisionRaw = row.decision ?? undefined;
   let decision: ScoutDecision | undefined;
   let decisionInstruction: string | undefined;
+  let decisionHypothesisId: string | undefined;
   if (decisionRaw) {
-    const { executionInstruction: fromDecision, ...rest } = decisionRaw;
+    const {
+      executionInstruction: fromDecision,
+      improvementHypothesisId: fromHypothesis,
+      ...rest
+    } = decisionRaw;
     decision = rest;
     decisionInstruction = fromDecision;
+    decisionHypothesisId = fromHypothesis;
   }
+  const layeredHypothesisId = layeredRaw?.improvementHypothesisId;
   return {
     id: row.id,
     ticker: row.ticker,
@@ -116,6 +128,7 @@ export function planRowToPlan(row: PlanRow): TradePlan {
       undefined,
     executionReadiness:
       (row.execution_readiness as ExecutionReadinessState | null) ?? undefined,
+    improvementHypothesisId: decisionHypothesisId ?? layeredHypothesisId,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -141,6 +154,7 @@ export function planToSupabaseRow(
 
 export function planToRow(plan: TradePlan): PlanRow {
   const instruction = plan.executionInstruction ?? undefined;
+  const hypothesisId = plan.improvementHypothesisId ?? undefined;
   return {
     id: plan.id,
     ticker: plan.ticker.toUpperCase(),
@@ -165,6 +179,9 @@ export function planToRow(plan: TradePlan): PlanRow {
       ? {
           ...plan.decision,
           ...(instruction ? { executionInstruction: instruction } : {}),
+          ...(hypothesisId
+            ? { improvementHypothesisId: hypothesisId }
+            : {}),
         }
       : null,
     decision_history: plan.decisionHistory ?? [],
@@ -177,6 +194,9 @@ export function planToRow(plan: TradePlan): PlanRow {
             ? { familyBAssessment: plan.familyBAssessment }
             : {}),
           ...(instruction ? { executionInstruction: instruction } : {}),
+          ...(hypothesisId && !plan.decision
+            ? { improvementHypothesisId: hypothesisId }
+            : {}),
         }
       : null,
     execution_method: plan.executionMethod ?? null,

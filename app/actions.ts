@@ -56,7 +56,7 @@ import {
   type TradePlan,
 } from "@/lib/plan-types";
 
-// DISABLED BY DESIGN — see lib/ai-session-disabled.ts (AI Session server actions)
+// DISABLED BY DESIGN ? see lib/ai-session-disabled.ts (AI Session server actions)
 
 export type SaveAiNotesActionResult = { count: number } | { error: string };
 
@@ -129,7 +129,7 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
   };
 }
 
-/** Parse, audit-log to inbox, and apply — inline Accept from Connect wizard. */
+/** Parse, audit-log to inbox, and apply ? inline Accept from Connect wizard. */
 export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiBlockActionResult> {
   await requireTradingSession();
 
@@ -298,7 +298,7 @@ export async function syncBridgeFormAction(): Promise<void> {
   if ("error" in result) {
     redirect(`/system?syncError=${encodeURIComponent(result.error)}`);
   }
-  const message = `Snapshot synced (HTTP ${result.httpStatus}) · revision ${result.snapshotRevision} · ${result.updatedAt}`;
+  const message = `Snapshot synced (HTTP ${result.httpStatus}) � revision ${result.snapshotRevision} � ${result.updatedAt}`;
   redirect(`/system?syncOk=${encodeURIComponent(message)}`);
 }
 
@@ -437,15 +437,15 @@ export async function rejectInboxItemAction(formData: FormData): Promise<void> {
   if (origin === "worker") {
     const ack = await ackBridgeInboxItem(id, "rejected");
     const msg = ack.ok
-      ? `Inbox item rejected · Worker acknowledged (HTTP ${ack.httpStatus})`
-      : `Inbox item rejected · Worker ack failed: ${ack.error ?? "unknown error"}`;
+      ? `Inbox item rejected � Worker acknowledged (HTTP ${ack.httpStatus})`
+      : `Inbox item rejected � Worker ack failed: ${ack.error ?? "unknown error"}`;
     revalidateTradingPaths();
     redirect(`/inbox?applied=${encodeURIComponent(msg)}`);
   } else {
     await markInboxItemStatus(id, origin, "rejected");
     revalidateTradingPaths();
     redirect(
-      `/inbox?applied=${encodeURIComponent(`Inbox item rejected · marked rejected (${origin})`)}`
+      `/inbox?applied=${encodeURIComponent(`Inbox item rejected � marked rejected (${origin})`)}`
     );
   }
 }
@@ -578,7 +578,7 @@ export async function saveTradeObservationAction(
   function optDate(name: string): string | undefined {
     const raw = String(formData.get(name) ?? "").trim();
     if (!raw) return undefined;
-    // date input → ISO noon UTC for stable storage
+    // date input ? ISO noon UTC for stable storage
     return `${raw}T12:00:00.000Z`;
   }
   function optStr(name: string): string | undefined {
@@ -873,7 +873,7 @@ export async function retryPlanOutcomeLearningSyncAction(
     return {
       error:
         result.errors?.join(" ") ||
-        "Plan outcome persisted (partialFailure); Learning sync failed. Open Planning → Retry Learning Sync — do not re-Apply a new outcome or reopen evaluate_expired_plan.",
+        "Plan outcome persisted (partialFailure); Learning sync failed. Open Planning ? Retry Learning Sync ? do not re-Apply a new outcome or reopen evaluate_expired_plan.",
     };
   }
   revalidateTradingPaths();
@@ -1101,4 +1101,115 @@ export async function concludeTradeEvaluationAction(
   if (result.errors?.length) return;
   revalidateTradingPaths();
   revalidatePath(`/trades/${tradeId}`);
+}
+
+/** MXT 028 - Improvement Learning Loop (no auto Mechanics mutate). */
+export type ImprovementHypothesisActionResult = {
+  ok: boolean;
+  error?: string;
+  hypothesisId?: string;
+};
+
+export async function createImprovementHypothesisAction(
+  formData: FormData
+): Promise<ImprovementHypothesisActionResult> {
+  const { createImprovementHypothesisFromAcceptedMaf } = await import(
+    "@/lib/improvement-hypothesis-apply"
+  );
+  const originPlanId = String(formData.get("originPlanId") ?? "").trim();
+  const result = await createImprovementHypothesisFromAcceptedMaf({
+    originPlanId,
+    mafExperimentId:
+      String(formData.get("mafExperimentId") ?? "").trim() || undefined,
+    notes: String(formData.get("notes") ?? "").trim() || undefined,
+  });
+  if (result.errors?.length) {
+    return { ok: false, error: result.errors.join(" ") };
+  }
+  revalidateTradingPaths();
+  revalidatePath("/stats");
+  return { ok: true, hypothesisId: result.hypothesis?.id };
+}
+
+export async function authorizeImprovementHypothesisTestingAction(
+  formData: FormData
+): Promise<ImprovementHypothesisActionResult> {
+  const { authorizeImprovementHypothesisForTesting } = await import(
+    "@/lib/improvement-hypothesis-apply"
+  );
+  const hypothesisId = String(formData.get("hypothesisId") ?? "").trim();
+  const result = await authorizeImprovementHypothesisForTesting(hypothesisId);
+  if (result.errors?.length) {
+    return { ok: false, error: result.errors.join(" ") };
+  }
+  revalidateTradingPaths();
+  revalidatePath("/stats");
+  return { ok: true, hypothesisId: result.hypothesis?.id };
+}
+
+export async function setImprovementHypothesisVerdictAction(
+  formData: FormData
+): Promise<ImprovementHypothesisActionResult> {
+  const { setImprovementHypothesisEvidenceVerdict } = await import(
+    "@/lib/improvement-hypothesis-apply"
+  );
+  const hypothesisId = String(formData.get("hypothesisId") ?? "").trim();
+  const statusRaw = String(formData.get("status") ?? "").trim();
+  const status =
+    statusRaw === "supported" ||
+    statusRaw === "rejected" ||
+    statusRaw === "insufficient_evidence"
+      ? statusRaw
+      : null;
+  if (!status) return { ok: false, error: "Invalid evidence verdict." };
+  const result = await setImprovementHypothesisEvidenceVerdict({
+    hypothesisId,
+    status,
+    note: String(formData.get("note") ?? "").trim() || undefined,
+  });
+  if (result.errors?.length) {
+    return { ok: false, error: result.errors.join(" ") };
+  }
+  revalidateTradingPaths();
+  revalidatePath("/stats");
+  return { ok: true, hypothesisId: result.hypothesis?.id };
+}
+
+export async function authorizeImprovementMethodChangeAction(
+  formData: FormData
+): Promise<ImprovementHypothesisActionResult> {
+  const { authorizeImprovementMethodChange } = await import(
+    "@/lib/improvement-hypothesis-apply"
+  );
+  const hypothesisId = String(formData.get("hypothesisId") ?? "").trim();
+  const result = await authorizeImprovementMethodChange({
+    hypothesisId,
+    note: String(formData.get("note") ?? "").trim() || undefined,
+  });
+  if (result.errors?.length) {
+    return { ok: false, error: result.errors.join(" ") };
+  }
+  revalidateTradingPaths();
+  revalidatePath("/stats");
+  return { ok: true, hypothesisId: result.hypothesis?.id };
+}
+
+export async function linkPlanToImprovementHypothesisAction(
+  formData: FormData
+): Promise<ImprovementHypothesisActionResult> {
+  const { linkPlanToImprovementHypothesis } = await import(
+    "@/lib/improvement-hypothesis-apply"
+  );
+  const hypothesisId = String(formData.get("hypothesisId") ?? "").trim();
+  const planId = String(formData.get("planId") ?? "").trim();
+  const result = await linkPlanToImprovementHypothesis({
+    hypothesisId,
+    planId,
+  });
+  if (result.errors?.length) {
+    return { ok: false, error: result.errors.join(" ") };
+  }
+  revalidateTradingPaths();
+  revalidatePath("/stats");
+  return { ok: true, hypothesisId: result.hypothesis?.id };
 }

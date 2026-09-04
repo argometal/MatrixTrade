@@ -5,6 +5,7 @@ import { loadStatsPageData } from "@/lib/load-stats-page-data";
 import { buildInsightsCaseSpine } from "@/lib/insights-case-spine";
 import { getLearningOutcomes } from "@/lib/learning-outcome-store";
 import { getMafExperiments } from "@/lib/maf-store";
+import { getImprovementHypotheses } from "@/lib/improvement-hypothesis-store";
 import { getObservations } from "@/lib/observation-store";
 import { getPlans } from "@/lib/plans";
 import { computeMistakeStats } from "@/lib/review";
@@ -41,6 +42,7 @@ export default async function StatsPage({
     observations,
     mafExperiments,
     caseSpine,
+    improvementHypotheses,
   ] = await Promise.all([
     loadStatsPageData(),
     getTrades(),
@@ -51,6 +53,7 @@ export default async function StatsPage({
     settled(getObservations(), []),
     settled(getMafExperiments(), []),
     settled(buildInsightsCaseSpine(), []),
+    settled(getImprovementHypotheses(), []),
   ]);
 
   const closed = trades
@@ -77,6 +80,7 @@ export default async function StatsPage({
           mafExperiments,
         }}
         caseSpine={caseSpine}
+        improvementHypotheses={improvementHypotheses}
       />
     </Suspense>
   );

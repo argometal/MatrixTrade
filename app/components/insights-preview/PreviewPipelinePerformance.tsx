@@ -38,6 +38,8 @@ import {
   formatAcceptedMafUi,
   formatHistoricalReconstructionUi,
 } from "@/lib/insights-maf-ui";
+import { PreviewImprovementPath } from "@/app/components/insights-preview/PreviewImprovementPath";
+import type { ImprovementHypothesis } from "@/lib/improvement-hypothesis-types";
 
 function formatR(value: number): string {
   const sign = value > 0 ? "+" : "";
@@ -157,10 +159,12 @@ export function PreviewPipelinePerformance({
   input,
   playbooks,
   caseSpine = [],
+  improvementHypotheses = [],
 }: {
   input: Omit<PipelinePerformanceInput, "filters">;
   playbooks: PipelinePerformancePlaybookOption[];
   caseSpine?: InsightsCaseRow[];
+  improvementHypotheses?: ImprovementHypothesis[];
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -183,6 +187,7 @@ export function PreviewPipelinePerformance({
     DecisionQuality | "all"
   >("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [focusPlanId, setFocusPlanId] = useState("");
 
   const filters: PipelinePerformanceFilters = useMemo(
     () => ({
@@ -329,11 +334,32 @@ export function PreviewPipelinePerformance({
       className="space-y-6 px-4 py-4 lg:px-6 lg:py-6"
       data-insights-pipeline-performance
     >
-      <p className="text-sm text-zinc-500">
-        Canonical Learning surface: Plan → T0 → Reality → Case equation →
-        diagnosis. Realized P/L stays separate from counterfactual Scout R.
-        Missed Scouts are never counted as Trade wins or losses.
-      </p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <p className="min-w-0 flex-1 text-sm text-zinc-500">
+          Canonical Learning surface: Plan → T0 → Reality → Case equation →
+          diagnosis. Realized P/L stays separate from counterfactual Scout R.
+          Missed Scouts are never counted as Trade wins or losses.
+        </p>
+        <div className="flex shrink-0 flex-wrap items-end gap-2">
+          <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wide text-zinc-500">
+            Focus plan
+            <input
+              type="text"
+              value={focusPlanId}
+              onChange={(e) => setFocusPlanId(e.target.value)}
+              placeholder="e.g. PLAN-009"
+              className="min-h-9 w-36 rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm normal-case text-zinc-200 placeholder:text-zinc-600"
+              data-testid="improvement-focus-plan"
+            />
+          </label>
+        </div>
+      </div>
+
+      <PreviewImprovementPath
+        hypotheses={improvementHypotheses}
+        caseSpine={caseSpine}
+        focusPlanId={focusPlanId}
+      />
 
       <section
         className="rounded-2xl border border-zinc-800 bg-zinc-900/40"

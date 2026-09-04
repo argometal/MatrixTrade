@@ -12,6 +12,7 @@ import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
 import type { MistakeStat } from "@/lib/review";
 import type { Playbook } from "@/lib/playbook-types";
 import type { Trade } from "@/lib/types";
+import type { ImprovementHypothesis } from "@/lib/improvement-hypothesis-types";
 
 export type InsightsTabId =
   | "stats"
@@ -39,6 +40,7 @@ export function PreviewInsightsHub({
   trades,
   pipelineInput,
   caseSpine = [],
+  improvementHypotheses = [],
 }: {
   tab: InsightsTabId;
   statsData: PreviewStatsData;
@@ -48,6 +50,7 @@ export function PreviewInsightsHub({
   trades: Trade[];
   pipelineInput: Omit<PipelinePerformanceInput, "filters">;
   caseSpine?: InsightsCaseRow[];
+  improvementHypotheses?: ImprovementHypothesis[];
 }) {
   const subtitles: Record<InsightsTabId, string> = {
     stats: "Cycle metrics — decide what to improve next.",
@@ -96,6 +99,7 @@ export function PreviewInsightsHub({
               input={pipelineInput}
               playbooks={playbooks.map((p) => ({ id: p.id, name: p.name }))}
               caseSpine={caseSpine}
+              improvementHypotheses={improvementHypotheses}
             />
           )}
         </div>

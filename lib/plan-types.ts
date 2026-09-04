@@ -178,6 +178,11 @@ export interface TradePlan {
   /** Replacement lineage (29-29). Nullable on legacy plans. */
   replacesPlanId?: string;
   replacedByPlanId?: string;
+  /**
+   * MXT 028 — prospective Improvement Hypothesis under test on this Plan.
+   * Originating Case must not use itself as confirming evidence.
+   */
+  improvementHypothesisId?: string;
   createdAt: string;
   updatedAt: string;
 }
