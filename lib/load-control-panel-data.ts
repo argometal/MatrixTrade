@@ -130,7 +130,7 @@ export const loadControlPanelData = cache(async (): Promise<ControlPanelData> =>
           id: "entry-solver",
           label: "Entry Solver",
           description:
-            "Target → Stop → R Map → Participation → Entry — not max theoretical R",
+            "Target → Stop → R Map → Participation → Optimized Entry + 1R $ — not max R",
           text: wrapSnapshotText("Entry Solver", buildEntrySolverMechanicsBrief()),
         },
       ],

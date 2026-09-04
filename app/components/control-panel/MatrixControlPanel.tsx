@@ -290,7 +290,7 @@ export function MatrixControlPanel() {
           id: "train-ai-entry-solver-brief",
           label: "Entry Solver",
           description:
-            "Target → Stop → R Map → Participation → Entry — optimize participation, not max R",
+            "Target → Stop → R Map → Participation → Optimized Entry + 1R $ — not max R",
           text: data.trainAi.entrySolverBrief,
         }
       );
@@ -516,7 +516,7 @@ export function MatrixControlPanel() {
                 />
                 <PlainCopyRow
                   label="Entry Solver"
-                  description="Target → Stop → R Map → Participation → Entry — not max theoretical R"
+                  description="Target → Stop → R Map → Participation → Optimized Entry + 1R $ — not max R"
                   text={data.trainAi.entrySolverBrief}
                 />
               </>

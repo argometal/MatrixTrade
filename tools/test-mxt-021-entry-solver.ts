@@ -75,10 +75,11 @@ const pkg = buildStockFileAnalyzePackage({
   mtaePresets: presets,
   activeEvidence: [],
 });
-assert.match(pkg, /=== ENTRY SOLVER ===/);
-assert.match(pkg, /Candidate entries \/ R/);
+assert.match(pkg, /=== ENTRY SOLVER \/ OPTIMIZED ENTRY ===/);
+assert.match(pkg, /Candidate Entry \| Risk\/share/);
 assert.match(pkg, /FILL EVIDENCE: INSUFFICIENT/);
 assert.match(pkg, /ENTRY SOLVER \(Mechanics\)/);
+assert.match(pkg, /1R = USD/);
 
 // --- Scenario: extended bullish continuation — JPM-like ---
 const sheet = adviseBullishContinuationZone({

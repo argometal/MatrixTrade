@@ -33,9 +33,13 @@ import { STOCK_THESIS_STATUS_LABELS } from "./stock-thesis-types";
 import {
   buildEntrySolverMechanicsBrief,
   describeExistingNoFillLearningSurfaces,
-  emptyEntrySolverAdviseTemplate,
   ENTRY_SOLVER_PIPELINE,
 } from "./entry-solver";
+import {
+  auditOptimizedEntryLearningSurfaces,
+  emptyOptimizedEntryAdviseTemplate,
+  resolveRiskBudgetUsd,
+} from "./optimized-entry";
 import type { ThesisT0Freeze } from "./thesis-t0-types";
 import { wrapSnapshotText } from "./snapshot-verification";
 
@@ -130,11 +134,13 @@ export const STOCK_FILE_ANALYZE_REQUEST = `Attach charts for EVERY required MTAE
 
 Then:
 1. TECHNICAL — Evidence First per TF, then Integrated, then Profile Notes. If levels/invalidation need refresh, prepare technical-assessment (include Phase A participation when volume is visible).
-2. ENTRY SOLVER (mandatory before Scout plannedEntry) — fill the ENTRY SOLVER section:
+2. ENTRY SOLVER / OPTIMIZED ENTRY (mandatory before Scout plannedEntry) — fill the worksheet:
    Probable target (not bare Fib/projection) → Tactical stop → R map across zone candidates →
-   Participation/fill consideration (FILL EVIDENCE: INSUFFICIENT if no sample) → Selected entry.
+   Participation/fill (FILL EVIDENCE: INSUFFICIENT if no sample) → Optimized Entry → size with Risk Budget 1R=$N.
+   riskPerShare = Entry−Stop. 1R = configured USD budget (NOT riskPerShare). shares ≈ R$ / riskPerShare.
    Forbidden: pick a visually nice price inside a zone then justify R afterward.
-   MAX R ≠ OPTIMAL ENTRY. maximumEntry is ceiling only. Deeper Opportunity 2 = reassessment.
+   MAX R ≠ OPTIMIZED ENTRY. maximumEntry is ceiling only. Deeper Opportunity 2 = reassessment.
+   To claim optimized on Apply: include optimizedEntryClaim + entrySolver worksheet.
 3. OPPORTUNITY + ENTRY + DECISION — using updated technical + Entry Solver + this dossier + active Scout. Distinguish current mutable state from frozen T0.
 4. When the human says Apply / Save / Propose JSON: return ONE AI Block only — use the SCOPED APPLY CONTRACT in this package (do not ask for another schema copy).
 
@@ -157,6 +163,8 @@ export type StockFileAnalyzeInput = {
   latestMtaeAssessment?: MtaeAssessment | null;
   /** All T0 freezes (caller loads once); package resolves plan linkage. */
   thesisT0Freezes?: ThesisT0Freeze[];
+  /** Canonical 1R monetary budget (rules.defaultRiskBudget). */
+  riskBudgetUsd?: number;
 };
 
 function pickFocusPlan(thesisId: string, plans: TradePlan[]): TradePlan | undefined {
@@ -269,6 +277,7 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     input.timeframeMapId ??
     input.latestMtaeAssessment?.timeframeMapId ??
     "swing-6m";
+  const riskBudgetUsd = resolveRiskBudgetUsd(input.riskBudgetUsd);
 
   const parts: string[] = [
     buildStockFileOperativePrompt(),
@@ -280,6 +289,8 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
     buildEntrySolverMechanicsBrief(),
     "",
     describeExistingNoFillLearningSurfaces(),
+    "",
+    auditOptimizedEntryLearningSurfaces(),
     "",
     buildMtaeProtocolBrief(mtaePresets),
     "",
@@ -387,7 +398,7 @@ export function buildStockFileAnalyzePackage(input: StockFileAnalyzeInput): stri
 
   parts.push(
     "",
-    emptyEntrySolverAdviseTemplate(thesis.riskRules.minimumRR),
+    emptyOptimizedEntryAdviseTemplate(thesis.riskRules.minimumRR, riskBudgetUsd),
     "",
     buildScopedAnalyzeApplyContractText(),
     "",

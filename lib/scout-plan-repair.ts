@@ -17,6 +17,7 @@ import {
 import { getStockThesisById } from "./stock-theses";
 import { getStockThesesStore } from "./stock-theses-store";
 import type { StockThesis } from "./stock-thesis-types";
+import { validateOptimizedEntryApplyClaim } from "./optimized-entry";
 
 const ACTIVE_SCOUT_LINK_STATUSES: PlanStatus[] = ["watching", "ready", "entered"];
 
@@ -396,6 +397,18 @@ export async function applyDecisionUpdateFromProposal(
         "decision-update requires either decision fields (verdict, decisionConfidence, challenges) or at least one tactical field (plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, operationalAssessment, executionReadiness, executionInstruction).",
       ],
     };
+  }
+
+  if (
+    proposal.plannedEntry !== undefined ||
+    proposal.executableEntry !== undefined ||
+    proposal.optimizedEntryClaim !== undefined ||
+    proposal.entryClaim !== undefined ||
+    proposal.entrySolver !== undefined ||
+    proposal.optimizedEntryEvidence !== undefined
+  ) {
+    const optClaim = validateOptimizedEntryApplyClaim(proposal);
+    if (!optClaim.ok) return { errors: optClaim.errors };
   }
 
   let currentPlan: TradePlan | undefined;

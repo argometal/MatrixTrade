@@ -4,6 +4,7 @@ import { rejectClientSuppliedPlanId } from "./plan-id";
 import { validateScoutContract } from "./scout-contract";
 import type { DecisionVerdict } from "./scout-decision-types";
 import { requireExecutionInstructionForGeometry } from "./scout-execution-instruction";
+import { validateOptimizedEntryApplyClaim } from "./optimized-entry";
 
 export function parseOptionalNumber(value: unknown): number | undefined {
   if (value === undefined || value === null || value === "") return undefined;
@@ -125,6 +126,10 @@ export function validateScoutPlanCreateProposal(
     always: true,
   });
   if (instructionErr) errors.push(instructionErr);
+
+  // Optimized Entry claim requires worksheet; bare plannedEntry remains legacy-allowed.
+  const optClaim = validateOptimizedEntryApplyClaim(proposal);
+  if (!optClaim.ok) errors.push(...optClaim.errors);
 
   if (errors.length) return { ok: false, errors };
   return { ok: true };

@@ -12,6 +12,7 @@ import { buildStockFileAnalyzePackage } from "@/lib/stock-file-analyze";
 import { buildStockProfileSynthesis } from "@/lib/stock-profile-synthesis";
 import { getStockThesisById } from "@/lib/stock-theses";
 import { listThesisT0Freezes } from "@/lib/thesis-t0";
+import { getRules } from "@/lib/storage";
 import { notFound } from "next/navigation";
 
 export default async function StockThesisDetailPage({
@@ -20,13 +21,15 @@ export default async function StockThesisDetailPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = await params;
-  const [thesis, playbooks, plans, mtaePresets, thesisT0Freezes] = await Promise.all([
-    getStockThesisById(id),
-    getPlaybooks(),
-    getPlans(),
-    getMtaeTimeframeMaps(),
-    listThesisT0Freezes(),
-  ]);
+  const [thesis, playbooks, plans, mtaePresets, thesisT0Freezes, rules] =
+    await Promise.all([
+      getStockThesisById(id),
+      getPlaybooks(),
+      getPlans(),
+      getMtaeTimeframeMaps(),
+      listThesisT0Freezes(),
+      getRules(),
+    ]);
   if (!thesis) notFound();
 
   const latestMtaeAssessment = await getLatestMtaeAssessmentForProfile(thesis.id);
@@ -53,6 +56,7 @@ export default async function StockThesisDetailPage({
     latestMtaeAssessment,
     thesisT0Freezes,
     timeframeMapId: latestMtaeAssessment?.timeframeMapId,
+    riskBudgetUsd: rules.defaultRiskBudget,
   });
 
   return (
