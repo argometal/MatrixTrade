@@ -124,6 +124,33 @@ export const MXT_ONTOLOGY_UI_MAP: readonly MxtOntologyUiRow[] = [
     resultingState: "Updated scout decision / geometry",
   },
   {
+    concept: "Historical T0 repair",
+    canonicalObject: "ThesisT0Freeze / plan-specific T0",
+    internalOperations: ["thesis-t0-repair"],
+    humanUi: {
+      kind: "control",
+      visibleLabel: "Apply",
+      location: "Header → Control → Apply",
+    },
+    humanAction:
+      "Use surviving plan-specific decision evidence, then paste thesis-t0-repair in Apply. Never inherit another Plan's T0 via shared Stock File.",
+    resultingState: "Plan-specific T0 freeze reconstructed or corrected with audit provenance",
+  },
+  {
+    concept: "Case Review / completion check",
+    canonicalObject: "ThesisCase / evaluated Case",
+    internalOperations: [],
+    humanUi: {
+      kind: "page",
+      visibleLabel: "Case Review",
+      location: "Scout / Planning case route",
+      route: "/mxt/scout/case?plan={PLAN-ID}",
+    },
+    humanAction:
+      "Open the plan-specific Case Review after T0 + outcome are accepted; inspect T0, Reality, Outcome, LO, OBS, and diagnosis before any MAF attribution.",
+    resultingState: "Human verification pause on the recomputed Case",
+  },
+  {
     concept: "Technical Analysis (MTAE)",
     canonicalObject: "TechnicalAssessment",
     internalOperations: ["technical-assessment", "technical-calibration"],
@@ -187,7 +214,8 @@ export const MXT_ONTOLOGY_UI_MAP: readonly MxtOntologyUiRow[] = [
       visibleLabel: "{TICKER} · {ID} forensic / historical attribution evidence",
       location: "Trades → closed trade detail snapshot menus",
     },
-    humanAction: "Copy forensic/attribution evidence; MAF rules via Control → Mechanics; Apply attribution",
+    humanAction:
+      "Copy forensic/attribution evidence; inspect completed Case first; MAF rules via Control → Mechanics; Apply attribution only after human Case review.",
     resultingState: "Attribution proposal accepted (not auto-MAF)",
   },
   {
@@ -200,7 +228,8 @@ export const MXT_ONTOLOGY_UI_MAP: readonly MxtOntologyUiRow[] = [
       location: "Sidebar → Insights → Pipeline Performance (also Journal / Mistakes)",
       route: "/mxt/stats?tab=pipeline",
     },
-    humanAction: "Open Insights evaluation surfaces; persist plan-outcome via Apply when recording",
+    humanAction:
+      "Open plan-specific evaluation surfaces (Case Review / Insights as needed); persist plan-outcome via Apply; LO/OBS synchronize from the accepted outcome rather than manual edits.",
     resultingState: "Evaluated case / recorded unexecuted outcome",
   },
   {
@@ -271,6 +300,7 @@ export const MXT_INTERNAL_OPS_NOT_UI = [
   "scout-plan-create",
   "scout-plan-update",
   "decision-update",
+  "thesis-t0-repair",
   "recordScoutDecision",
   "technical-assessment",
   "trade-proposal",
