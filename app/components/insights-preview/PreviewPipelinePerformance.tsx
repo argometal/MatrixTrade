@@ -16,6 +16,7 @@ import {
 import { MAF_COMPONENT_LABELS, type MafComponentId } from "@/lib/maf-types";
 import {
   buildInsightsCaseSpineView,
+  pickCasesNeedingReview,
   type InsightsCaseFamily,
 } from "@/lib/insights-case-spine-view";
 import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
@@ -41,6 +42,8 @@ import {
 } from "@/lib/insights-maf-ui";
 import { PreviewImprovementPath } from "@/app/components/insights-preview/PreviewImprovementPath";
 import type { ImprovementHypothesis } from "@/lib/improvement-hypothesis-types";
+import { copyText } from "@/app/components/ai-bridge/copy-text";
+import { buildInsightsSnapshotBrief } from "@/lib/insights-snapshot";
 
 function formatR(value: number): string {
   const sign = value > 0 ? "+" : "";
@@ -192,6 +195,7 @@ export function PreviewPipelinePerformance({
   >("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [focusPlanId, setFocusPlanId] = useState("");
+  const [snapshotCopied, setSnapshotCopied] = useState(false);
 
   const filters: PipelinePerformanceFilters = useMemo(
     () => ({
@@ -278,24 +282,10 @@ export function PreviewPipelinePerformance({
     [caseView.rows]
   );
 
-  const casesForReview = useMemo(() => {
-    const scored = caseView.rows.map((row) => {
-      let score = 0;
-      if (!row.t0Available) score += 100;
-      if (row.noEntryDiagnosis === "OVER_OPTIMIZATION") score += 50;
-      if (row.noEntryDiagnosis === "INDETERMINATE") score += 25;
-      if (row.family === "D") score += 45;
-      if (row.decisionQuality === "INDETERMINATE") score += 40;
-      if (row.executionQuality === "violated") score += 35;
-      if (row.linkage?.planThesis === "UNLINKED") score += 20;
-      if (row.linkage?.planPlaybook === "UNLINKED") score += 10;
-      return { row, score };
-    });
-    return scored
-      .filter((x) => x.score > 0)
-      .sort((a, b) => b.score - a.score || a.row.planId.localeCompare(b.row.planId))
-      .slice(0, 12);
-  }, [caseView.rows]);
+  const casesForReview = useMemo(
+    () => pickCasesNeedingReview(caseView.rows, 12),
+    [caseView.rows]
+  );
 
   function applyFamilyFilter(family: InsightsCaseFamily) {
     setCaseFamily((prev) => (prev === family ? "all" : family));
@@ -333,6 +323,36 @@ export function PreviewPipelinePerformance({
     pipelineComponent,
   ]);
 
+  const pipelineSnapshotText = useMemo(
+    () =>
+      buildInsightsSnapshotBrief({
+        pipelineInput: input,
+        caseSpine,
+        pipelineFilters: filters,
+        caseFilters: {
+          from: filters.from,
+          to: filters.to,
+          ticker: filters.ticker,
+          playbookId: filters.playbookId,
+          caseFamily,
+          noEntryDiagnosis,
+          decisionQuality,
+        },
+        focusPlanId: focusPlanId.trim() || undefined,
+        playbookNames,
+      }),
+    [
+      input,
+      caseSpine,
+      filters,
+      caseFamily,
+      noEntryDiagnosis,
+      decisionQuality,
+      focusPlanId,
+      playbookNames,
+    ]
+  );
+
   return (
     <div
       className="space-y-6 px-4 py-4 lg:px-6 lg:py-6"
@@ -356,6 +376,29 @@ export function PreviewPipelinePerformance({
               data-testid="improvement-focus-plan"
             />
           </label>
+          <div data-testid="insights-snapshot-copy">
+            <button
+              type="button"
+              onClick={async () => {
+                const ok = await copyText(pipelineSnapshotText);
+                if (ok) {
+                  setSnapshotCopied(true);
+                  window.setTimeout(() => setSnapshotCopied(false), 2000);
+                }
+              }}
+              className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-left hover:border-zinc-500 hover:bg-zinc-800"
+              data-insights-pipeline-snapshot
+            >
+              <span className="block text-xs font-medium text-zinc-100">
+                {snapshotCopied
+                  ? "Copied ✓"
+                  : "Insights Pipeline Snapshot"}
+              </span>
+              <span className="mt-0.5 block text-[11px] text-zinc-500">
+                Copy AI context for this filtered Pipeline view
+              </span>
+            </button>
+          </div>
         </div>
       </div>
 

@@ -115,6 +115,13 @@ export const VISIBLE_SNAPSHOT_MENU = [
       "evidence pack for AI attribution proposal (tradeId; Plan/T0 may be absent) — not accepted MAF",
   },
   {
+    label: "Insights Pipeline Snapshot",
+    kind: "copy_row",
+    where: "Insights → Pipeline (button next to Focus plan)",
+    purpose:
+      "AI context for filtered Pipeline: Case accounting, review queue, MAF, realized vs CF R",
+  },
+  {
     label: "Analyze with AI",
     kind: "cta",
     where: "Stock File window (primary CTA)",

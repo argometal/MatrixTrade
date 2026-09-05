@@ -58,6 +58,34 @@ export function noEntryDiagnosisFrom(
   return diagnosis.classification.value;
 }
 
+/** Same priority heuristic as Insights → Pipeline "Cases needing review". */
+export function scoreInsightsCaseForReview(row: InsightsCaseRow): number {
+  let score = 0;
+  if (!row.t0Available) score += 100;
+  if (row.noEntryDiagnosis === "OVER_OPTIMIZATION") score += 50;
+  if (row.noEntryDiagnosis === "INDETERMINATE") score += 25;
+  if (row.family === "D") score += 45;
+  if (row.decisionQuality === "INDETERMINATE") score += 40;
+  if (row.executionQuality === "violated") score += 35;
+  if (row.linkage?.planThesis === "UNLINKED") score += 20;
+  if (row.linkage?.planPlaybook === "UNLINKED") score += 10;
+  return score;
+}
+
+export function pickCasesNeedingReview(
+  rows: InsightsCaseRow[],
+  limit = 12
+): Array<{ row: InsightsCaseRow; score: number }> {
+  return rows
+    .map((row) => ({ row, score: scoreInsightsCaseForReview(row) }))
+    .filter((x) => x.score > 0)
+    .sort(
+      (a, b) =>
+        b.score - a.score || a.row.planId.localeCompare(b.row.planId)
+    )
+    .slice(0, limit);
+}
+
 export function filterInsightsCaseRows(
   rows: InsightsCaseRow[],
   filters: InsightsCaseSpineFilters
