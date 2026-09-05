@@ -1,7 +1,8 @@
 /**
  * Thesis T0 freeze + finite evaluation horizon (Prompt #8).
  * Analytical ThesisEpisode — no separate episode table.
- * Compact immutable freeze at first committed Scout decision.
+ * Compact decision-time freeze at first committed Scout decision.
+ * Body is stable except status/t1, planIds (same Plan), and controlled thesis-t0-repair.
  */
 
 import type { ConfirmationCost } from "./asymmetry-types";
@@ -74,8 +75,9 @@ export type ThesisT0PlanGeometry = {
 };
 
 /**
- * Immutable T0 freeze for one thesis evaluation episode.
- * Keyed by freeze id; open episode uniqueness is (stockThesisId) while status=open.
+ * Immutable T0 freeze for one Plan evaluation episode.
+ * Multiple open freezes may share a stockThesisId (one Stock File → many Plans).
+ * Plan-specific binding: never inherit another Plan's freeze via shared thesis id.
  */
 export type ThesisT0Freeze = {
   id: string;
@@ -97,6 +99,15 @@ export type ThesisT0Freeze = {
   /** ISO T1 when closed/expired; null while open. */
   t1: string | null;
   createdAt: string;
-  /** Never mutate freeze payload after create — only status/t1/planIds append may update. */
+  /**
+   * Payload body is frozen at create except: status/t1, planIds (same Plan only),
+   * and controlled repair via thesis-t0-repair (audit preserved).
+   */
   updatedAt: string;
+  /** original (default) | reconstructed (was missing) | corrected (was wrong). */
+  recordKind?: import("./correction-types").RecordKind;
+  /** Prior freeze id when this record supersedes a corrected freeze. */
+  supersededFreezeId?: string | null;
+  /** Append-only repair provenance. */
+  correctionAudit?: import("./correction-types").CorrectionAuditEntry[];
 };

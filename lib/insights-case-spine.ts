@@ -279,6 +279,7 @@ export async function buildInsightsCaseSpine(
       realizedPnL: isExecuted ? lo?.realizedPnL ?? null : null,
       counterfactualR: !isExecuted ? lo?.counterfactualR ?? null : null,
       t0Available: thesisCase.t0Evidence.available,
+      t0RecordKind: thesisCase.freeze?.recordKind ?? null,
       missingInputs: [...diagnosis.missingInputs],
       diagnosisReason: diagnosis.reason,
       evidenceSummary,

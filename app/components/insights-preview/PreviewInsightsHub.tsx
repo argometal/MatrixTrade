@@ -41,6 +41,7 @@ export function PreviewInsightsHub({
   pipelineInput,
   caseSpine = [],
   improvementHypotheses = [],
+  persistenceReadOnly = false,
 }: {
   tab: InsightsTabId;
   statsData: PreviewStatsData;
@@ -51,6 +52,8 @@ export function PreviewInsightsHub({
   pipelineInput: Omit<PipelinePerformanceInput, "filters">;
   caseSpine?: InsightsCaseRow[];
   improvementHypotheses?: ImprovementHypothesis[];
+  /** Local #12D / supabase-readonly — writes blocked; UI must not crash. */
+  persistenceReadOnly?: boolean;
 }) {
   const subtitles: Record<InsightsTabId, string> = {
     stats: "Cycle metrics — decide what to improve next.",
@@ -100,6 +103,7 @@ export function PreviewInsightsHub({
               playbooks={playbooks.map((p) => ({ id: p.id, name: p.name }))}
               caseSpine={caseSpine}
               improvementHypotheses={improvementHypotheses}
+              persistenceReadOnly={persistenceReadOnly}
             />
           )}
         </div>

@@ -19,6 +19,30 @@ import type {
   ImprovementHypothesisStatus,
 } from "./improvement-hypothesis-types";
 
+function readOnlyWriteErrors(err: unknown): string[] | null {
+  const message = err instanceof Error ? err.message : String(err);
+  if (!message.includes("MXT_READ_ONLY") && !message.includes("[MXT_READ_ONLY]")) {
+    return null;
+  }
+  return [
+    message,
+    "Persistence is read-only in this runtime — Improvement Hypothesis was not written. Local #12D must not mutate production.",
+  ];
+}
+
+async function persistImprovementHypothesis(
+  hypothesis: ImprovementHypothesis
+): Promise<{ hypothesis?: ImprovementHypothesis; errors?: string[] }> {
+  try {
+    await upsertImprovementHypothesis(hypothesis);
+    return { hypothesis };
+  } catch (err) {
+    const ro = readOnlyWriteErrors(err);
+    if (ro) return { errors: ro };
+    throw err;
+  }
+}
+
 const ACCEPTED_MAF_STATUSES = new Set(["attributed", "concluded"]);
 
 function isAcceptedMaf(maf: MafExperiment): boolean {
@@ -163,8 +187,8 @@ export async function createImprovementHypothesisFromAcceptedMaf(
     source: "maf_accepted_deficiency",
   };
 
-  await upsertImprovementHypothesis(hypothesis);
-  return { hypothesis };
+  const persisted = await persistImprovementHypothesis(hypothesis);
+  return persisted;
 }
 
 export async function authorizeImprovementHypothesisForTesting(
@@ -193,8 +217,7 @@ export async function authorizeImprovementHypothesisForTesting(
     authorizedForTestingAt: h.authorizedForTestingAt ?? now,
     updatedAt: now,
   };
-  await upsertImprovementHypothesis(updated);
-  return { hypothesis: updated };
+  return persistImprovementHypothesis(updated);
 }
 
 const VERDICT_STATUSES = new Set<ImprovementHypothesisStatus>([
@@ -235,8 +258,7 @@ export async function setImprovementHypothesisEvidenceVerdict(input: {
     evidenceVerdictNote: input.note?.trim() || undefined,
     updatedAt: now,
   };
-  await upsertImprovementHypothesis(updated);
-  return { hypothesis: updated };
+  return persistImprovementHypothesis(updated);
 }
 
 export async function authorizeImprovementMethodChange(input: {
@@ -262,8 +284,7 @@ export async function authorizeImprovementMethodChange(input: {
       "Human authorized method change boundary — Playbook/Mechanics not auto-mutated.",
     updatedAt: now,
   };
-  await upsertImprovementHypothesis(updated);
-  return { hypothesis: updated };
+  return persistImprovementHypothesis(updated);
 }
 
 /**
@@ -318,14 +339,23 @@ export async function linkPlanToImprovementHypothesis(input: {
     evidencePlanIds,
     updatedAt: now,
   };
-  await upsertImprovementHypothesis(updatedH);
+  const persisted = await persistImprovementHypothesis(updatedH);
+  if (persisted.errors?.length) {
+    return { errors: persisted.errors };
+  }
 
   const updatedPlan: TradePlan = {
     ...plan,
     improvementHypothesisId: h.id,
     updatedAt: now,
   };
-  await getPlansStore().upsert(updatedPlan);
+  try {
+    await getPlansStore().upsert(updatedPlan);
+  } catch (err) {
+    const ro = readOnlyWriteErrors(err);
+    if (ro) return { errors: ro };
+    throw err;
+  }
 
   return { hypothesis: updatedH, plan: updatedPlan };
 }

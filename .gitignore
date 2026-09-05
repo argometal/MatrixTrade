@@ -54,3 +54,4 @@ Thumbs.db
 # Chaos — separate repo; ignore only nested .git (sources sync via MatrixTrade pull)
 /tools/Chaos/.git/
 .vercel
+.env*

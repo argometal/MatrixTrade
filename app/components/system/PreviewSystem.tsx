@@ -7,6 +7,7 @@ import { SystemRulesPanel } from "@/app/components/system/SystemRulesPanel";
 import { SystemSection, SystemRow, StatusBadge } from "@/app/components/system/SystemSection";
 import type { SystemPageData } from "@/lib/system-page-data";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 
 const SECTION_LINKS = [
   { id: "rules", label: "Rules" },
@@ -60,7 +61,9 @@ export function PreviewSystem({
                 Bridge sync, inbox backend, vault paths, and deployment status.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
+            <div
+              className={`flex flex-wrap items-center gap-2 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
+            >
               <SnapshotButton
                 title="MTA Mechanics snapshot"
                 description="Full rules, block types, Apply gate — paste once per AI session"

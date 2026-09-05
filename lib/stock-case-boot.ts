@@ -29,7 +29,7 @@ export const STOCK_CASE_BOOT_REQUEST = [
   "",
   "Separate conceptual analysis from serialization. Keep Scout entry/stop/target distinct from Stock File zones and structural targets.",
   "",
-  "POST result to inboxUrl — human Apply in MTA /inbox.",
+  "POST result to Proposals (/mxt/inbox) or Control → Apply — human Validate → Accept only.",
 ].join("\n");
 
 export function buildStockCaseBootPackage(): string {

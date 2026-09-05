@@ -88,6 +88,10 @@ export interface PlanOutcome {
   /** New classification (preferred). */
   status?: PlanOutcomeStatus;
   outcomeKind?: PlanOutcomeKind;
+  /** original (default) | corrected after audited supersede (MXT 029). */
+  recordKind?: import("./correction-types").RecordKind;
+  /** Append-only prior outcomes when corrected. */
+  correctionAudit?: import("./correction-types").CorrectionAuditEntry[];
   tradeExecuted?: boolean;
   entryTriggered?: boolean | null;
   stopTriggered?: boolean | null;

@@ -8,6 +8,7 @@ import { formatDashboardPf, formatDashboardUsd } from "@/lib/dashboard-display";
 import type { DashboardData } from "@/lib/dashboard-types";
 import { formatMonthlyLossRoom } from "@/lib/monthly-risk";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 import { NeedsAttentionRow } from "@/app/components/dashboard/NeedsAttentionRow";
 
 function DarkExperimentPnLChart({ points }: { points: EquityPoint[] }) {
@@ -85,7 +86,9 @@ export function PreviewDashboard({
                   {data.cycleLabel} · experiment control
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-3 lg:mr-[14rem]">
+              <div
+                className={`flex flex-wrap items-center gap-3 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
+              >
                 {exchange ? (
                   <SnapshotButton
                     title="Dashboard snapshot"

@@ -395,7 +395,11 @@ export function MatrixControlPanel() {
       onClick={closePanel}
     >
       <div
-        className="flex max-h-[min(560px,90vh)] w-full max-w-lg flex-col rounded-2xl border border-zinc-700/80 bg-zinc-950 p-4 shadow-2xl"
+        className={`flex w-full flex-col rounded-2xl border border-zinc-700/80 bg-zinc-950 p-4 shadow-2xl ${
+          step === "apply"
+            ? "max-h-[min(92vh,960px)] max-w-3xl sm:max-w-4xl"
+            : "max-h-[min(85vh,720px)] max-w-xl sm:max-w-2xl"
+        }`}
         onClick={(event) => event.stopPropagation()}
       >
         <header className="mb-3 shrink-0">

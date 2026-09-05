@@ -15,6 +15,7 @@ import {
   type PlaybookZoneSelectionFlow,
 } from "@/lib/playbook-types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -432,7 +433,9 @@ export function PreviewPlaybook({
                 Strategy laboratory — assign trades manually, measure what works.
               </p>
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
+            <div
+              className={`flex flex-wrap items-center gap-2 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
+            >
               <SnapshotButton
                 title="Playbook snapshot"
                 description="Strategies, checklists, P/L and win rate per playbook"

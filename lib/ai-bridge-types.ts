@@ -19,6 +19,7 @@ export const AI_BRIDGE_BLOCK_TYPES = [
   "attribution",
   "observation-update",
   "plan-outcome",
+  "thesis-t0-repair",
   "external-position-create",
   "external-position-update",
   "external-position-reduction",
@@ -49,7 +50,7 @@ export function getApplyStatusLabel(type: TradingProposalType): string {
 }
 
 export const AI_BRIDGE_CAPABILITIES =
-  "Open, adjust, close, and analyze trades in natural language; validate Stock Files and scout decisions — proposals import through AI Bridge → Inbox (human Apply only).";
+  "Open, adjust, close, and analyze trades in natural language; validate Stock Files and scout decisions — proposals import through Proposals (/mxt/inbox) or Control → Apply (human gate only).";
 
 export const AI_BRIDGE_FLOW =
-  "Copy Snapshot → tell your AI what you want → paste its response → Inbox → Apply → Supabase";
+  "Copy Snapshot → tell your AI what you want → paste its response → Proposals (/mxt/inbox) or Control → Apply → Validate → Accept";

@@ -8,6 +8,7 @@ import {
 } from "@/app/actions";
 import { parseAiBlock, sampleAiBlock } from "@/lib/ai-block";
 import { buildStockCaseBootPackage } from "@/lib/stock-case-boot";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 
 export function PreviewNewStockCase() {
   const [showNotesHelper, setShowNotesHelper] = useState(false);
@@ -88,7 +89,7 @@ export function PreviewNewStockCase() {
             </div>
             <Link
               href="/mxt/scout"
-              className="rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 lg:mr-[14rem]"
+              className={`rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-zinc-200 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
             >
               ← Scouting Desk
             </Link>

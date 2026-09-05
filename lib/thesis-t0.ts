@@ -222,112 +222,123 @@ export function buildThesisT0Freeze(input: {
     t1: null,
     createdAt: now,
     updatedAt: now,
+    recordKind: "original",
   };
 }
 
-/**
- * Result of ensuring a T0 freeze after Scout decision.
- * Decision commit may succeed while freeze fails — callers must observe this.
- */
-export type ThesisT0EnsureStatus =
-  | "created"
-  | "linked_existing"
-  | "already_open"
-  | "skipped_readonly"
-  | "failed"
-  | "no_decision";
-
-export type ThesisT0EnsureResult = {
-  freeze: ThesisT0Freeze | null;
-  created: boolean;
-  status: ThesisT0EnsureStatus;
-  error?: string;
-};
-
-/**
- * First committed Scout decision creates an immutable T0 freeze.
- * Plans without stockThesisId use PLAN-ONLY:{planId} episode key (same store).
- * Later decisions / Stock File edits must not rewrite an existing open freeze body.
- */
-export async function ensureThesisT0OnScoutDecision(input: {
-  plan: TradePlan;
-  thesis?: StockThesis | null;
-  evaluationHorizonDays?: number;
-}): Promise<ThesisT0EnsureResult> {
-  const decision = input.plan.decision;
-  if (!decision) {
-    return { freeze: null, created: false, status: "no_decision" };
-  }
-
-  if (isMxtReadOnlyMode()) {
-    return {
-      freeze: null,
-      created: false,
-      status: "skipped_readonly",
-      error:
-        "[MXT_READ_ONLY] T0 freeze not written — decision persisted without freeze.",
-    };
-  }
-
-  try {
-    const episodeKey = resolveThesisEpisodeKey(input.plan);
-    const store = getThesisT0Store();
-    await expireOpenEpisodesDue({ nowIso: new Date().toISOString() });
-
-    const open = await store.findOpenByStockThesisId(episodeKey);
-    if (open) {
-      if (
-        input.plan.id &&
-        !open.planIds.some(
-          (id) => id.toUpperCase() === input.plan.id.toUpperCase()
-        )
-      ) {
-        const linked: ThesisT0Freeze = {
-          ...open,
-          planIds: [...open.planIds, input.plan.id],
-          updatedAt: new Date().toISOString(),
-        };
-        await store.upsert(linked);
-        return { freeze: linked, created: false, status: "linked_existing" };
-      }
-      return { freeze: open, created: false, status: "already_open" };
-    }
-
-    let thesis = input.thesis;
-    const linkedThesisId = input.plan.stockThesisId?.trim();
-    if (thesis === undefined && linkedThesisId) {
-      const { getStockThesisById } = await import("./stock-theses");
-      thesis = await getStockThesisById(linkedThesisId);
-    }
-    if (!linkedThesisId) {
-      thesis = null;
-    }
-
-    const freeze = buildThesisT0Freeze({
-      plan: input.plan,
-      decision,
-      thesis: thesis ?? null,
-      evaluationHorizonDays: input.evaluationHorizonDays,
-    });
-    await store.insert(freeze);
-    return { freeze, created: true, status: "created" };
-  } catch (err) {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(
-      "[thesis-t0] ensureThesisT0OnScoutDecision failed for plan " +
-        input.plan.id +
-        ": " +
-        message
-    );
-    return {
-      freeze: null,
-      created: false,
-      status: "failed",
-      error: message,
-    };
-  }
-}
-
+/**
+ * Result of ensuring a T0 freeze after Scout decision.
+ * Decision commit may succeed while freeze fails — callers must observe this.
+ */
+export type ThesisT0EnsureStatus =
+  | "created"
+  | "already_open"
+  | "skipped_readonly"
+  | "failed"
+  | "no_decision";
+
+export type ThesisT0EnsureResult = {
+  freeze: ThesisT0Freeze | null;
+  created: boolean;
+  status: ThesisT0EnsureStatus;
+  error?: string;
+};
+
+/**
+ * First committed Scout decision creates a Plan-specific T0 freeze.
+ * Plans without stockThesisId use PLAN-ONLY:{planId} episode key (same store).
+ * Never attach a different Plan to an existing open freeze merely because they
+ * share stockThesisId (MXT 029 — PLAN-001 must not inherit PLAN-009 T0).
+ * Later Stock File edits must not rewrite an existing freeze body (use thesis-t0-repair).
+ */
+export async function ensureThesisT0OnScoutDecision(input: {
+  plan: TradePlan;
+  thesis?: StockThesis | null;
+  evaluationHorizonDays?: number;
+}): Promise<ThesisT0EnsureResult> {
+  const decision = input.plan.decision;
+  if (!decision) {
+    return { freeze: null, created: false, status: "no_decision" };
+  }
+
+  if (isMxtReadOnlyMode()) {
+    return {
+      freeze: null,
+      created: false,
+      status: "skipped_readonly",
+      error:
+        "[MXT_READ_ONLY] T0 freeze not written — decision persisted without freeze.",
+    };
+  }
+
+  try {
+    const store = getThesisT0Store();
+    await expireOpenEpisodesDue({ nowIso: new Date().toISOString() });
+
+    const planKey = input.plan.id.toUpperCase();
+    const all = await store.readAll();
+    const existingForPlan = all.find(
+      (f) =>
+        f.status === "open" &&
+        (f.plan.planId.toUpperCase() === planKey ||
+          f.planIds.some((id) => id.toUpperCase() === planKey))
+    );
+    if (existingForPlan) {
+      return {
+        freeze: existingForPlan,
+        created: false,
+        status: "already_open",
+      };
+    }
+
+    // Detach this planId if it was wrongly appended to another Plan's freeze.
+    for (const row of all) {
+      if (row.plan.planId.toUpperCase() === planKey) continue;
+      const hasForeign = row.planIds.some((id) => id.toUpperCase() === planKey);
+      if (!hasForeign) continue;
+      const cleaned: ThesisT0Freeze = {
+        ...row,
+        planIds: row.planIds.filter((id) => id.toUpperCase() !== planKey),
+        updatedAt: new Date().toISOString(),
+      };
+      await store.upsert(cleaned);
+    }
+
+    let thesis = input.thesis;
+    const linkedThesisId = input.plan.stockThesisId?.trim();
+    if (thesis === undefined && linkedThesisId) {
+      const { getStockThesisById } = await import("./stock-theses");
+      thesis = await getStockThesisById(linkedThesisId);
+    }
+    if (!linkedThesisId) {
+      thesis = null;
+    }
+
+    const freeze = buildThesisT0Freeze({
+      plan: input.plan,
+      decision,
+      thesis: thesis ?? null,
+      evaluationHorizonDays: input.evaluationHorizonDays,
+    });
+    await store.insert(freeze);
+    return { freeze, created: true, status: "created" };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(
+      "[thesis-t0] ensureThesisT0OnScoutDecision failed for plan " +
+        input.plan.id +
+        ": " +
+        message
+    );
+    return {
+      freeze: null,
+      created: false,
+      status: "failed",
+      error: message,
+    };
+  }
+}
+
 export async function getOpenThesisT0Freeze(
   stockThesisId: string
 ): Promise<ThesisT0Freeze | null> {

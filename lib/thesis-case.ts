@@ -201,7 +201,7 @@ function buildT0Decision(freeze: ThesisT0Freeze): CaseT0Decision | null {
 }
 
 /**
- * T0 / original evidence from immutable freeze only.
+ * T0 / original evidence from effective freeze only.
  * unavailable → no fabricated packet; never read live Stock File.
  */
 export function buildT0EvidencePacket(

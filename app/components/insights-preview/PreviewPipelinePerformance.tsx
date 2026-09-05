@@ -167,11 +167,13 @@ export function PreviewPipelinePerformance({
   playbooks,
   caseSpine = [],
   improvementHypotheses = [],
+  persistenceReadOnly = false,
 }: {
   input: Omit<PipelinePerformanceInput, "filters">;
   playbooks: PipelinePerformancePlaybookOption[];
   caseSpine?: InsightsCaseRow[];
   improvementHypotheses?: ImprovementHypothesis[];
+  persistenceReadOnly?: boolean;
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -246,6 +248,26 @@ export function PreviewPipelinePerformance({
     for (const r of caseSpine) set.add(r.ticker.toUpperCase());
     return [...set].sort();
   }, [input, caseSpine]);
+
+  const focusPlanOptions = useMemo(() => {
+    const byId = new Map<string, InsightsCaseRow>();
+    for (const row of caseSpine) {
+      const id = row.planId.toUpperCase();
+      if (!byId.has(id)) byId.set(id, row);
+    }
+    return [...byId.values()].sort((a, b) => {
+      const t = a.ticker.localeCompare(b.ticker);
+      return t !== 0 ? t : a.planId.localeCompare(b.planId);
+    });
+  }, [caseSpine]);
+
+  const planStatusById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const p of input.plans) {
+      map.set(p.id.toUpperCase(), p.status);
+    }
+    return map;
+  }, [input.plans]);
 
   const fvl = caseView.aggregate.falseVirtuousLoop;
   const condition = caseView.aggregate.currentCondition;
@@ -367,14 +389,24 @@ export function PreviewPipelinePerformance({
         <div className="flex shrink-0 flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wide text-zinc-500">
             Focus plan
-            <input
-              type="text"
+            <select
               value={focusPlanId}
               onChange={(e) => setFocusPlanId(e.target.value)}
-              placeholder="e.g. PLAN-009"
-              className="min-h-9 w-36 rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm normal-case text-zinc-200 placeholder:text-zinc-600"
+              className="min-h-9 min-w-[14rem] max-w-[22rem] rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm normal-case text-zinc-200"
               data-testid="improvement-focus-plan"
-            />
+            >
+              <option value="">Select plan…</option>
+              {focusPlanOptions.map((row) => {
+                const status =
+                  planStatusById.get(row.planId.toUpperCase()) ?? "—";
+                const t0 = row.t0Available ? "T0" : "Missing T0";
+                return (
+                  <option key={row.planId} value={row.planId}>
+                    {row.ticker} · {row.planId} · {status} · {t0}
+                  </option>
+                );
+              })}
+            </select>
           </label>
           <div data-testid="insights-snapshot-copy">
             <button
@@ -406,6 +438,13 @@ export function PreviewPipelinePerformance({
         hypotheses={improvementHypotheses}
         caseSpine={caseSpine}
         focusPlanId={focusPlanId}
+        persistenceReadOnly={persistenceReadOnly}
+        planOptions={focusPlanOptions.map((row) => ({
+          planId: row.planId,
+          ticker: row.ticker,
+          status: planStatusById.get(row.planId.toUpperCase()) ?? "—",
+          t0Available: row.t0Available,
+        }))}
       />
 
       <section

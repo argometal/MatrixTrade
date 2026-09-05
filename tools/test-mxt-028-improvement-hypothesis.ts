@@ -228,6 +228,47 @@ async function runTests() {
     assert.ok(blocked.errors?.some((e) => /not accepted/i.test(e)));
   }
 
+  // Read-only gate: must return errors, never throw uncaught.
+  {
+    __setImprovementHypothesesStoreForTests(
+      createMemoryImprovementHypothesesStore([]),
+      "memory"
+    );
+    __setMafExperimentsStoreForTests([sampleMaf()], "memory");
+    __setPlansStoreForTests(createMemoryPlansStore([samplePlan("PLAN-009")]));
+
+    const prevRo = process.env.MXT_READ_ONLY;
+    process.env.MXT_READ_ONLY = "1";
+    const { assertMxtPersistenceWriteAllowed } = await import(
+      "../lib/mxt-readonly"
+    );
+    // Force the store path used in memory still calls upsert — wrap by stubbing upsert via
+    // temporarily using a store that throws like production read-only.
+    const { createMemoryImprovementHypothesesStore: mem } = await import(
+      "../lib/improvement-hypotheses-store"
+    );
+    const base = mem([]);
+    __setImprovementHypothesesStoreForTests(
+      {
+        ...base,
+        async upsert(row) {
+          assertMxtPersistenceWriteAllowed("improvement_hypotheses.storage.upsert");
+          return base.upsert(row);
+        },
+      },
+      "memory"
+    );
+
+    const ro = await createImprovementHypothesisFromAcceptedMaf({
+      originPlanId: "PLAN-009",
+    });
+    assert.ok(ro.errors?.some((e) => /MXT_READ_ONLY/i.test(e)), ro.errors?.join("; "));
+    assert.equal(ro.hypothesis, undefined);
+
+    if (prevRo === undefined) delete process.env.MXT_READ_ONLY;
+    else process.env.MXT_READ_ONLY = prevRo;
+  }
+
   __setImprovementHypothesesStoreForTests(null, null);
   __setMafExperimentsStoreForTests(null, null);
   __setPlansStoreForTests(null);

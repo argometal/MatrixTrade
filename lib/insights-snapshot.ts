@@ -66,6 +66,8 @@ export type InsightsSnapshotFocusTrace = {
   reality: string;
   executionQuality: string;
   t0Available: boolean;
+  /** original | reconstructed | corrected when freeze present. */
+  t0RecordKind?: string | null;
   evaluable: boolean;
   loKind: string | null;
   /** Actual fill result only — never CF. */
@@ -292,6 +294,7 @@ function buildFocusTrace(input: {
     reality: row.reality,
     executionQuality: row.executionQuality,
     t0Available: row.t0Available,
+    t0RecordKind: row.t0RecordKind ?? null,
     evaluable: isEvaluableCase(row),
     loKind: row.loKind,
     realizedR: row.realizedR,
@@ -454,7 +457,7 @@ export function formatInsightsSnapshotBrief(model: InsightsSnapshotModel): strin
     "Realized R/P&L ≠ Counterfactual / Planned R. CF R is never portfolio P/L."
   );
   lines.push(
-    "Missing T0 ≠ permission to reconstruct or inherit another Plan's T0 (even under shared Stock File)."
+    "Missing T0 ≠ permission to reconstruct or inherit another Plan's T0 (even under shared Stock File). Controlled repair: Apply thesis-t0-repair."
   );
   lines.push(
     "Known Outcome ≠ Case automatically evaluable. Plans under one Stock File stay independent Cases."
@@ -656,6 +659,9 @@ export function formatInsightsSnapshotBrief(model: InsightsSnapshotModel): strin
     lines.push(`executionQuality: ${focus.executionQuality}`);
     lines.push(`realityRelationship: ${focus.reality}`);
     lines.push(`t0Available: ${focus.t0Available}`);
+    if (focus.t0RecordKind) {
+      lines.push(`t0RecordKind: ${focus.t0RecordKind}`);
+    }
     lines.push(`evaluable: ${focus.evaluable}`);
     if (focus.planGeometry) {
       lines.push(

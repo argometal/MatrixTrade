@@ -117,7 +117,7 @@ export const VISIBLE_SNAPSHOT_MENU = [
   {
     label: "Insights Pipeline Snapshot",
     kind: "copy_row",
-    where: "Insights → Pipeline (button next to Focus plan)",
+    where: "Insights → Pipeline Performance (button next to Focus plan)",
     purpose:
       "AI context for filtered Pipeline: Case accounting, review queue, MAF, realized vs CF R",
   },

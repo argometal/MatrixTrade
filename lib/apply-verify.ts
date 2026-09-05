@@ -52,6 +52,8 @@ export async function verifyApplyPersistence(
       return verifyObservationUpdatePersistence(parsed);
     case "plan-outcome":
       return verifyPlanOutcomePersistence(parsed);
+    case "thesis-t0-repair":
+      return verifyThesisT0RepairPersistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -408,6 +410,49 @@ async function verifyObservationUpdatePersistence(
   return {
     ok: true,
     detail: `Observation ${row.id} verified · ${row.status}`,
+  };
+}
+
+async function verifyThesisT0RepairPersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const planId = String(parsed.proposal.planId ?? "").trim();
+  const repairKind = String(parsed.proposal.repairKind ?? "").trim();
+  const { getPlanById } = await import("./plans");
+  const { findFreezeForPlan } = await import("./thesis-case");
+  const { listThesisT0Freezes } = await import("./thesis-t0");
+  const plan = await getPlanById(planId);
+  if (!plan) {
+    return { ok: false, detail: `Plan ${planId} not found after T0 repair.` };
+  }
+  const freeze = findFreezeForPlan(plan, await listThesisT0Freezes());
+  if (!freeze) {
+    return { ok: false, detail: `No T0 freeze bound to ${planId} after repair.` };
+  }
+  if (freeze.plan.planId.toUpperCase() !== planId.toUpperCase()) {
+    return {
+      ok: false,
+      detail: `T0 freeze plan.planId=${freeze.plan.planId} does not match ${planId}.`,
+    };
+  }
+  if (repairKind === "reconstructed" && freeze.recordKind !== "reconstructed") {
+    return {
+      ok: false,
+      detail: `Expected recordKind=reconstructed, got ${freeze.recordKind ?? "—"}`,
+    };
+  }
+  if (repairKind === "corrected" && freeze.recordKind !== "corrected") {
+    return {
+      ok: false,
+      detail: `Expected recordKind=corrected, got ${freeze.recordKind ?? "—"}`,
+    };
+  }
+  if (!freeze.correctionAudit?.length) {
+    return { ok: false, detail: `Freeze ${freeze.id} missing correctionAudit after repair.` };
+  }
+  return {
+    ok: true,
+    detail: `T0 ${repairKind} verified · ${freeze.id} · recordKind=${freeze.recordKind} · plan=${planId}`,
   };
 }
 

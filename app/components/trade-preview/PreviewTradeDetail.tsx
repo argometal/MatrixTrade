@@ -23,6 +23,7 @@ import {
 import type { Experiment, Trade } from "@/lib/types";
 import type { MonthlyRisk } from "@/lib/monthly-risk";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 import {
   EVALUATION_STATUS_LABELS,
   EXECUTION_OUTCOME_LABELS,
@@ -84,7 +85,9 @@ export function PreviewTradeDetail({
                 <p className="mt-1 text-sm text-amber-400">⚠ inconsistent trade data</p>
               )}
             </div>
-            <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
+            <div
+              className={`flex flex-wrap items-center gap-2 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
+            >
               <SnapshotButton
                 title={snapshotButtonTitle(trade.ticker, `${trade.id} snapshot`)}
                 description={

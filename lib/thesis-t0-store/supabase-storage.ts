@@ -55,9 +55,28 @@ async function downloadFreeze(id: string): Promise<ThesisT0Freeze | null> {
     .from(MXT_T0_STORAGE_BUCKET)
     .download(objectPath(id));
   if (error) {
-    const msg = String(error.message ?? "").toLowerCase();
-    if (msg.includes("not found") || msg.includes("404")) return null;
-    throw new Error(`Supabase T0 storage download failed: ${error.message}`);
+    const rawMsg = String(error.message ?? "").trim();
+    const msg = rawMsg.toLowerCase();
+    const status = Number(
+      (error as { statusCode?: string | number }).statusCode ??
+        (error as { status?: string | number }).status ??
+        NaN
+    );
+    // Storage often returns opaque/empty errors for missing objects.
+    if (
+      !rawMsg ||
+      rawMsg === "{}" ||
+      msg.includes("not found") ||
+      msg.includes("404") ||
+      msg.includes("object not found") ||
+      status === 404 ||
+      status === 400
+    ) {
+      return null;
+    }
+    throw new Error(
+      `Supabase T0 storage download failed: ${rawMsg || JSON.stringify(error)}`
+    );
   }
   const text = await data.text();
   return JSON.parse(text) as ThesisT0Freeze;

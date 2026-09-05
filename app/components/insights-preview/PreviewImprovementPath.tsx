@@ -18,14 +18,25 @@ import {
 import { summarizeImprovementEvidence } from "@/lib/improvement-hypothesis-evidence-summary";
 import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
 
+export type ImprovementPlanOption = {
+  planId: string;
+  ticker: string;
+  status: string;
+  t0Available: boolean;
+};
+
 export function PreviewImprovementPath({
   hypotheses,
   caseSpine,
   focusPlanId,
+  persistenceReadOnly = false,
+  planOptions = [],
 }: {
   hypotheses: ImprovementHypothesis[];
   caseSpine: InsightsCaseRow[];
   focusPlanId?: string;
+  persistenceReadOnly?: boolean;
+  planOptions?: ImprovementPlanOption[];
 }) {
   const [message, setMessage] = useState<string | null>(null);
   const [linkPlanById, setLinkPlanById] = useState<Record<string, string>>({});
@@ -52,19 +63,31 @@ export function PreviewImprovementPath({
     action: (fd: FormData) => Promise<{ ok: boolean; error?: string; hypothesisId?: string }>,
     fields: Record<string, string>
   ) {
-    startTransition(async () => {
-      const fd = new FormData();
-      for (const [k, v] of Object.entries(fields)) fd.set(k, v);
-      const result = await action(fd);
+    if (persistenceReadOnly) {
       setMessage(
-        result.ok
-          ? `${label} OK${result.hypothesisId ? ` — ${result.hypothesisId}` : ""}`
-          : `${label} failed: ${result.error ?? "unknown"}`
+        `${label} blocked: persistence is read-only in this runtime (Local #12D). Production writes remain protected.`
       );
+      return;
+    }
+    startTransition(async () => {
+      try {
+        const fd = new FormData();
+        for (const [k, v] of Object.entries(fields)) fd.set(k, v);
+        const result = await action(fd);
+        setMessage(
+          result.ok
+            ? `${label} OK${result.hypothesisId ? ` — ${result.hypothesisId}` : ""}`
+            : `${label} failed: ${result.error ?? "unknown"}`
+        );
+      } catch (err) {
+        const msg = err instanceof Error ? err.message : String(err);
+        setMessage(`${label} failed: ${msg}`);
+      }
     });
   }
 
   const focus = focusPlanId?.trim().toUpperCase() ?? "";
+  const writesDisabled = pending || persistenceReadOnly;
 
   return (
     <section
@@ -81,13 +104,22 @@ export function PreviewImprovementPath({
           never confirming evidence. Does not mutate Playbooks. Evidence
           &quot;review ready&quot; hint is provisional UI guidance only.
         </p>
+        {persistenceReadOnly ? (
+          <p
+            className="mt-2 rounded-lg border border-amber-700/50 bg-amber-950/40 px-2.5 py-1.5 text-xs text-amber-100"
+            data-testid="improvement-readonly-banner"
+          >
+            Read-only runtime — Create / authorize / link writes are disabled.
+            Local #12D must not mutate production Supabase.
+          </p>
+        ) : null}
       </div>
 
       <div className="space-y-3 px-3 py-3">
         <div className="flex flex-wrap items-end gap-2">
           <button
             type="button"
-            disabled={pending || !focus}
+            disabled={writesDisabled || !focus}
             onClick={() =>
               run("Create hypothesis", createImprovementHypothesisAction, {
                 originPlanId: focus,
@@ -121,6 +153,12 @@ export function PreviewImprovementPath({
           <ul className="space-y-3">
             {hypotheses.map((h) => {
               const summary = summaries.get(h.id);
+              const linkChoices = planOptions.filter(
+                (p) =>
+                  p.planId.toUpperCase() !== h.originPlanId.toUpperCase() &&
+                  (!h.ticker ||
+                    p.ticker.toUpperCase() === h.ticker.toUpperCase())
+              );
               return (
                 <li
                   key={h.id}
@@ -167,7 +205,7 @@ export function PreviewImprovementPath({
                     {h.status === "proposed" ? (
                       <button
                         type="button"
-                        disabled={pending}
+                        disabled={writesDisabled}
                         onClick={() =>
                           run(
                             "Authorize testing",
@@ -175,7 +213,7 @@ export function PreviewImprovementPath({
                             { hypothesisId: h.id }
                           )
                         }
-                        className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200"
+                        className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 disabled:opacity-40"
                       >
                         Authorize testing
                       </button>
@@ -186,9 +224,7 @@ export function PreviewImprovementPath({
                     h.status === "supported" ||
                     h.status === "rejected" ? (
                       <>
-                        <input
-                          type="text"
-                          placeholder="Future PLAN-…"
+                        <select
                           value={linkPlanById[h.id] ?? ""}
                           onChange={(e) =>
                             setLinkPlanById((prev) => ({
@@ -196,11 +232,23 @@ export function PreviewImprovementPath({
                               [h.id]: e.target.value,
                             }))
                           }
-                          className="h-8 w-32 rounded-lg border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-200"
-                        />
+                          disabled={writesDisabled}
+                          className="h-8 min-w-[12rem] rounded-lg border border-zinc-700 bg-zinc-950 px-2 text-xs text-zinc-200 disabled:opacity-40"
+                          data-testid={`improvement-link-plan-${h.id}`}
+                        >
+                          <option value="">Future evidence plan…</option>
+                          {linkChoices.map((p) => (
+                            <option key={p.planId} value={p.planId}>
+                              {p.ticker} · {p.planId} · {p.status}
+                              {p.t0Available ? "" : " · Missing T0"}
+                            </option>
+                          ))}
+                        </select>
                         <button
                           type="button"
-                          disabled={pending || !(linkPlanById[h.id] ?? "").trim()}
+                          disabled={
+                            writesDisabled || !(linkPlanById[h.id] ?? "").trim()
+                          }
                           onClick={() =>
                             run(
                               "Link evidence plan",
@@ -215,36 +263,58 @@ export function PreviewImprovementPath({
                         >
                           Link evidence
                         </button>
-                        {(
-                          [
-                            "supported",
-                            "rejected",
-                            "insufficient_evidence",
-                          ] as const
-                        ).map((status) => (
-                          <button
-                            key={status}
-                            type="button"
-                            disabled={pending}
-                            onClick={() =>
-                              run(
-                                `Verdict ${status}`,
-                                setImprovementHypothesisVerdictAction,
-                                { hypothesisId: h.id, status }
-                              )
-                            }
-                            className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200"
-                          >
-                            {IMPROVEMENT_HYPOTHESIS_STATUS_LABELS[status]}
-                          </button>
-                        ))}
+                        <button
+                          type="button"
+                          disabled={writesDisabled}
+                          onClick={() =>
+                            run(
+                              "Verdict supported",
+                              setImprovementHypothesisVerdictAction,
+                              { hypothesisId: h.id, status: "supported" }
+                            )
+                          }
+                          className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 disabled:opacity-40"
+                        >
+                          Supported
+                        </button>
+                        <button
+                          type="button"
+                          disabled={writesDisabled}
+                          onClick={() =>
+                            run(
+                              "Verdict rejected",
+                              setImprovementHypothesisVerdictAction,
+                              { hypothesisId: h.id, status: "rejected" }
+                            )
+                          }
+                          className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 disabled:opacity-40"
+                        >
+                          Rejected
+                        </button>
+                        <button
+                          type="button"
+                          disabled={writesDisabled}
+                          onClick={() =>
+                            run(
+                              "Verdict insufficient",
+                              setImprovementHypothesisVerdictAction,
+                              {
+                                hypothesisId: h.id,
+                                status: "insufficient_evidence",
+                              }
+                            )
+                          }
+                          className="rounded-lg border border-zinc-700 px-2.5 py-1 text-xs text-zinc-200 disabled:opacity-40"
+                        >
+                          Insufficient
+                        </button>
                       </>
                     ) : null}
 
                     {h.status === "supported" ? (
                       <button
                         type="button"
-                        disabled={pending}
+                        disabled={writesDisabled}
                         onClick={() =>
                           run(
                             "Authorize method change",
@@ -252,7 +322,7 @@ export function PreviewImprovementPath({
                             { hypothesisId: h.id }
                           )
                         }
-                        className="rounded-lg border border-amber-700/60 px-2.5 py-1 text-xs text-amber-200"
+                        className="rounded-lg border border-violet-700/60 px-2.5 py-1 text-xs text-violet-200 disabled:opacity-40"
                       >
                         Authorize method change
                       </button>

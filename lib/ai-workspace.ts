@@ -26,7 +26,7 @@ export const AI_WORKFLOW_STEPS = [
   "Scan QR or paste Snapshot URL in your assistant",
   "Assistant analyzes snapshot",
   "Assistant sends proposals to Worker inbox",
-  "Review → Inbox → Apply",
+  "Review → Proposals (/mxt/inbox) or Control → Apply",
 ] as const;
 
 export const ANALYSIS_TEMPLATES = [

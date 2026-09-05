@@ -11,6 +11,7 @@ import { getPlans } from "@/lib/plans";
 import { computeMistakeStats } from "@/lib/review";
 import { getPlaybooks } from "@/lib/playbooks";
 import { getTrades } from "@/lib/storage";
+import { isMxtReadOnlyMode } from "@/lib/mxt-readonly";
 
 function resolveInsightsTab(tabParam: string | undefined): InsightsTabId {
   if (tabParam === "journal") return "journal";
@@ -81,6 +82,7 @@ export default async function StatsPage({
         }}
         caseSpine={caseSpine}
         improvementHypotheses={improvementHypotheses}
+        persistenceReadOnly={isMxtReadOnlyMode()}
       />
     </Suspense>
   );

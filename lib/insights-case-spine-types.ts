@@ -70,6 +70,8 @@ export type InsightsCaseRow = {
   counterfactualR: number | null;
 
   t0Available: boolean;
+  /** Freeze recordKind when T0 present (original|reconstructed|corrected). */
+  t0RecordKind?: import("./correction-types").RecordKind | null;
   missingInputs: string[];
   diagnosisReason: string;
   evidenceSummary: string;

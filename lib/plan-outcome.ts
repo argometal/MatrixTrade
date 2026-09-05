@@ -21,6 +21,7 @@ import type { ObservationRecord } from "./observation-types";
 import { getLearningOutcomeByPlanId } from "./learning-outcome-store";
 import { getTrades } from "./storage";
 import type { LearningOutcome } from "./learning-outcome-types";
+import { appendCorrectionAudit } from "./correction-types";
 
 function resolveTerminalStatus(plan: TradePlan): TradePlan["status"] {
   if (
@@ -71,14 +72,16 @@ export async function persistPlanOutcome(
 
   const linkedTradeIds = await tradesLinkedToPlan(plan.id);
 
-  // Idempotent re-Accept of the same UPL outcome — still sync learning if needed.
-  if (
-    plan.outcome?.recordedAt &&
+  const sameKindIdempotent =
+    !!plan.outcome?.recordedAt &&
+    input.repairKind !== "corrected" &&
     (plan.outcome.outcomeKind === input.outcomeKind ||
       (input.outcomeKind === "unexecuted_plan_loss" &&
         plan.outcome.status === "theoretical_loss" &&
-        plan.outcome.tradeExecuted === false))
-  ) {
+        plan.outcome.tradeExecuted === false));
+
+  // Idempotent re-Accept of the same UPL outcome — still sync learning if needed.
+  if (sameKindIdempotent) {
     const sync = await syncPlanOutcomeLearning(plan.id);
     if (!sync.ok) {
       return {
@@ -103,12 +106,22 @@ export async function persistPlanOutcome(
     };
   }
 
-  if (plan.outcome?.recordedAt) {
+  if (plan.outcome?.recordedAt && input.repairKind !== "corrected") {
     return {
       errors: [
-        `Plan ${plan.id} already has outcome.recordedAt — duplicate outcome rejected (idempotent re-submit of same UPL is allowed)`,
+        `Plan ${plan.id} already has outcome.recordedAt (${plan.outcome.outcomeKind ?? plan.outcome.status ?? "—"}) — to supersede a wrong outcome, re-Apply plan-outcome with repairKind=corrected + repairNote/note (≥8) + evidence`,
       ],
     };
+  }
+
+  if (plan.outcome?.recordedAt && input.repairKind === "corrected") {
+    if (!input.repairNote || input.repairNote.trim().length < 8) {
+      return {
+        errors: [
+          "corrected plan-outcome requires repairNote/note (≥8 chars)",
+        ],
+      };
+    }
   }
 
   if (input.outcomeKind === "unexecuted_plan_loss" || input.uplContract) {
@@ -188,11 +201,37 @@ export async function persistPlanOutcome(
     counterfactualDollarResult = server.counterfactualDollarResult;
   }
 
+  const priorOutcome = plan.outcome?.recordedAt ? plan.outcome : null;
+  const correcting = input.repairKind === "corrected" && !!priorOutcome;
+
   const outcome: NonNullable<TradePlan["outcome"]> = {
     planId: plan.id,
-    recordedAt: now,
+    recordedAt: correcting ? priorOutcome!.recordedAt : now,
     status: input.status,
     outcomeKind: input.outcomeKind,
+    recordKind: correcting ? "corrected" : "original",
+    correctionAudit: correcting
+      ? appendCorrectionAudit(priorOutcome!.correctionAudit, {
+          at: now,
+          kind: "corrected",
+          note: input.repairNote!.trim(),
+          evidenceRefs: input.evidenceRefs,
+          mechanism: "apply:plan-outcome",
+          previous: {
+            outcomeKind: priorOutcome!.outcomeKind ?? null,
+            status: priorOutcome!.status ?? null,
+            tradeExecuted: priorOutcome!.tradeExecuted,
+            entryReached: priorOutcome!.entryReached ?? null,
+            stopReachedBeforeTarget: priorOutcome!.stopReachedBeforeTarget ?? null,
+            targetReachedBeforeStop: priorOutcome!.targetReachedBeforeStop ?? null,
+            nonExecutionReason: priorOutcome!.nonExecutionReason ?? null,
+            theoreticalResultR: priorOutcome!.theoreticalResultR,
+            realizedResultR: priorOutcome!.realizedResultR,
+            recordedAt: priorOutcome!.recordedAt,
+            recordKind: priorOutcome!.recordKind ?? "original",
+          },
+        })
+      : undefined,
     tradeExecuted: input.tradeExecuted,
     entryTriggered: input.entryTriggered,
     stopTriggered: input.stopTriggered,

@@ -106,6 +106,10 @@ export type PlanOutcomeRecord = {
   status?: PlanOutcomeStatus;
   /** Canonical Scout outcome kind when recorded via UPL Apply. */
   outcomeKind?: PlanOutcomeKind;
+  /** original (default) | corrected after audited supersede (MXT 029). */
+  recordKind?: import("./correction-types").RecordKind;
+  /** Append-only prior outcomes when corrected. */
+  correctionAudit?: import("./correction-types").CorrectionAuditEntry[];
   tradeExecuted: boolean;
   entryTriggered: boolean | null;
   stopTriggered: boolean | null;
@@ -167,4 +171,10 @@ export type PlanOutcomeProposalInput = {
   lesson?: string;
   /** True when proposal used UPL Apply field names. */
   uplContract?: boolean;
+  /**
+   * MXT 029 — supersede a wrong persisted outcome (requires note ≥8).
+   * Idempotent same-kind re-Accept still works without this flag.
+   */
+  repairKind?: "corrected";
+  repairNote?: string;
 };

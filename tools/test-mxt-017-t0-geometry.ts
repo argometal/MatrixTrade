@@ -170,9 +170,7 @@ async function run() {
       levels: { primaryZone: { low: 1, high: 2 } },
     },
   });
-  assert.ok(
-    again.status === "already_open" || again.status === "linked_existing"
-  );
+  assert.equal(again.status, "already_open");
   assert.equal(again.freeze!.plan.plannedEntry, created.freeze!.plan.plannedEntry);
   assert.equal(again.freeze!.plan.playbookId, "PB-LIVE");
 

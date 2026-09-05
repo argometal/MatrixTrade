@@ -392,7 +392,7 @@ export function LearningOverviewView({ data }: { data: LearningOverview }) {
         ) : null}
 
         <p className="mt-4 text-[11px] text-zinc-600">
-          T0 immutable · Verifiable evidence · Sin narrativa retrospectiva
+          T0 protected from hindsight · Verifiable evidence · Sin narrativa retrospectiva
         </p>
       </section>
     </div>

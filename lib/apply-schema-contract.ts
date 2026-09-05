@@ -3,6 +3,7 @@
  * Never invent keys: use only types/fields listed here or in accepted samples.
  */
 import { AI_BLOCK_SAMPLES, type AiBlockType } from "./ai-block";
+import { AI_BRIDGE_BLOCK_TYPES } from "./ai-bridge-types";
 import {
   buildLegacyTradeCompletionContractText,
   buildLegacyTradeUpdateExample,
@@ -85,7 +86,7 @@ export type ApplySchemaContract = {
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-07-25.obs-legacy-dates",
+    schemaVersion: "2026-09-05.mxt-029-correctability",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, open Control → Apply and copy the visible row Apply schema contract.",
@@ -101,11 +102,13 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "MTAE presentation is evidence-first (Analysis Mode); explain only on request.",
       `Legacy closed trades: never invent playbookId/planId — use ${LEGACY_ABSENT_PLAYBOOK_ID} / ${LEGACY_ABSENT_PLAN_ID} for historical absence.`,
       "Legacy date correction: trade-update with datesReconstructed:true + dateCorrectionNote; closed legacy only; audit prior dates.",
+      "thesis-t0-repair: Plan-specific T0 reconstruct (missing) or correct (wrong); note+evidence required; prior body in correctionAudit; never share freeze across Plans via stockThesisId; hindsight P/L alone insufficient.",
       "observation-update: one of observationId|tradeId|planId + at least one measurable field; never invent prices; observation ≠ attribution.",
       "plan-outcome: one mutation per block; human-confirmed event order; AI must not invent prices, timestamps, fills or risk.",
       "plan-outcome: unexecuted_plan_loss = entry reached + stop before target + execution-failure reason; counterfactualR server −1.",
       "plan-outcome: missed_opportunity = entry never reached + target before stop + entry_not_reached; counterfactualR server +planned R; no Trade; no chase.",
       "plan-outcome: no Trade created; realized P/L unchanged; Stock File thesis unchanged; MAF separate.",
+      "plan-outcome: wrong persisted outcome → repairKind=corrected + repairNote/note (≥8); prior outcome in correctionAudit; LO/OBS re-sync.",
       "External Position: outside Scout→Trade pipeline; experimentEligible=false; never creates Trade/MAF; capital only via Capital Planner.",
       "external-position-reduction: requires reductionId|executionReference; server computes proceeds/realized P/L; proceeds start pending_settlement (not settled cash).",
       "external-position-settle: credits settled cash once via settlement ledger; pending ≠ settled.",
@@ -122,7 +125,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "capital-ledger-adjustment: idempotencyKey required; settled amounts immutable; reversals are separate events.",
       "Human mutations only via Control → Apply → Validate → Accept.",
     ],
-    acceptedTypes: Object.keys(AI_BLOCK_SAMPLES) as AiBlockType[],
+    acceptedTypes: [...AI_BRIDGE_BLOCK_TYPES] as AiBlockType[],
     requiredFields: {
       "stock-case-create": [
         "ticker",
@@ -162,6 +165,15 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "at least one measurable field",
         `allowed keys: ${OBSERVATION_UPDATE_ALLOWED_KEYS.join(", ")}`,
       ],
+      "evidence-add": [
+        "stockProfileId",
+        "ticker",
+        "timeframe",
+        "category",
+        "value",
+        "confidence (0-100)",
+        "note?",
+      ],
       "plan-outcome": [
         "planId",
         "outcomeKind (unexecuted_plan_loss|missed_opportunity|duplicate_creation)",
@@ -170,6 +182,15 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "targetReachedBeforeStop",
         "nonExecutionReason",
         "notes?",
+        "evidenceRefs?",
+        "repairKind=corrected + repairNote/note (≥8) when superseding a wrong persisted outcome",
+      ],
+      "thesis-t0-repair": [
+        "planId",
+        "repairKind (reconstructed|corrected)",
+        "note (≥8 chars)",
+        "t0 (required when reconstructed)",
+        "plannedEntry+stopPrice+targetPrice (required when reconstructed)",
         "evidenceRefs?",
       ],
       "external-position-create": [
@@ -327,10 +348,13 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "scout-plan-create": AI_BLOCK_SAMPLES["scout-plan-create"],
       "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
+      "file-update": AI_BLOCK_SAMPLES["file-update"],
+      "evidence-add": AI_BLOCK_SAMPLES["evidence-add"],
       "trade-update": buildLegacyTradeUpdateExample("H002"),
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
       "observation-update": AI_BLOCK_SAMPLES["observation-update"],
       "plan-outcome": AI_BLOCK_SAMPLES["plan-outcome"],
+      "thesis-t0-repair": AI_BLOCK_SAMPLES["thesis-t0-repair"],
       "external-position-create": AI_BLOCK_SAMPLES["external-position-create"],
       "external-position-update": AI_BLOCK_SAMPLES["external-position-update"],
       "external-position-reduction":
@@ -354,6 +378,33 @@ export function buildApplySchemaContract(): ApplySchemaContract {
   };
 }
 
+/** Human-visible correctability section — must appear above CONTRACT JSON. */
+export function buildDataCorrectabilityContractText(): string {
+  return [
+    "=== DATA CORRECTABILITY (MXT 029) — authoritative Apply types ===",
+    "Freshness check: schemaVersion MUST be 2026-09-05.mxt-029-correctability.",
+    "If that marker is missing, discard this paste — it is STALE vs implementation.",
+    "",
+    "thesis-t0-repair (acceptedTypes MUST include this string):",
+    "  · Use when T0 is Missing (reconstructed) or persisted freeze is wrong (corrected).",
+    "  · Required: planId, repairKind (reconstructed|corrected), note (≥8 chars).",
+    "  · reconstructed also requires: t0 (ISO), plannedEntry, stopPrice, targetPrice.",
+    "  · corrected: patches the Plan-specific freeze; prior body stays in correctionAudit[].",
+    "  · recordKind on freeze becomes reconstructed|corrected; prior values remain auditable.",
+    "  · NEVER inherit another Plan's freeze via shared stockThesisId / Stock File.",
+    "  · Hindsight price/P&L alone is NEVER sufficient evidence.",
+    "  · Evaluation/reconstruction analysis does NOT auto-mutate T0 — only this Apply type does.",
+    "",
+    "plan-outcome supersede (same type plan-outcome — not a new type):",
+    "  · After outcome.recordedAt, a DIFFERENT outcomeKind is rejected unless repairKind=corrected.",
+    "  · Required for supersede: repairKind=corrected + repairNote or note (≥8) + full event-order fields for the NEW kind.",
+    "  · Prior outcome snapshot is appended to plan.outcome.correctionAudit[]; recordKind=corrected.",
+    "  · LO/OBS re-sync on Accept. Same-kind re-Accept remains idempotent WITHOUT repairKind.",
+    "",
+    "Legacy trade dates (existing): trade-update + datesReconstructed + dateCorrectionNote → dateCorrectionAudit[].",
+  ].join("\n");
+}
+
 export function buildApplySchemaContractText(): string {
   const contract = buildApplySchemaContract();
   return [
@@ -363,7 +414,12 @@ export function buildApplySchemaContractText(): string {
     "WHERE TO COPY THIS",
     "Open Control → Apply, then tap the visible copy row labeled Apply schema contract.",
     "That row sits above the paste box in Apply — it is not under Start Here or Mechanics body.",
-    "Write path after JSON: Control → Apply → Validate → Accept.",
+    "Write path after JSON: Control → Apply → Validate → Accept (or sidebar Proposals /mxt/inbox).",
+    "",
+    buildDataCorrectabilityContractText(),
+    "",
+    "ACCEPTED TYPES (authoritative — thesis-t0-repair MUST appear below)",
+    ...contract.acceptedTypes.map((t) => `- ${t}`),
     "",
     "RULES",
     ...contract.rules.map((r) => `- ${r}`),
@@ -406,7 +462,27 @@ const ANALYZE_SCOPED_TYPES = [
   "decision-update",
   "scout-plan-create",
   "file-update",
+  "evidence-add",
   "plan-outcome",
+  "thesis-t0-repair",
+] as const;
+
+const ANALYZE_SCOPED_RULE_NEEDLES = [
+  "SCHEMA-FIRST",
+  "Never invent JSON",
+  "If that exact copy",
+  "Separate analysis",
+  "validator error",
+  "scout-plan-create",
+  "riskRules.invalidation",
+  "Do not put Scout capital",
+  "Do not put Entry Solver",
+  "MTAE presentation",
+  "thesis-t0-repair",
+  "plan-outcome",
+  "observation-update",
+  "evidence-add",
+  "Human mutations only",
 ] as const;
 
 /**
@@ -426,9 +502,13 @@ export function buildScopedAnalyzeApplyContractText(): string {
     return [`--- example:${type} ---`, JSON.stringify(sample, null, 2)].join("\n");
   }).filter(Boolean);
 
+  const scopedRules = contract.rules.filter((r) =>
+    ANALYZE_SCOPED_RULE_NEEDLES.some((n) => r.includes(n))
+  );
+
   return [
     "=== SCOPED APPLY CONTRACT (Analyze with AI return path) ===",
-    "Write path: Control → Apply → Validate → Accept (human gate — no silent persist).",
+    "Write path: Control → Apply → Validate → Accept (human gate — no silent persist). Sidebar Proposals (/mxt/inbox) is the same gate.",
     "Do NOT ask the human to copy the full Apply schema from Mechanics — this scoped contract is enough for this ticker loop.",
     "If you need a type outside this list, say so explicitly.",
     "",
@@ -438,8 +518,8 @@ export function buildScopedAnalyzeApplyContractText(): string {
     "REQUIRED FIELDS",
     ...required,
     "",
-    "RULES (subset)",
-    ...contract.rules.slice(0, 8).map((r) => `- ${r}`),
+    "RULES (scoped — includes plan-outcome / thesis-t0-repair)",
+    ...scopedRules.map((r) => `- ${r}`),
     "",
     "EXAMPLES",
     ...examples,

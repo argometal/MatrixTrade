@@ -498,6 +498,39 @@ function validateLegacyProposal(
   };
 }
 
+function attachPlanOutcomeRepair(
+  value: PlanOutcomeProposalInput,
+  proposal: Record<string, unknown>
+):
+  | { ok: true; value: PlanOutcomeProposalInput }
+  | { ok: false; errors: string[] } {
+  const raw = proposal.repairKind;
+  if (raw === undefined || raw === null || raw === "") {
+    return { ok: true, value };
+  }
+  if (raw !== "corrected") {
+    return {
+      ok: false,
+      errors: [
+        "plan-outcome repairKind must be corrected when set (use thesis-t0-repair for Missing T0)",
+      ],
+    };
+  }
+  const note = String(proposal.repairNote ?? proposal.note ?? "").trim();
+  if (note.length < 8) {
+    return {
+      ok: false,
+      errors: [
+        "corrected plan-outcome requires repairNote or note (≥8 chars) — why the prior outcome was wrong",
+      ],
+    };
+  }
+  return {
+    ok: true,
+    value: { ...value, repairKind: "corrected", repairNote: note },
+  };
+}
+
 export function validatePlanOutcomeProposal(
   proposal: Record<string, unknown>
 ):
@@ -507,6 +540,9 @@ export function validatePlanOutcomeProposal(
   if (!planId) return { ok: false, errors: ["proposal.planId required"] };
 
   const kindRaw = String(proposal.outcomeKind ?? "").trim();
+  let base:
+    | { ok: true; value: PlanOutcomeProposalInput }
+    | { ok: false; errors: string[] };
   if (kindRaw) {
     if (!(PLAN_OUTCOME_KINDS as readonly string[]).includes(kindRaw)) {
       return {
@@ -516,17 +552,21 @@ export function validatePlanOutcomeProposal(
         ],
       };
     }
-    return validateUplProposal(proposal, planId, kindRaw as PlanOutcomeKind);
+    base = validateUplProposal(proposal, planId, kindRaw as PlanOutcomeKind);
+  } else if (
+    proposal.status !== undefined &&
+    proposal.status !== null &&
+    proposal.status !== ""
+  ) {
+    base = validateLegacyProposal(proposal, planId);
+  } else {
+    return {
+      ok: false,
+      errors: [
+        "proposal.outcomeKind or proposal.status required (prefer outcomeKind=unexecuted_plan_loss|missed_opportunity)",
+      ],
+    };
   }
-
-  if (proposal.status !== undefined && proposal.status !== null && proposal.status !== "") {
-    return validateLegacyProposal(proposal, planId);
-  }
-
-  return {
-    ok: false,
-    errors: [
-      "proposal.outcomeKind or proposal.status required (prefer outcomeKind=unexecuted_plan_loss|missed_opportunity)",
-    ],
-  };
+  if (!base.ok) return base;
+  return attachPlanOutcomeRepair(base.value, proposal);
 }

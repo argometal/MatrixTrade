@@ -21,7 +21,7 @@ export const AI_BRIDGE_V2_PROTOCOL = [
   "Understand the user's intent in plain language",
   "Infer the correct action (Open / Adjust / Close / Analyze)",
   "Return exactly one valid AI Block JSON",
-  "Never auto-apply — human uses Inbox → Apply",
+  "Never auto-apply — human uses Proposals (/mxt/inbox) or Control → Apply",
   "Suggest playbook only when a repeatable pattern is clear",
 ] as const;
 
@@ -192,7 +192,7 @@ export function buildAiBridgeHandoffText(
     "=== INSTRUCTIONS FOR AI ===",
     "Return exactly ONE AI Block as plain JSON or a single ```json fenced block.",
     "Infer the internal type from the user's intent.",
-    "Do not auto-apply — the human will Import → Inbox → Apply in MTA.",
+    "Do not auto-apply — the human will paste into Proposals (/mxt/inbox) or Control → Apply → Validate → Accept.",
     "",
     "=== SNAPSHOT ===",
     snapshotText,

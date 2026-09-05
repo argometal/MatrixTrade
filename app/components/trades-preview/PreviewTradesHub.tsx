@@ -23,6 +23,7 @@ import {
 import type { TradePlan } from "@/lib/plan-types";
 import type { Trade } from "@/lib/types";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 import { formatDashboardUsd } from "@/lib/dashboard-display";
 
 export type TradesHubTab =
@@ -130,7 +131,9 @@ export function PreviewTradesHub({
                 <h1 className="text-xl font-semibold text-zinc-100">Trades</h1>
                 <p className="mt-0.5 text-sm text-zinc-500">{subtitle}</p>
               </div>
-              <div className="flex flex-wrap items-center gap-2 lg:mr-[14rem]">
+              <div
+                className={`flex flex-wrap items-center gap-2 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
+              >
                 <SnapshotButton
                   title="Trades snapshot"
                   description="Ledger summary for AI"

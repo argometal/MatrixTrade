@@ -33,13 +33,14 @@ Trade layer (use only when scouting approves):
 - trade-update: id required; at least one field to change. Legacy closed completion may set playbookId=__legacy_none__, planId=__LEGACY_NONE__, thesis, riskRewardPlanned, lossClassification, postStopStudy — never invent real Playbook/PLAN links
 - attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
 - observation-update: Observation Engine — observationId or tradeId or planId; at least one of targetReached, targetReachedAt, thesisInvalidated, invalidationReachedAt, firstTerminalEvent, maxPrice, minPrice, mfe, mae, betterEntryAvailable, status (observing|concluded). Never invent prices.
-- plan-outcome: terminal Scout plan without Trade — planId, outcomeKind (unexecuted_plan_loss|missed_opportunity|duplicate_creation). UPL: entryReached=true, stopReachedBeforeTarget=true, targetReachedBeforeStop=false, nonExecutionReason from execution-failure enum; server derives realizedR=0, counterfactualR=-1. Missed opportunity: entryReached=false, targetReachedBeforeStop=true, stopReachedBeforeTarget=false, nonExecutionReason=entry_not_reached; server derives realizedR=0, counterfactualR=+planned R. Never invent fills/risk; do not chase; do not use decision-update or fictitious Trade
+- plan-outcome: terminal Scout plan without Trade — planId, outcomeKind (unexecuted_plan_loss|missed_opportunity|duplicate_creation). UPL: entryReached=true, stopReachedBeforeTarget=true, targetReachedBeforeStop=false, nonExecutionReason from execution-failure enum; server derives realizedR=0, counterfactualR=-1. Missed opportunity: entryReached=false, targetReachedBeforeStop=true, stopReachedBeforeTarget=false, nonExecutionReason=entry_not_reached; server derives realizedR=0, counterfactualR=+planned R. Wrong persisted outcome: re-Apply with repairKind=corrected + repairNote/note (≥8) — prior outcome stays in correctionAudit; LO/OBS re-sync. Never invent fills/risk; do not chase; do not use decision-update or fictitious Trade
+- thesis-t0-repair: controlled T0 reconstruct/correct for ONE planId — repairKind (reconstructed|corrected), note (≥8), evidenceRefs[]; reconstructed requires t0+plannedEntry+stopPrice+targetPrice when Missing T0; corrected patches a wrong freeze and keeps prior body in correctionAudit. Never inherit another Plan's T0 via shared Stock File. Hindsight price/P&L alone is never sufficient evidence.
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
 - Challenge the thesis — challengesToThesis must list real risks or contradictions.
 - Return exactly one block. No arrays of blocks.
-- Do not apply changes — human imports in Inbox → Apply.
+- Do not apply changes — human imports via sidebar Proposals (/mxt/inbox) or Control → Apply → Validate → Accept.
 - If context is insufficient, ask ONE clarifying question.`;
 
 export const DEFAULT_AI_BLOCK_REQUEST = `The human speaks naturally about trading: Open, Adjust, Close, Analyze.
@@ -86,11 +87,15 @@ All Apply-ready block types:
 - trade-update: id required; at least one field to change. Legacy closed completion may set playbookId=__legacy_none__, planId=__LEGACY_NONE__, thesis, riskRewardPlanned, lossClassification, postStopStudy — never invent real Playbook/PLAN links
 - attribution: MAF — tradeId/planId/experimentId; components[{component, classification, aiInterpretationConfidence, reasoning}]; optional observation{} (never invent prices)
 - observation-update: Observation Engine — observationId|tradeId|planId + measurable fields (targetReached, mfe/mae, …)
+- plan-outcome: Scout closure without Trade — outcomeKind + event booleans; wrong outcome → repairKind=corrected + repairNote/note (≥8)
+- thesis-t0-repair: Plan-specific T0 reconstruct/correct — repairKind reconstructed|corrected + note; never share freeze across Plans
+- external-position-create/update/reduction/settle/exit-plan-update: holdings outside Scout→Trade; never invent Trade/MAF
+- capital-configuration-create/update · capital-reservation-* · capital-ledger-adjustment: Settings → Capital prepares; Control → Apply persists; settled amounts immutable (reversals = new events)
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
 - Return exactly one block. No arrays of blocks.
-- Do not apply changes — human imports in MTA AI Bridge → Inbox → Apply.
+- Do not apply changes — human imports via sidebar Proposals (/mxt/inbox) or Control → Apply → Validate → Accept.
 - Reply to the human in trading language, not internal type names.
 - If the snapshot is not enough, ask for ONE missing detail (ticker, trade id, or exit price).`;
 
@@ -225,6 +230,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "plan-outcome",
     label: "plan-outcome — Scout terminal outcome (no Trade)",
     hint: "UPL or missed_opportunity — human-confirmed event order; server derives R — never invent fills",
+  },
+  {
+    type: "thesis-t0-repair",
+    label: "thesis-t0-repair — reconstruct or correct Plan T0",
+    hint: "Missing or wrong T0 with audit — never inherit another Plan's freeze",
   },
   {
     type: "analysis",
@@ -845,6 +855,22 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       notes:
         "Approved entry reached; stop reached before target; no Trade/fill. Order was not staged. Counterfactual Scout loss; account P/L unchanged.",
       evidenceRefs: [],
+    },
+  },
+  "thesis-t0-repair": {
+    type: "thesis-t0-repair",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-001",
+      repairKind: "reconstructed",
+      t0: "2025-06-15T14:00:00.000Z",
+      plannedEntry: 349,
+      stopPrice: 320,
+      targetPrice: 430,
+      plannedRR: 2.79,
+      note:
+        "Missing Plan-specific T0; reconstructing from contemporaneous decision-time geometry confirmed by human (not from later price path).",
+      evidenceRefs: ["human:plan-geometry-notebook", "decision:PLAN-001"],
     },
   },
   "external-position-create": {

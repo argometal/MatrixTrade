@@ -352,14 +352,19 @@ async function ensureCounterfactualObservationForSync(
   const targetTriggered = o.targetTriggered ?? o.targetReachedBeforeStop ?? null;
 
   if (existing) {
+    const isMiss = isMissedOpportunity(plan);
+    const isUpl = isUnexecutedPlanLoss(plan);
     const patched: ObservationRecord = {
       ...existing,
       learningOutcomeId,
       observationKind: PLAN_COUNTERFACTUAL_OBSERVATION_KIND,
-      learningUnitKind:
-        entryTriggered === true && o.tradeExecuted === false
-          ? TRIGGERED_UNEXECUTED_PLAN_UNIT
-          : existing.learningUnitKind,
+      learningUnitKind: isUpl
+        ? TRIGGERED_UNEXECUTED_PLAN_UNIT
+        : isMiss
+          ? undefined
+          : entryTriggered === true && o.tradeExecuted === false
+            ? TRIGGERED_UNEXECUTED_PLAN_UNIT
+            : existing.learningUnitKind,
       entryTriggered: entryTriggered ?? existing.entryTriggered,
       stopTriggered: stopTriggered ?? existing.stopTriggered,
       targetTriggered: targetTriggered ?? existing.targetTriggered,
@@ -378,6 +383,10 @@ async function ensureCounterfactualObservationForSync(
       lastUpdatedAt: now,
       notes: o.notes ?? existing.notes,
     };
+    // Explicit clear of UPL unit when correcting to miss (undefined alone may not wipe).
+    if (isMiss) {
+      delete (patched as { learningUnitKind?: string }).learningUnitKind;
+    }
     await upsertObservation(patched);
     return patched;
   }

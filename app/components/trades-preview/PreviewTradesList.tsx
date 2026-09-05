@@ -4,6 +4,7 @@ import type { Playbook } from "@/lib/playbook-types";
 import { getPlaybookName } from "@/lib/playbooks";
 import { isTradeReviewed } from "@/lib/review";
 import type { Experiment, Trade } from "@/lib/types";
+import { MXT_DESKTOP_CHROME_CLEARANCE_CLASS } from "@/lib/mxt-desktop-chrome";
 
 function formatUsd(value: number): string {
   const sign = value >= 0 ? "+" : "";
@@ -153,7 +154,9 @@ export function PreviewTradesList({
                 {trades.length} closed in lab
               </p>
             </div>
-            <div className="flex flex-wrap gap-2 lg:mr-[14rem]">
+            <div
+              className={`flex flex-wrap gap-2 ${MXT_DESKTOP_CHROME_CLEARANCE_CLASS}`}
+            >
               <Link
                 href="/mxt/scout"
                 className="rounded-lg bg-violet-600 px-4 py-2 text-sm font-medium text-white hover:bg-violet-500"

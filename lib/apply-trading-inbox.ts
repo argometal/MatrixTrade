@@ -9,11 +9,17 @@ import type { Playbook } from "./playbook-types";
 import {
   appendScoutAssessment,
   applyStockFileInboxUpdate,
+  getStockThesisById,
 } from "./stock-theses";
 import { applyTechnicalAssessment, applyTechnicalCalibration } from "./mtae-apply";
 import { applyAttribution } from "./maf-apply";
 import { applyObservationUpdateProposal } from "./observation-apply";
 import { applyPlanOutcomeProposal } from "./plan-outcome";
+import {
+  applyThesisT0Repair,
+  validateThesisT0RepairProposal,
+} from "./thesis-t0-repair";
+import { getPlanById } from "./plans";
 import {
   applyExternalPositionCreateBlock,
   applyExternalPositionExitPlanBlock,
@@ -173,6 +179,8 @@ async function applyTradingProposalInner(
       return applyObservationUpdateBlock(parsed);
     case "plan-outcome":
       return applyPlanOutcomeBlock(parsed);
+    case "thesis-t0-repair":
+      return applyThesisT0RepairBlock(parsed);
     case "external-position-create":
       return applyExternalPositionCreateBlock(parsed);
     case "external-position-update":
@@ -473,6 +481,41 @@ async function applyPlanOutcomeBlock(
     planId: plan?.id,
     learningSyncComplete: true,
   };
+}
+
+async function applyThesisT0RepairBlock(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const validated = validateThesisT0RepairProposal(parsed.proposal);
+  if (!validated.ok) {
+    return { ok: false, errors: [validated.error] };
+  }
+  const repair = validated.value;
+  const plan = await getPlanById(repair.planId);
+  if (!plan) {
+    return { ok: false, errors: [`Plan not found: ${repair.planId}`] };
+  }
+  const thesis = plan.stockThesisId
+    ? (await getStockThesisById(plan.stockThesisId)) ?? null
+    : null;
+  try {
+    const result = await applyThesisT0Repair({ plan, repair, thesis });
+    const detach =
+      result.detachedFromFreezeIds.length > 0
+        ? ` · detached from ${result.detachedFromFreezeIds.join(",")}`
+        : "";
+    return {
+      ok: true,
+      type: "thesis-t0-repair",
+      planId: plan.id,
+      message: `T0 ${repair.repairKind} for ${plan.id} · freeze ${result.freeze.id} · recordKind=${result.freeze.recordKind ?? "—"} · T0=${result.freeze.t0}${detach}`,
+    };
+  } catch (err) {
+    return {
+      ok: false,
+      errors: [err instanceof Error ? err.message : String(err)],
+    };
+  }
 }
 
 async function applyTradeProposal(

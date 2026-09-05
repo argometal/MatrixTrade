@@ -19,6 +19,7 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
+import { validateThesisT0RepairProposal } from "./thesis-t0-repair-validate";
 import { EXECUTION_READINESS_STATES } from "./plan-outcome-types";
 import {
   validateExternalPositionCreateProposal,
@@ -269,6 +270,7 @@ export type TradingProposalType =
   | "attribution"
   | "observation-update"
   | "plan-outcome"
+  | "thesis-t0-repair"
   | "external-position-create"
   | "external-position-update"
   | "external-position-reduction"
@@ -313,6 +315,7 @@ export function parseTradingInboxPayload(
     type !== "attribution" &&
     type !== "observation-update" &&
     type !== "plan-outcome" &&
+    type !== "thesis-t0-repair" &&
     type !== "external-position-create" &&
     type !== "external-position-update" &&
     type !== "external-position-reduction" &&
@@ -386,6 +389,8 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Observation ${p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? ""} · update`;
     case "plan-outcome":
       return `Plan outcome ${p.planId ?? ""} · ${p.outcomeKind ?? p.status ?? "record"} · entryReached ${String(p.entryReached ?? p.entryTriggered ?? "—")}`;
+    case "thesis-t0-repair":
+      return `T0 repair ${p.planId ?? ""} · ${p.repairKind ?? "—"} · ${(typeof p.note === "string" ? p.note : "").slice(0, 48)}`;
     case "external-position-create":
       return `External Position ${p.ticker ?? ""} · ${p.shares ?? ""} shares (outside MTA)`;
     case "external-position-update":
@@ -831,6 +836,11 @@ export function validateProposalPayload(
   if (parsed.type === "plan-outcome") {
     const check = validatePlanOutcomeProposal(p);
     if (!check.ok) errors.push(...check.errors);
+  }
+
+  if (parsed.type === "thesis-t0-repair") {
+    const check = validateThesisT0RepairProposal(p);
+    if (!check.ok) errors.push(check.error);
   }
 
   if (parsed.type === "external-position-create") {
