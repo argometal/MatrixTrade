@@ -73,7 +73,7 @@ function run() {
   assert.equal(caseFamilyLabel("A"), "A · Good Entry / Profit");
   assert.equal(caseFamilyLabel("B"), "B · No Entry");
   assert.equal(caseFamilyLabel("C"), "C · Good Entry / Loss");
-  assert.equal(caseFamilyLabel("D"), "D · Decision / Execution Failure");
+  assert.equal(caseFamilyLabel("D"), "D · Execution / Plan Divergence");
   assert.equal(caseFamilyLabel("INDETERMINATE"), "? · Insufficient Evidence");
   assert.equal(noEntryDiagnosisLabel("GOOD_FILTER"), "Good Filter");
   assert.equal(

@@ -9,6 +9,7 @@ import type { ThesisCase } from "./thesis-case-types";
 import type {
   CaseDiagnosis,
   CaseDiagnosisEvidence,
+  CaseDSubtype,
   DiagnosisAggregate,
   EntryCaseFamily,
   FalseVirtuousLoopState,
@@ -36,11 +37,59 @@ export const EQ = {
   ENT_C: "EQ-016A-ENT-C",
   ENT_D: "EQ-016A-ENT-D",
   ENT_INDETERMINATE: "EQ-016A-ENT-INDETERMINATE",
+  D1: "EQ-028-D1-NO-ENTRY-WOULD-PROFIT",
+  D2: "EQ-028-D2-NO-ENTRY-WOULD-LOSS",
+  D3: "EQ-028-D3-NO-ENTRY-INDETERMINATE",
+  D4: "EQ-028-D4-DEFICIENT-EXEC-WOULD-PROFIT",
+  D5: "EQ-028-D5-DEFICIENT-EXEC-WOULD-LOSS",
+  D6: "EQ-028-D6-DEFICIENT-EXEC-INDETERMINATE",
   PROBE: "EQ-016A-PROBE-INDETERMINATE",
   UNCLASSIFIED: "EQ-016A-UNCLASSIFIED",
   FVL: "EQ-016A-FVL-1",
   CONDITION: "EQ-016A-CONDITION-1",
 } as const;
+
+/** Counterfactual / planned-path polarity — never mixes into portfolio P/L. */
+export function counterfactualPolarity(
+  counterfactualR: number | null | undefined
+): "favorable" | "adverse" | "unknown" {
+  if (counterfactualR == null || !Number.isFinite(counterfactualR)) {
+    return "unknown";
+  }
+  if (counterfactualR > 0) return "favorable";
+  if (counterfactualR < 0) return "adverse";
+  return "unknown";
+}
+
+function caseDResult(
+  planId: string,
+  subtype: CaseDSubtype,
+  inputs: CaseDiagnosisEvidence[],
+  missing: string[],
+  reason: string
+): CaseDiagnosis {
+  const equationId =
+    subtype === "D1"
+      ? EQ.D1
+      : subtype === "D2"
+        ? EQ.D2
+        : subtype === "D3"
+          ? EQ.D3
+          : subtype === "D4"
+            ? EQ.D4
+            : subtype === "D5"
+              ? EQ.D5
+              : EQ.D6;
+  return {
+    planId,
+    classification: { kind: "case_d", value: subtype },
+    caseDSubtype: subtype,
+    equationId,
+    inputsUsed: inputs,
+    missingInputs: missing,
+    reason,
+  };
+}
 
 function verdictOf(c: ThesisCase): DecisionVerdict | null {
   return (
@@ -95,7 +144,8 @@ function evidence(
 function diagnoseNoEntry(
   planId: string,
   c: ThesisCase,
-  evaluation: CaseEvaluation
+  evaluation: CaseEvaluation,
+  counterfactualR: number | null | undefined
 ): CaseDiagnosis {
   const inputs: CaseDiagnosisEvidence[] = [];
   const missing: string[] = [];
@@ -117,7 +167,7 @@ function diagnoseNoEntry(
       inputsUsed: inputs,
       missingInputs: missing,
       reason:
-        "Missing usable T0 freeze — cannot distinguish Good Filter from Over-optimization.",
+        "Missing usable T0 freeze — cannot distinguish Good Filter from Over-optimization or Case D plan-path accounting.",
     };
   }
 
@@ -135,11 +185,22 @@ function diagnoseNoEntry(
     .join("; ");
   inputs.push(evidence("reality_relationship", rr, rrEvidence || "lane"));
 
-  // Outcome facts recorded but MUST NOT drive no-entry classification.
+  const cfPol = counterfactualPolarity(counterfactualR);
+  inputs.push(
+    evidence(
+      "counterfactual_r",
+      counterfactualR == null || !Number.isFinite(counterfactualR)
+        ? "unknown"
+        : String(counterfactualR),
+      "learning_outcome.counterfactualR — never portfolio P/L"
+    )
+  );
+
+  // Outcome facts recorded but MUST NOT drive no-entry Over-Opt class.
   inputs.push(
     evidence(
       "outcome_facts_isolated",
-      "ignored_for_no_entry_class",
+      "ignored_for_no_entry_overopt_class",
       evaluation.outcome.facts.join(" | ") || "none"
     )
   );
@@ -158,6 +219,27 @@ function diagnoseNoEntry(
     };
   }
 
+  // When conditions were met (or Reality unclear) and planned path R is evaluable,
+  // Case D plan-divergence subtypes take precedence over bare Over-Opt.
+  if (cfPol === "favorable") {
+    return caseDResult(
+      planId,
+      "D1",
+      inputs,
+      missing,
+      "D1 — No Entry / Would Profit: no actual fill; planned path counterfactual R is positive. Realized R remains 0; CF R is not portfolio P/L. Does not assign MAF components."
+    );
+  }
+  if (cfPol === "adverse") {
+    return caseDResult(
+      planId,
+      "D2",
+      inputs,
+      missing,
+      "D2 — No Entry / Would Loss: no actual fill; planned path counterfactual R is negative. Realized R remains 0; avoided planned loss is still CF −R, not portfolio P/L. Does not assign MAF components."
+    );
+  }
+
   if (rr === "condition_met") {
     return {
       planId,
@@ -166,21 +248,20 @@ function diagnoseNoEntry(
       inputsUsed: inputs,
       missingInputs: missing,
       reason:
-        "No-entry while T0 participation conditions later met in Reality — possible over-restrictive filter. Not inferred from price/outcome alone.",
+        "No-entry while T0 participation conditions later met in Reality — possible over-restrictive filter. Counterfactual planned R not reliably evaluable (D1/D2 not assigned).",
     };
   }
 
   if (rr === "mixed" || rr === "INDETERMINATE") {
     if (rr === "INDETERMINATE") missing.push("reality_relationship_clarity");
-    return {
+    missing.push("counterfactual_r");
+    return caseDResult(
       planId,
-      classification: { kind: "no_entry", value: "INDETERMINATE" },
-      equationId: EQ.NE_INDETERMINATE,
-      inputsUsed: inputs,
-      missingInputs: missing,
-      reason:
-        "Evidence insufficient to distinguish Good Filter from Over-optimization.",
-    };
+      "D3",
+      inputs,
+      missing,
+      "D3 — No Entry / Indeterminate: no fill; planned-path counterfactual R cannot be determined reliably. Realized R remains 0."
+    );
   }
 
   return {
@@ -196,7 +277,8 @@ function diagnoseNoEntry(
 function diagnoseEntry(
   planId: string,
   c: ThesisCase,
-  evaluation: CaseEvaluation
+  evaluation: CaseEvaluation,
+  counterfactualR: number | null | undefined
 ): CaseDiagnosis {
   const inputs: CaseDiagnosisEvidence[] = [];
   const missing: string[] = [];
@@ -241,16 +323,43 @@ function diagnoseEntry(
     )
   );
 
+  const cfPol = counterfactualPolarity(counterfactualR);
+  inputs.push(
+    evidence(
+      "counterfactual_r",
+      counterfactualR == null || !Number.isFinite(counterfactualR)
+        ? "unknown"
+        : String(counterfactualR),
+      "planned-path R when evaluable — never portfolio P/L"
+    )
+  );
+
   if (dq === "not_supported" || eq === "violated") {
-    return {
+    if (cfPol === "favorable") {
+      return caseDResult(
+        planId,
+        "D4",
+        inputs,
+        missing,
+        "D4 — Deficient Execution / Would Profit: actual path diverged from plan; planned path counterfactual R is positive. Does not assign MAF components."
+      );
+    }
+    if (cfPol === "adverse") {
+      return caseDResult(
+        planId,
+        "D5",
+        inputs,
+        missing,
+        "D5 — Deficient Execution / Would Loss: actual path diverged from plan; planned path counterfactual R is negative. Does not assign MAF components."
+      );
+    }
+    return caseDResult(
       planId,
-      classification: { kind: "entry_family", value: "D" },
-      equationId: EQ.ENT_D,
-      inputsUsed: inputs,
-      missingInputs: missing,
-      reason:
-        "Attributable failure evidence in Decision Quality and/or Execution.",
-    };
+      "D6",
+      inputs,
+      [...missing, "counterfactual_r"],
+      "D6 — Deficient Execution / Indeterminate: actual path diverged from plan; planned-path counterfactual effect cannot be determined reliably. Legacy ENT-D failure evidence present."
+    );
   }
 
   const dqOk = dq === "supported" || dq === "weakly_supported";
@@ -297,17 +406,20 @@ export function diagnoseCase(input: {
   thesisCase: ThesisCase;
   evaluation: CaseEvaluation;
   participation?: CaseParticipationClass | null;
+  /** Planned/counterfactual R when evaluable — never treated as portfolio P/L. */
+  counterfactualR?: number | null;
 }): CaseDiagnosis {
   const c = input.thesisCase;
   const planId = c.identity.anchorPlanId;
   const participation =
     input.participation ?? participationFromVerdict(verdictOf(c));
+  const counterfactualR = input.counterfactualR;
 
   if (participation === "no_entry") {
-    return diagnoseNoEntry(planId, c, input.evaluation);
+    return diagnoseNoEntry(planId, c, input.evaluation, counterfactualR);
   }
   if (participation === "entry") {
-    return diagnoseEntry(planId, c, input.evaluation);
+    return diagnoseEntry(planId, c, input.evaluation, counterfactualR);
   }
   if (participation === "probe") {
     return {
@@ -500,6 +612,11 @@ export function aggregateDiagnoses(input: {
       if (v === "GOOD_FILTER") goodFilter += 1;
       else if (v === "OVER_OPTIMIZATION") overOptimization += 1;
       else indeterminateNoEntry += 1;
+    } else if (d.classification.kind === "case_d") {
+      // D1–D6 are Case D (plan divergence) — product family D.
+      // D1–D3 remain no-fill participation; D4–D6 are deficient execution.
+      entryUniverse += 1;
+      entryFamilyD += 1;
     } else if (d.classification.kind === "entry_family") {
       entryUniverse += 1;
       const v = d.classification.value as EntryCaseFamily;

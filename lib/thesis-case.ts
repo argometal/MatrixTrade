@@ -130,22 +130,17 @@ export function findFreezeForPlan(
   freezes: ThesisT0Freeze[]
 ): ThesisT0Freeze | null {
   const planKey = plan.id.toUpperCase();
-  const byPlan = freezes.find((f) =>
+  // Plan-specific binding only. Never inherit another Plan's freeze via shared
+  // stockThesisId (MXT 028 — PLAN-001 must not attach PLAN-009 T0).
+  const byPlanIds = freezes.find((f) =>
     f.planIds.some((id) => id.toUpperCase() === planKey)
   );
-  if (byPlan) return byPlan;
+  if (byPlanIds) return byPlanIds;
 
-  const thesisId = plan.stockThesisId?.trim();
-  if (!thesisId) return null;
-  const thesisKey = thesisId.toUpperCase();
-  const forThesis = freezes.filter(
-    (f) => f.stockThesisId.toUpperCase() === thesisKey
+  const byPlanGeometry = freezes.find(
+    (f) => f.plan.planId.toUpperCase() === planKey
   );
-  if (forThesis.length === 0) return null;
-  // Prefer open, else most recent by t0.
-  const open = forThesis.find((f) => f.status === "open");
-  if (open) return open;
-  return [...forThesis].sort((a, b) => b.t0.localeCompare(a.t0))[0] ?? null;
+  return byPlanGeometry ?? null;
 }
 
 function buildT0PreEvent(freeze: ThesisT0Freeze): CaseT0PreEvent | null {

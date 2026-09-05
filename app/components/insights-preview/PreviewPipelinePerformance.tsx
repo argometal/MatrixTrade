@@ -25,6 +25,7 @@ import type { NoEntryDiagnosisClass } from "@/lib/case-diagnosis-types";
 import {
   CASE_FAMILY_FILTER_OPTIONS,
   CASE_FAMILY_LABEL,
+  CASE_D_SUBTYPE_LABEL,
   NO_ENTRY_DIAGNOSIS_FILTER_OPTIONS,
   NO_ENTRY_DIAGNOSIS_LABEL,
   caseFamilyLabel,
@@ -67,6 +68,9 @@ function familyChip(row: InsightsCaseRow): string {
 }
 
 function diagnosisChip(row: InsightsCaseRow): string {
+  if (row.caseDSubtype) {
+    return CASE_D_SUBTYPE_LABEL[row.caseDSubtype];
+  }
   if (row.family === "B" && row.noEntryDiagnosis) {
     return noEntryDiagnosisLabel(row.noEntryDiagnosis);
   }
@@ -850,7 +854,7 @@ export function PreviewPipelinePerformance({
                   </dd>
                 </div>
                 <div>
-                  <dt className="text-zinc-500">Realized R</dt>
+                  <dt className="text-zinc-500">Realized R (fills only)</dt>
                   <dd
                     className={`tabular-nums ${tone(view.realized.realizedRSum)}`}
                   >
@@ -872,12 +876,13 @@ export function PreviewPipelinePerformance({
               data-pipeline-counterfactual
             >
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
-                Counterfactual performance (Scout — not P/L)
+                Counterfactual / Planned R (Scout — not portfolio P/L)
               </h2>
               <p className="mt-1 text-[11px] text-zinc-600">
-                Counterfactual R is hypothetical plan-path magnitude. It is not
-                realized P/L, not Decision Quality, and not proof that a No Entry
-                was wrong.
+                Counterfactual R is hypothetical planned-path magnitude (symmetric:
+                missed upside = +R; avoided planned loss = −R). It is never realized
+                portfolio P/L, not Decision Quality, and not automatic MAF attribution.
+                0R realized + (−1R CF) does not mean the portfolio lost 1R.
               </p>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
@@ -1220,8 +1225,8 @@ export function PreviewPipelinePerformance({
                       <th className="px-3 py-2 font-medium">Accepted MAF</th>
                       <th className="px-3 py-2 font-medium">Historical</th>
                       <th className="px-3 py-2 font-medium">Outcome</th>
-                      <th className="px-3 py-2 font-medium">Realized</th>
-                      <th className="px-3 py-2 font-medium">Counterfactual</th>
+                      <th className="px-3 py-2 font-medium">Realized R</th>
+                      <th className="px-3 py-2 font-medium">CF / Planned R</th>
                       <th className="px-3 py-2 font-medium">Record</th>
                     </tr>
                   </thead>
@@ -1342,8 +1347,8 @@ export function PreviewPipelinePerformance({
                     <th className="px-3 py-2 font-medium">Ticker</th>
                     <th className="px-3 py-2 font-medium">Outcome</th>
                     <th className="px-3 py-2 font-medium">Drag</th>
-                    <th className="px-3 py-2 font-medium">Realized</th>
-                    <th className="px-3 py-2 font-medium">Counterfactual</th>
+                    <th className="px-3 py-2 font-medium">Realized R</th>
+                    <th className="px-3 py-2 font-medium">CF / Planned R</th>
                     <th className="px-3 py-2 font-medium">Record</th>
                   </tr>
                 </thead>

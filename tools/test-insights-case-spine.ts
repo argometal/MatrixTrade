@@ -103,7 +103,7 @@ async function run() {
   });
   assert.ok(freezeGf);
 
-  // Over-opt: WAIT + T0 + Reality condition_met via OHLCV zone=YES
+  // Over-opt: WAIT + T0 + Reality condition_met via OHLCV zone=YES (no CF R)
   const waitOo = appendDecision(
     basePlan({ id: "PLAN-OO", ticker: "CCC", stockThesisId: "ST-ICS-OO" }),
     {
@@ -119,6 +119,24 @@ async function run() {
     thesis: thesisOo,
   });
   assert.ok(freezeOo);
+
+  // D1: same Reality met + evaluable +CF R → Case D (not bare Over-Opt)
+  const waitD1 = appendDecision(
+    basePlan({ id: "PLAN-D1", ticker: "CCC", stockThesisId: "ST-ICS-D1" }),
+    {
+      verdict: "wait",
+      decisionConfidence: 60,
+      challenges: ["Strict"],
+      reasoning: "Waiting — later CF profit evaluable",
+      decidedBy: "human",
+    }
+  ).plan;
+  const thesisD1 = { ...thesisOo, id: "ST-ICS-D1" };
+  const { freeze: freezeD1 } = await ensureThesisT0OnScoutDecision({
+    plan: waitD1,
+    thesis: thesisD1,
+  });
+  assert.ok(freezeD1);
 
   // Missing T0 → indeterminate
   const waitNoT0 = appendDecision(
@@ -186,12 +204,12 @@ async function run() {
     source: "trade_close",
   };
 
-  // CF R isolation LO on WAIT with +R — should not change family via CF
+  // CF R on PLAN-D1 → D1; PLAN-OO keeps bare Over-Opt (CF unknown)
   const loCf: LearningOutcome = {
-    id: "LO-CCC-001",
+    id: "LO-CCC-D1",
     kind: "missed_opportunity",
     ticker: "CCC",
-    planId: "PLAN-OO",
+    planId: "PLAN-D1",
     counterfactualR: 6.25,
     realizedR: 0,
     lifecycleStatus: "concluded",
@@ -200,8 +218,8 @@ async function run() {
     source: "plan_outcome",
   };
 
-  const plans = [goPlan, waitGf, waitOo, waitNoT0, goC];
-  const freezes = [freezeA!, freezeGf!, freezeOo!, freezeC!];
+  const plans = [goPlan, waitGf, waitOo, waitD1, waitNoT0, goC];
+  const freezes = [freezeA!, freezeGf!, freezeOo!, freezeD1!, freezeC!];
 
   const ohlcvByPlan: Record<
     string,
@@ -236,6 +254,16 @@ async function run() {
       windowHigh: 108,
       windowLow: 99,
     },
+    "PLAN-D1": {
+      planId: "PLAN-D1",
+      available: true,
+      thesisZoneReached: "YES",
+      stopLevelReached: "NO",
+      targetReached: "YES",
+      entryLevelReached: "YES",
+      windowHigh: 108,
+      windowLow: 99,
+    },
     "PLAN-A": {
       planId: "PLAN-A",
       available: true,
@@ -261,18 +289,19 @@ async function run() {
     getLearningOutcomes: async () => [loC, loCf],
     getLearningOutcomeByPlanId: async (id) => {
       if (id.toUpperCase() === "PLAN-C") return loC;
-      if (id.toUpperCase() === "PLAN-OO") return loCf;
+      if (id.toUpperCase() === "PLAN-D1") return loCf;
       return undefined;
     },
     getMafExperimentByPlanId: async () => undefined,
     getCachedOhlcv: async (plan) => ohlcvByPlan[plan.id] ?? null,
   });
 
-  assert.ok(rows.length >= 5, "spine has decided plans");
+  assert.ok(rows.length >= 6, "spine has decided plans");
 
   const rowA = rows.find((r) => r.planId === "PLAN-A");
   const rowGf = rows.find((r) => r.planId === "PLAN-GF");
   const rowOo = rows.find((r) => r.planId === "PLAN-OO");
+  const rowD1 = rows.find((r) => r.planId === "PLAN-D1");
   const rowNt0 = rows.find((r) => r.planId === "PLAN-NT0");
   const rowC = rows.find((r) => r.planId === "PLAN-C");
 
@@ -317,13 +346,20 @@ async function run() {
   assert.equal(rowGf!.noEntryDiagnosis, "GOOD_FILTER");
   assert.equal(rowGf!.equationId, EQ.NE_GOOD_FILTER);
 
-  // 3. Over-optimization → B + OVER_OPTIMIZATION
+  // 3. Over-optimization → B + OVER_OPTIMIZATION (CF unknown)
   assert.ok(rowOo);
   assert.equal(rowOo!.family, "B");
   assert.equal(rowOo!.noEntryDiagnosis, "OVER_OPTIMIZATION");
   assert.equal(rowOo!.equationId, EQ.NE_OVER_OPT);
-  // 7. +CF R present but does not alter family
-  assert.equal(rowOo!.counterfactualR, 6.25);
+  assert.equal(rowOo!.counterfactualR, null);
+
+  // 3b. D1 — No Entry / Would Profit when CF R known
+  assert.ok(rowD1);
+  assert.equal(rowD1!.family, "D");
+  assert.equal(rowD1!.caseDSubtype, "D1");
+  assert.equal(rowD1!.equationId, EQ.D1);
+  assert.equal(rowD1!.realizedR, 0);
+  assert.equal(rowD1!.counterfactualR, 6.25);
 
   // 4. Missing T0 → INDETERMINATE (family B with NE indet or family INDETERMINATE)
   assert.ok(rowNt0);
@@ -366,7 +402,11 @@ async function run() {
       },
     });
     assert.equal(familyFromDiagnosis(dD), "D");
-    assert.equal(dD.equationId, EQ.ENT_D);
+    assert.equal(dD.equationId, EQ.D6);
+    assert.equal(
+      dD.classification.kind === "case_d" && dD.classification.value,
+      "D6"
+    );
   }
 
   // 8–10 filters
@@ -406,7 +446,7 @@ async function run() {
 
   // LO join unambiguous
   const joined = resolveLearningOutcomeForPlan({
-    plan: waitOo,
+    plan: waitD1,
     learningOutcomes: [loCf],
     trades: [],
   });

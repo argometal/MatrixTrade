@@ -40,28 +40,8 @@ import {
   resolveRiskBudgetUsd,
 } from "./optimized-entry";
 import type { ThesisT0Freeze } from "./thesis-t0-types";
+import { findFreezeForPlan } from "./thesis-case";
 import { wrapSnapshotText } from "./snapshot-verification";
-
-function findFreezeForPlan(
-  plan: TradePlan,
-  freezes: ThesisT0Freeze[]
-): ThesisT0Freeze | null {
-  const planKey = plan.id.toUpperCase();
-  const byPlan = freezes.find((f) =>
-    f.planIds.some((id) => id.toUpperCase() === planKey)
-  );
-  if (byPlan) return byPlan;
-  const thesisId = plan.stockThesisId?.trim();
-  if (!thesisId) return null;
-  const thesisKey = thesisId.toUpperCase();
-  const forThesis = freezes.filter(
-    (f) => f.stockThesisId.toUpperCase() === thesisKey
-  );
-  if (forThesis.length === 0) return null;
-  const open = forThesis.find((f) => f.status === "open");
-  if (open) return open;
-  return [...forThesis].sort((a, b) => b.t0.localeCompare(a.t0))[0] ?? null;
-}
 
 /** Operative master prompt — five lanes, one chat cycle (MTA-002A). */
 export function buildStockFileOperativePrompt(): string {

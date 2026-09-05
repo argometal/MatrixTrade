@@ -10,6 +10,7 @@ import type {
 } from "./case-evaluation-types";
 import type {
   CaseDiagnosis,
+  CaseDSubtype,
   DiagnosisAggregate,
   NoEntryDiagnosisClass,
 } from "./case-diagnosis-types";
@@ -52,6 +53,8 @@ export type InsightsCaseRow = {
   /** Product family: A/C/D entry; B = no-entry; else INDETERMINATE. */
   family: InsightsCaseFamily;
   noEntryDiagnosis: NoEntryDiagnosisClass | null;
+  /** Present when family D is a Case D subtype (D1–D6). */
+  caseDSubtype?: CaseDSubtype | null;
   equationId: string;
 
   decisionQuality: DecisionQuality;
@@ -60,8 +63,10 @@ export type InsightsCaseRow = {
 
   outcomeLabel: string | null;
   loKind: LearningOutcomeKind | null;
+  /** Actual trade result only — never includes counterfactual/planned R. */
   realizedR: number | null;
   realizedPnL: number | null;
+  /** Planned-path R when evaluable — never portfolio P/L. */
   counterfactualR: number | null;
 
   t0Available: boolean;

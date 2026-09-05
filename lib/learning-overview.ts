@@ -155,6 +155,9 @@ function reviewPriority(row: LearningOverviewRow): number {
     if (row.diagnosis.classification.value === "OVER_OPTIMIZATION") score += 50;
     if (row.diagnosis.classification.value === "INDETERMINATE") score += 25;
   }
+  if (row.diagnosis?.classification.kind === "case_d") {
+    score += 45;
+  }
   if (row.diagnosis?.classification.kind === "entry_family") {
     if (row.diagnosis.classification.value === "D") score += 45;
   }
@@ -224,7 +227,14 @@ export async function buildLearningOverview(
       ? await getOhlcv(plan)
       : await cachedOhlcvForPlan(plan, thesisCase.freeze);
     const evaluation = evaluateCase({ thesisCase, ohlcv });
-    const diagnosis = diagnoseCase({ thesisCase, evaluation });
+    const cf =
+      thesisCase.postDecision.learningEvidence.learningOutcome
+        ?.counterfactualR ?? null;
+    const diagnosis = diagnoseCase({
+      thesisCase,
+      evaluation,
+      counterfactualR: cf,
+    });
     diagnoses.push(diagnosis);
     rows.push(rowFromCase(thesisCase, evaluation, diagnosis));
   }

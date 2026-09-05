@@ -42,6 +42,7 @@ export function familyFromDiagnosis(
   diagnosis: CaseDiagnosis
 ): InsightsCaseFamily {
   if (diagnosis.classification.kind === "no_entry") return "B";
+  if (diagnosis.classification.kind === "case_d") return "D";
   if (diagnosis.classification.kind === "entry_family") {
     const v = diagnosis.classification.value;
     if (v === "A" || v === "C" || v === "D") return v;

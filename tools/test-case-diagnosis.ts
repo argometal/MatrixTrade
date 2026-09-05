@@ -215,19 +215,21 @@ function run() {
     assert.equal(d.equationId, EQ.NE_OVER_OPT);
   }
 
-  // 3. Indeterminate no-entry
+  // 3. No-entry Reality unclear → D3 (CF unknown)
   {
     const d = diagnoseCase({
       thesisCase: baseCase({ verdict: "wait" }),
       evaluation: evalLane("INDETERMINATE"),
     });
+    assert.equal(d.classification.kind, "case_d");
     assert.equal(
-      d.classification.kind === "no_entry" && d.classification.value,
-      "INDETERMINATE"
+      d.classification.kind === "case_d" && d.classification.value,
+      "D3"
     );
+    assert.equal(d.equationId, EQ.D3);
   }
 
-  // 4. Entry families A / C / D
+  // 4. Entry families A / C / D6 (deficient exec, CF unknown)
   {
     const a = diagnoseCase({
       thesisCase: baseCase({
@@ -284,10 +286,12 @@ function run() {
         "execution: trade T3",
       ]),
     });
+    assert.equal(dFam.classification.kind, "case_d");
     assert.equal(
-      dFam.classification.kind === "entry_family" && dFam.classification.value,
-      "D"
+      dFam.classification.kind === "case_d" && dFam.classification.value,
+      "D6"
     );
+    assert.equal(dFam.equationId, EQ.D6);
   }
 
   // 5. Missing T0
@@ -319,16 +323,80 @@ function run() {
     );
     assert.notEqual(d.equationId, EQ.NE_OVER_OPT);
 
-    const stillIndet = diagnoseCase({
+    const stillD3 = diagnoseCase({
       thesisCase: baseCase({ verdict: "wait" }),
       evaluation: evalLane("INDETERMINATE", "supported", "not_applicable", [
         "PnL hint: 500",
       ]),
     });
     assert.equal(
-      stillIndet.classification.kind === "no_entry" &&
-        stillIndet.classification.value,
-      "INDETERMINATE"
+      stillD3.classification.kind === "case_d" && stillD3.classification.value,
+      "D3"
+    );
+  }
+
+  // 6b. D1 / D2 from counterfactual R (condition_met, no fill)
+  {
+    const d1 = diagnoseCase({
+      thesisCase: baseCase({ verdict: "wait" }),
+      evaluation: evalLane("condition_met"),
+      counterfactualR: 2.5,
+    });
+    assert.equal(d1.classification.kind, "case_d");
+    assert.equal(
+      d1.classification.kind === "case_d" && d1.classification.value,
+      "D1"
+    );
+    assert.equal(d1.equationId, EQ.D1);
+
+    const d2 = diagnoseCase({
+      thesisCase: baseCase({ verdict: "wait" }),
+      evaluation: evalLane("condition_met"),
+      counterfactualR: -1,
+    });
+    assert.equal(d2.classification.kind, "case_d");
+    assert.equal(
+      d2.classification.kind === "case_d" && d2.classification.value,
+      "D2"
+    );
+    assert.equal(d2.equationId, EQ.D2);
+
+    // Good Filter still wins over CF when conditions not met
+    const gf = diagnoseCase({
+      thesisCase: baseCase({ verdict: "wait" }),
+      evaluation: evalLane("condition_not_met"),
+      counterfactualR: -1,
+    });
+    assert.equal(
+      gf.classification.kind === "no_entry" && gf.classification.value,
+      "GOOD_FILTER"
+    );
+  }
+
+  // 6c. D4 / D5 deficient execution with CF polarity
+  {
+    const d4 = diagnoseCase({
+      thesisCase: baseCase({ verdict: "go" }),
+      evaluation: evalLane("condition_met", "not_supported", "violated", [
+        "execution: trade T4",
+      ]),
+      counterfactualR: 1.2,
+    });
+    assert.equal(
+      d4.classification.kind === "case_d" && d4.classification.value,
+      "D4"
+    );
+
+    const d5 = diagnoseCase({
+      thesisCase: baseCase({ verdict: "go" }),
+      evaluation: evalLane("condition_met", "not_supported", "respected", [
+        "execution: trade T5",
+      ]),
+      counterfactualR: -1,
+    });
+    assert.equal(
+      d5.classification.kind === "case_d" && d5.classification.value,
+      "D5"
     );
   }
 
@@ -358,9 +426,11 @@ function run() {
     });
     assert.equal(agg.goodFilter, 1);
     assert.equal(agg.overOptimization, 1);
-    assert.equal(agg.indeterminateNoEntry, 1);
-    assert.equal(agg.rates.goodFilterRate, 1 / 3);
-    assert.equal(agg.rates.overOptimizationRate, 1 / 3);
+    // P3 is Case D3 — not counted in no-entry INDETERMINATE bucket
+    assert.equal(agg.indeterminateNoEntry, 0);
+    assert.equal(agg.entryFamilyD, 1);
+    assert.equal(agg.rates.goodFilterRate, 1 / 2);
+    assert.equal(agg.rates.overOptimizationRate, 1 / 2);
   }
 
   // 8. False-loop does not trigger from high no-entry alone

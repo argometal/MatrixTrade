@@ -181,7 +181,6 @@ export async function buildInsightsCaseSpine(
       ? await deps.getCachedOhlcv(plan, thesisCase.freeze)
       : await cachedOhlcvForPlan(plan, thesisCase.freeze);
     const evaluation = evaluateCase({ thesisCase, ohlcv });
-    const diagnosis = diagnoseCase({ thesisCase, evaluation });
     const participation = participationFromVerdict(
       thesisCase.t0Evidence.decision?.verdict ??
         (thesisCase.postDecision.execution.kind === "no_trade"
@@ -193,8 +192,18 @@ export async function buildInsightsCaseSpine(
       learningOutcomes,
       trades,
     });
+    const diagnosis = diagnoseCase({
+      thesisCase,
+      evaluation,
+      participation,
+      counterfactualR: lo?.counterfactualR ?? null,
+    });
     const family = familyFromDiagnosis(diagnosis);
     const noEntryDiagnosis = noEntryDiagnosisFrom(diagnosis);
+    const caseDSubtype =
+      diagnosis.classification.kind === "case_d"
+        ? diagnosis.classification.value
+        : diagnosis.caseDSubtype ?? null;
     const isExecuted =
       lo?.kind === "executed_win" || lo?.kind === "executed_loss";
     const date =
@@ -234,6 +243,15 @@ export async function buildInsightsCaseSpine(
       ? ("linked" as const)
       : ("UNLINKED" as const);
 
+    // Realized R: fills only for executed; no-entry / Scout CF stays 0 when known.
+    const realizedR = isExecuted
+      ? lo?.realizedR ?? lo?.rAchieved ?? null
+      : lo?.realizedR === 0 || lo?.kind != null
+        ? lo?.realizedR ?? 0
+        : participation === "no_entry"
+          ? 0
+          : null;
+
     rows.push({
       planId: plan.id,
       caseId: plan.id,
@@ -250,15 +268,14 @@ export async function buildInsightsCaseSpine(
           : null),
       family,
       noEntryDiagnosis,
+      caseDSubtype,
       equationId: diagnosis.equationId,
       decisionQuality: evaluation.decisionQuality.value,
       executionQuality: evaluation.executionQuality.value,
       reality: evaluation.realityRelationship.value,
       outcomeLabel: lo?.kind ?? null,
       loKind: lo?.kind ?? null,
-      realizedR: isExecuted
-        ? lo?.realizedR ?? lo?.rAchieved ?? null
-        : null,
+      realizedR,
       realizedPnL: isExecuted ? lo?.realizedPnL ?? null : null,
       counterfactualR: !isExecuted ? lo?.counterfactualR ?? null : null,
       t0Available: thesisCase.t0Evidence.available,
