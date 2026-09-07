@@ -257,8 +257,29 @@ function evaluateRealityRelationship(
 
   const mr = c.postDecision.marketReality;
   const obs = mr.observations.filter((o) => o.observedAfterT0);
+  const rawObs = c.postDecision.learningEvidence.observations.filter((o) => {
+    const started = o.startedAt;
+    return !c.identity.t0 || !started
+      ? true
+      : !isNaN(Date.parse(started)) && Date.parse(started) > Date.parse(c.identity.t0);
+  });
   const invalidatedObs = obs.some((o) => o.thesisInvalidated === true);
   const targetObs = obs.some((o) => o.targetReached === true);
+  const explicitObsInvalidated = rawObs.some(
+    (o) =>
+      o.thesisInvalidated === true ||
+      o.stopTriggered === true ||
+      o.firstTerminalEvent === "invalidation"
+  );
+  const explicitObsTarget = rawObs.some(
+    (o) =>
+      o.targetReached === true ||
+      o.targetTriggered === true ||
+      o.firstTerminalEvent === "target"
+  );
+  const explicitObsEntry = rawObs.some(
+    (o) => o.entryTriggered === true || o.entryTouched === true
+  );
   const hasPath =
     obs.some(
       (o) =>
@@ -268,6 +289,10 @@ function evaluateRealityRelationship(
         o.thesisInvalidated != null ||
         o.firstTerminalEvent != null
     ) || mr.horizonExpired;
+  const obsProvidesExplicitCondition =
+    explicitObsTarget ||
+    explicitObsInvalidated ||
+    rawObs.some((o) => o.targetReached === true || o.thesisInvalidated === true);
 
   const attached = ohlcvForCase(c, ohlcv);
   const zoneYes = attached?.thesisZoneReached === "YES";
@@ -294,6 +319,56 @@ function evaluateRealityRelationship(
     ]);
   }
 
+  if (
+    (verdict === "wait" || verdict === "no") &&
+    explicitObsEntry &&
+    explicitObsInvalidated &&
+    !explicitObsTarget
+  ) {
+    return lane("mixed", [
+      {
+        t0Ref: zone
+          ? `wait/no vs zone ${zone.low}-${zone.high}; stop ${c.t0Evidence.plan?.stopPrice}`
+          : `verdict=${verdict}; stop@T0`,
+        realityRef:
+          "OBS counterfactual path entryTriggered=true and stopTriggered=true before target",
+        note: "Observation records reachable entry followed by stop/invalidation without target.",
+      },
+    ]);
+  }
+
+  if (explicitObsInvalidated && explicitObsTarget) {
+    return lane("mixed", [
+      {
+        t0Ref: t0Inv
+          ? `invalidation@T0: ${t0Inv}; target@T0: ${t0Target}`
+          : `target@T0: ${t0Target}`,
+        realityRef: "OBS terminal path includes both target and invalidation",
+        note: "Observation carries both target and invalidation signals after T0.",
+      },
+    ]);
+  }
+
+  if (explicitObsInvalidated) {
+    return lane("invalidated", [
+      {
+        t0Ref: t0Inv ?? "invalidation criterion inferred from stop/terminal path",
+        realityRef: "OBS stopTriggered/thesisInvalidated after T0",
+        note: "Observation records invalidation/stop path after decision.",
+      },
+    ]);
+  }
+
+  if (explicitObsTarget) {
+    return lane("condition_met", [
+      {
+        t0Ref: t0Target != null ? `target@T0: ${t0Target}` : "target geometry @ T0",
+        realityRef: "OBS targetTriggered/targetReached after T0",
+        note: "Observation records target path after decision.",
+      },
+    ]);
+  }
+
   if (invalidatedObs) {
     return lane("invalidated", [
       {
@@ -314,8 +389,9 @@ function evaluateRealityRelationship(
     ]);
   }
 
-  // OHLCV assist (same plan only) when OBS insufficient
-  if (!hasPath && attached) {
+  // OHLCV assist (same plan only) when OBS is absent or too thin to express
+  // the post-T0 condition relationship explicitly.
+  if (attached && (!hasPath || !obsProvidesExplicitCondition)) {
     if (zoneYes && stopYes && (verdict === "wait" || verdict === "no")) {
       return lane("mixed", [
         {
