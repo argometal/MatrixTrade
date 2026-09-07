@@ -17,6 +17,39 @@ function objectPath(id: string): string {
   return `${PREFIX}/${id.toUpperCase()}.json`;
 }
 
+export function isBenignMissingFreezeDownloadError(
+  id: string,
+  error: { message?: string; statusCode?: string | number; status?: string | number }
+): boolean {
+  const rawMsg = String(error.message ?? "").trim();
+  const msg = rawMsg.toLowerCase();
+  const status = Number(error.statusCode ?? error.status ?? NaN);
+  if (
+    !rawMsg ||
+    rawMsg === "{}" ||
+    msg.includes("not found") ||
+    msg.includes("404") ||
+    msg.includes("object not found") ||
+    status === 404 ||
+    status === 400
+  ) {
+    return true;
+  }
+
+  // Supabase Storage can return a JSON-encoded URL for a missing object with
+  // no explicit 404 metadata. Treat that as a benign miss for read paths.
+  try {
+    const parsed = JSON.parse(rawMsg) as { url?: unknown };
+    const url = typeof parsed.url === "string" ? parsed.url : "";
+    if (url && url.toUpperCase().includes(objectPath(id).toUpperCase())) {
+      return true;
+    }
+  } catch {
+    /* non-JSON error; fall through */
+  }
+  return false;
+}
+
 async function ensureBucket(): Promise<void> {
   const supabase = createSupabaseAdmin();
   const { data: buckets, error } = await supabase.storage.listBuckets();
@@ -55,25 +88,19 @@ async function downloadFreeze(id: string): Promise<ThesisT0Freeze | null> {
     .from(MXT_T0_STORAGE_BUCKET)
     .download(objectPath(id));
   if (error) {
-    const rawMsg = String(error.message ?? "").trim();
-    const msg = rawMsg.toLowerCase();
-    const status = Number(
-      (error as { statusCode?: string | number }).statusCode ??
-        (error as { status?: string | number }).status ??
-        NaN
-    );
-    // Storage often returns opaque/empty errors for missing objects.
     if (
-      !rawMsg ||
-      rawMsg === "{}" ||
-      msg.includes("not found") ||
-      msg.includes("404") ||
-      msg.includes("object not found") ||
-      status === 404 ||
-      status === 400
+      isBenignMissingFreezeDownloadError(
+        id,
+        error as {
+          message?: string;
+          statusCode?: string | number;
+          status?: string | number;
+        }
+      )
     ) {
       return null;
     }
+    const rawMsg = String(error.message ?? "").trim();
     throw new Error(
       `Supabase T0 storage download failed: ${rawMsg || JSON.stringify(error)}`
     );
