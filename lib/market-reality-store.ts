@@ -17,7 +17,7 @@ function windowsPath(): string {
   return path.join(process.cwd(), "data", "market-reality-case-windows.json");
 }
 
-function useSupabaseStorage(): boolean {
+function isSupabaseMarketRealityStorage(): boolean {
   return Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
 }
 
