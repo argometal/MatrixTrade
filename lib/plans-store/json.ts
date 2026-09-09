@@ -126,6 +126,17 @@ export function createJsonPlansStore(): PlansStore {
         }
       });
     },
+    async deleteById(id) {
+      await withPlansJsonLock(async () => {
+        const key = id.trim().toUpperCase();
+        const all = await readPlansJsonFile();
+        const next = all.filter((row) => row.id.toUpperCase() !== key);
+        if (next.length === all.length) {
+          throw new Error(`Plan ${key} not found for delete.`);
+        }
+        await writePlansJsonFile(next);
+      });
+    },
   };
 }
 

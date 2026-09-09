@@ -222,7 +222,6 @@ export function buildThesisT0Freeze(input: {
     t1: null,
     createdAt: now,
     updatedAt: now,
-    recordKind: "original",
   };
 }
 
@@ -249,7 +248,7 @@ export type ThesisT0EnsureResult = {
  * Plans without stockThesisId use PLAN-ONLY:{planId} episode key (same store).
  * Never attach a different Plan to an existing open freeze merely because they
  * share stockThesisId (MXT 029 — PLAN-001 must not inherit PLAN-009 T0).
- * Later Stock File edits must not rewrite an existing freeze body (use thesis-t0-repair).
+ * Later Stock File edits must not rewrite an existing freeze body (use thesis-t0 Apply).
  */
 export async function ensureThesisT0OnScoutDecision(input: {
   plan: TradePlan;

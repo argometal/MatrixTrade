@@ -1,13 +1,15 @@
+require("./register-local-env.cjs");
+
 import { buildCaseSnapshot } from "../lib/case-snapshot";
 
 async function run() {
-  const planIds = process.argv.slice(2);
-  const targets = planIds.length > 0 ? planIds : ["PLAN-001"];
-  for (const planId of targets) {
-    const text = await buildCaseSnapshot(planId);
+  const caseIds = process.argv.slice(2);
+  const targets = caseIds.length > 0 ? caseIds : ["PLAN-001"];
+  for (const caseId of targets) {
+    const text = await buildCaseSnapshot(caseId);
     if (!text) {
       process.stdout.write(
-        `=== CASE SNAPSHOT ===\n\nPLAN ID: ${planId}\nSTATUS: UNAVAILABLE\nREASON: Plan not found in current canonical plan store.\n\n=== END CASE SNAPSHOT ===\n`
+        `=== CASE SNAPSHOT ===\n\nCASE ID: ${caseId}\nSTATUS: UNAVAILABLE\nREASON: Case identity not found in current canonical Case universe.\n\n=== END CASE SNAPSHOT ===\n`
       );
       continue;
     }

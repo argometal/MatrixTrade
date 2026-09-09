@@ -215,6 +215,11 @@ export type SavePlanInput = {
   chatNotes?: string;
   /** AI-authored Plan Map execution instruction (optional). */
   executionInstruction?: string;
+  /**
+   * Explicit override after identical-geometry STALL.
+   * Without this, create with matching entry/stop/target does not persist.
+   */
+  identicalGeometryOverride?: boolean;
 };
 
 export type RecordPlanOutcomeInput = {

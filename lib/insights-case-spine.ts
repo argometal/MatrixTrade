@@ -5,10 +5,16 @@
 
 import { getPlans } from "./plans";
 import type { TradePlan } from "./plan-types";
+import { resolvePlanEntryForRR } from "./plan-risk";
 import { getTrades } from "./storage";
 import type { Trade } from "./types";
 import { getLearningOutcomes } from "./learning-outcome-store";
 import type { LearningOutcome } from "./learning-outcome-types";
+import { resolveLearningOutcomeForPlan } from "./learning-outcome-resolve";
+import {
+  findDuplicateCreationLearningOutcome,
+  isDuplicateEconomicObservation,
+} from "./duplicate-observation";
 import {
   buildCase,
   type BuildCaseDeps,
@@ -39,6 +45,7 @@ import {
   resolveMafForTrade,
 } from "./historical-case-attribution";
 import type { CaseDiagnosis } from "./case-diagnosis-types";
+import { derivePlanCaseLifecycle } from "./plan-case-lifecycle";
 
 export type { InsightsCaseRow } from "./insights-case-spine-types";
 export {
@@ -46,56 +53,15 @@ export {
   filterInsightsCaseRows,
   familyFromDiagnosis,
   noEntryDiagnosisFrom,
+  independentEconomicCaseRows,
+  pickCasesNeedingReview,
 } from "./insights-case-spine-view";
+export { resolveLearningOutcomeForPlan } from "./learning-outcome-resolve";
 export type {
   InsightsCaseFamily,
   InsightsCaseSpineFilters,
   InsightsCaseSpineView,
 } from "./insights-case-spine-types";
-
-/**
- * Join LO unambiguously: prefer planId;
- * else tradeId only when exactly one trade maps to this plan.
- */
-export function resolveLearningOutcomeForPlan(input: {
-  plan: TradePlan;
-  learningOutcomes: LearningOutcome[];
-  trades: Trade[];
-}): LearningOutcome | null {
-  const planId = input.plan.id.toUpperCase();
-  const byPlan = input.learningOutcomes.filter(
-    (lo) =>
-      lo.planId?.toUpperCase() === planId &&
-      lo.excludedFromMetrics !== true &&
-      lo.kind !== "duplicate_creation"
-  );
-  if (byPlan.length === 1) return byPlan[0]!;
-  if (byPlan.length > 1) {
-    const scoutOnly = byPlan.filter((lo) => !lo.tradeId);
-    if (scoutOnly.length === 1) return scoutOnly[0]!;
-    return null;
-  }
-
-  const linked =
-    input.plan.linkedTradeId?.toUpperCase() ??
-    input.trades.find((t) => t.planId?.toUpperCase() === planId)?.id.toUpperCase();
-  if (!linked) return null;
-
-  const tradesForPlan = input.trades.filter(
-    (t) =>
-      t.id.toUpperCase() === linked ||
-      t.planId?.toUpperCase() === planId
-  );
-  if (tradesForPlan.length !== 1) return null;
-
-  const byTrade = input.learningOutcomes.filter(
-    (lo) =>
-      lo.tradeId?.toUpperCase() === tradesForPlan[0]!.id.toUpperCase() &&
-      lo.excludedFromMetrics !== true
-  );
-  if (byTrade.length === 1) return byTrade[0]!;
-  return null;
-}
 
 async function cachedOhlcvForPlan(
   plan: TradePlan,
@@ -187,11 +153,21 @@ export async function buildInsightsCaseSpine(
           ? thesisCase.postDecision.execution.scoutVerdict
           : null)
     );
-    const lo = resolveLearningOutcomeForPlan({
+    const duplicateLo = findDuplicateCreationLearningOutcome(
+      plan.id,
+      learningOutcomes
+    );
+    const isDuplicate = isDuplicateEconomicObservation({
       plan,
-      learningOutcomes,
-      trades,
+      learningOutcome: duplicateLo,
     });
+    const lo = isDuplicate
+      ? duplicateLo
+      : resolveLearningOutcomeForPlan({
+          plan,
+          learningOutcomes,
+          trades,
+        });
     const diagnosis = diagnoseCase({
       thesisCase,
       evaluation,
@@ -251,6 +227,53 @@ export async function buildInsightsCaseSpine(
         : participation === "no_entry"
           ? 0
           : null;
+    const resolvedEntry = resolvePlanEntryForRR(plan);
+    const geometricRR =
+      resolvedEntry != null &&
+      plan.stopPrice != null &&
+      plan.targetPrice != null &&
+      resolvedEntry > plan.stopPrice
+        ? (plan.targetPrice - resolvedEntry) / (resolvedEntry - plan.stopPrice)
+        : null;
+    const rrCorrectableIssue =
+      geometricRR != null &&
+      plan.plannedRR != null &&
+      Number.isFinite(plan.plannedRR) &&
+      Math.abs(plan.plannedRR - geometricRR) > 1e-6;
+    const lifecycle = derivePlanCaseLifecycle({
+      caseOrigin: "modern",
+      planStatus: plan.status,
+      t0Available: thesisCase.t0Evidence.available,
+      hasValidityWindow: Boolean(plan.validFrom || plan.validUntil),
+      hasReality:
+        evaluation.realityRelationship.value !== "INDETERMINATE" ||
+        thesisCase.postDecision.marketReality.observations.length > 0 ||
+        Boolean(ohlcv?.available),
+      hasExecutionEvidence:
+        Boolean(tradeId) ||
+        Boolean(plan.outcome?.outcomeKind) ||
+        Boolean(plan.outcome?.nonExecutionReason) ||
+        Boolean(lo?.kind),
+      hasOutcomeEvidence:
+        Boolean(plan.outcome?.recordedAt) ||
+        Boolean(lo?.kind) ||
+        realizedR != null ||
+        lo?.counterfactualR != null,
+      classificationComplete: family !== "INDETERMINATE",
+      hasLearningEvidence: Boolean(lo?.id),
+      hasAcceptedMaf: Boolean(
+        mafExperiments.find(
+          (item) => item.planId?.toUpperCase() === plan.id.toUpperCase()
+        )
+      ),
+      rrCorrectableIssue,
+      rrIssueNote:
+        rrCorrectableIssue && geometricRR != null && plan.plannedRR != null
+          ? `Persisted plannedRR ${plan.plannedRR} != geometric ${Number(
+              geometricRR.toFixed(4)
+            )}.`
+          : null,
+    });
 
     rows.push({
       planId: plan.id,
@@ -260,6 +283,7 @@ export async function buildInsightsCaseSpine(
       playbookId: playbookId ?? null,
       stockThesisId: plan.stockThesisId ?? null,
       caseOrigin: "modern",
+      independentEconomicObservation: !isDuplicate,
       participation,
       verdict:
         thesisCase.t0Evidence.decision?.verdict ??
@@ -279,7 +303,8 @@ export async function buildInsightsCaseSpine(
       realizedPnL: isExecuted ? lo?.realizedPnL ?? null : null,
       counterfactualR: !isExecuted ? lo?.counterfactualR ?? null : null,
       t0Available: thesisCase.t0Evidence.available,
-      t0RecordKind: thesisCase.freeze?.recordKind ?? null,
+      t0RecordKind: null,
+      lifecycle,
       missingInputs: [...diagnosis.missingInputs],
       diagnosisReason: diagnosis.reason,
       evidenceSummary,
@@ -365,6 +390,7 @@ export async function buildInsightsCaseSpine(
       playbookId: trade.playbookId ?? null,
       stockThesisId: lo?.stockThesisId ?? null,
       caseOrigin: "historical_trade",
+      independentEconomicObservation: true,
       participation: "entry",
       verdict: null,
       family: "INDETERMINATE",
@@ -384,6 +410,19 @@ export async function buildInsightsCaseSpine(
           : null,
       counterfactualR: null,
       t0Available: false,
+      lifecycle: derivePlanCaseLifecycle({
+        caseOrigin: "historical_trade",
+        planStatus: null,
+        t0Available: false,
+        hasValidityWindow: false,
+        hasReality: Boolean(hist.evidence.length),
+        hasExecutionEvidence: true,
+        hasOutcomeEvidence: realizedR != null || trade.exit != null,
+        classificationComplete: false,
+        hasLearningEvidence: Boolean(lo?.id),
+        hasAcceptedMaf: Boolean(maf?.id),
+        rrCorrectableIssue: false,
+      }),
       missingInputs: ["t0_freeze"],
       diagnosisReason: hist.summary,
       evidenceSummary: hist.components

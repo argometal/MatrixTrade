@@ -26,6 +26,29 @@ export interface StockThesisHistoricalAnalysis {
   summary: string;
 }
 
+export function normalizeHistoricalAnalysis(
+  raw: unknown
+): { ok: true; value: StockThesisHistoricalAnalysis[] } | { ok: false; errors: string[] } {
+  if (raw === undefined) return { ok: true, value: [] };
+  if (!Array.isArray(raw)) {
+    return { ok: false, errors: ["proposal.historicalAnalysis must be an array"] };
+  }
+  const value: StockThesisHistoricalAnalysis[] = [];
+  const errors: string[] = [];
+  raw.forEach((item, index) => {
+    if (!item || typeof item !== "object" || Array.isArray(item)) {
+      errors.push(`proposal.historicalAnalysis[${index}] must be an object`);
+      return;
+    }
+    const timeframe = String((item as { timeframe?: unknown }).timeframe ?? "").trim();
+    const summary = String((item as { summary?: unknown }).summary ?? "").trim();
+    if (!timeframe) errors.push(`proposal.historicalAnalysis[${index}].timeframe required`);
+    if (!summary) errors.push(`proposal.historicalAnalysis[${index}].summary required`);
+    if (timeframe && summary) value.push({ timeframe, summary });
+  });
+  return errors.length ? { ok: false, errors } : { ok: true, value };
+}
+
 export interface StockThesisZone {
   low: number;
   high: number;

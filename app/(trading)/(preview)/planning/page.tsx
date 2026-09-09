@@ -3,6 +3,7 @@ import { PreviewPlanning } from "@/app/components/planning-preview/PreviewPlanni
 import { PageHelpPanel } from "@/app/components/preview/PageHelpPanel";
 import { getCapitalAccountSnapshot } from "@/lib/capital-account";
 import { getActiveCapitalConfiguration } from "@/lib/capital-configuration";
+import { buildInsightsCaseSpine } from "@/lib/insights-case-spine";
 import { listCapitalReservations } from "@/lib/capital-reservation";
 import { getPlans } from "@/lib/plans";
 import { getPlaybooks } from "@/lib/playbooks";
@@ -31,6 +32,7 @@ export default async function PlanningPage({
     stockTheses,
     monthly,
     trades,
+    caseSpineResult,
     params,
     reservationsResult,
     accountResult,
@@ -41,6 +43,7 @@ export default async function PlanningPage({
     getStockTheses(),
     getMonthlyRisk(),
     getTrades(),
+    settle(buildInsightsCaseSpine()),
     searchParams,
     settle(listCapitalReservations()),
     settle(getCapitalAccountSnapshot()),
@@ -51,6 +54,7 @@ export default async function PlanningPage({
   const focusThesisId = params.thesis?.trim() || undefined;
   const focusTicker = params.ticker?.trim() || undefined;
   const suggestedTradeId = suggestNextTradeId(trades);
+  const caseSpine = caseSpineResult ?? [];
 
   const reservations: CapitalReservation[] = reservationsResult ?? [];
   const capitalAccount: CapitalAccountSnapshot | null = accountResult;
@@ -67,6 +71,7 @@ export default async function PlanningPage({
           stockTheses={stockTheses}
           monthly={monthly}
           trades={trades}
+          caseSpine={caseSpine}
           suggestedTradeId={suggestedTradeId}
           focusPlanId={focusPlanId}
           focusThesisId={focusThesisId}

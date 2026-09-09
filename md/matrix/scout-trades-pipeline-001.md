@@ -1,5 +1,33 @@
 # Scout → Trades pipeline (CURSOR-MTA-SCOUT-TRADES-PIPELINE-001)
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+A-Iteration Anchors are constraints, not complete implementation specifications.
+Everything not constrained by an Anchor remains available for AI reasoning, design, simplification, implementation, and improvement.
+The AI has an objective obligation to improve the system within those remaining degrees of freedom.
+Do not treat absence of explicit human instruction as a prohibition on improvement.
+If proceeding requires changing an Anchor or inventing unresolved semantics necessary to satisfy it, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+UI may simplify, hide, reorganize, or derive presentation from canonical data when this does not change meaning.
+When genuinely blocked, isolate the smallest unresolved question.
+Verify the result.
+
+## A-Iteration Anchors
+
+“Focus solo permitirá: Stock, Plan XXX, Complete o Incomplete, Watching, Failed, Success.”
+
+
 **Status:** Design proposal (library only — no implementation in this change).  
 **Audience:** Product + Cursor agents.  
 **Related:** [scout-execution-model.md](scout-execution-model.md) · [plan-outcome-learning-001.md](plan-outcome-learning-001.md) · [metrics-analysis-planteamiento-handoff.md](metrics-analysis-planteamiento-handoff.md)

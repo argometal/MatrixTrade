@@ -9,6 +9,7 @@ import {
 } from "@/app/components/stats-preview/PreviewStats";
 import type { PipelinePerformanceInput } from "@/lib/insights-pipeline-performance";
 import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
+import type { MarketRealityCaseWindow } from "@/lib/market-reality-types";
 import type { MistakeStat } from "@/lib/review";
 import type { Playbook } from "@/lib/playbook-types";
 import type { Trade } from "@/lib/types";
@@ -39,9 +40,11 @@ export function PreviewInsightsHub({
   mistakeStats,
   trades,
   pipelineInput,
+  realityWindows,
   caseSpine = [],
   improvementHypotheses = [],
   persistenceReadOnly = false,
+  initialFocusCaseId = "",
 }: {
   tab: InsightsTabId;
   statsData: PreviewStatsData;
@@ -50,10 +53,12 @@ export function PreviewInsightsHub({
   mistakeStats: MistakeStat[];
   trades: Trade[];
   pipelineInput: Omit<PipelinePerformanceInput, "filters">;
+  realityWindows: MarketRealityCaseWindow[];
   caseSpine?: InsightsCaseRow[];
   improvementHypotheses?: ImprovementHypothesis[];
   /** Local #12D / supabase-readonly — writes blocked; UI must not crash. */
   persistenceReadOnly?: boolean;
+  initialFocusCaseId?: string;
 }) {
   const subtitles: Record<InsightsTabId, string> = {
     stats: "Cycle metrics — decide what to improve next.",
@@ -100,10 +105,12 @@ export function PreviewInsightsHub({
           {tab === "pipeline" && (
             <PreviewPipelinePerformance
               input={pipelineInput}
+              realityWindows={realityWindows}
               playbooks={playbooks.map((p) => ({ id: p.id, name: p.name }))}
               caseSpine={caseSpine}
               improvementHypotheses={improvementHypotheses}
               persistenceReadOnly={persistenceReadOnly}
+              initialFocusCaseId={initialFocusCaseId}
             />
           )}
         </div>

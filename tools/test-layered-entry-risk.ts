@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { computePlannedRR } from "../lib/plan-risk";
 import {
+  applyLayeredEntryUpdate,
   authorizeLayeredEntry,
   parseLayeredEntryInput,
   validateLayeredEntry,
@@ -64,6 +65,39 @@ const riskInput = {
   sizingMode: "risk_percent" as const,
   noChase: true,
 };
+
+function samplePlanWithLayeredEntry(): TradePlan {
+  const layeredEntry = authorizeLayeredEntry(
+    {
+      executionMethod: "layered_limits",
+      sizingMode: "risk_percent",
+      authorizedRiskAmount: 100,
+      stopModel: "common",
+      commonStopPrice: 224,
+      primaryTargetPrice: 270,
+      limits: [
+        { price: 240, allocationPercent: 20, role: "starter" as const },
+        { price: 233, allocationPercent: 40, role: "preferred" as const },
+        { price: 228, allocationPercent: 40, role: "deep_pullback" as const },
+      ],
+    },
+    { primaryTargetPrice: 270, planStopPrice: 224 }
+  );
+  return {
+    id: "PLAN-LAYER-001",
+    ticker: "TSLA",
+    stockThesisId: "ST-TSLA-001",
+    status: "watching",
+    analysisTimeframes: ["1D"],
+    entryTimeframe: "1H",
+    plannedEntry: 240,
+    stopPrice: 224,
+    targetPrice: 270,
+    createdAt: "2026-09-01T00:00:00.000Z",
+    updatedAt: "2026-09-01T00:00:00.000Z",
+    layeredEntry,
+  };
+}
 
 {
   const d = computeAllLayerDerived(riskInput);
@@ -219,6 +253,20 @@ const riskInput = {
   assert.ok(forged.limits[0].derived);
   assert.ok(Math.abs(forged.limits[0].derived!.rr - 3) < 1e-9);
   assert.notEqual(forged.limits[0].derived!.plannedQuantity, 999);
+}
+
+// 16b: newly filled layers get a prospective recorded timestamp and keep it on later updates
+{
+  const plan = samplePlanWithLayeredEntry();
+  const first = applyLayeredEntryUpdate(plan, { filledThroughIndex: 0 });
+  assert.ok(first.plan?.layeredEntry?.limits[0].fillRecordedAt);
+  assert.equal(first.plan?.layeredEntry?.limits[1].fillRecordedAt, undefined);
+
+  const firstStamp = first.plan!.layeredEntry!.limits[0].fillRecordedAt;
+  const second = applyLayeredEntryUpdate(first.plan!, { filledThroughIndex: 1 });
+  assert.equal(second.plan?.layeredEntry?.limits[0].fillRecordedAt, firstStamp);
+  assert.ok(second.plan?.layeredEntry?.limits[1].fillRecordedAt);
+  assert.equal(second.plan?.layeredEntry?.limits[2].fillRecordedAt, undefined);
 }
 
 // Default risk budget constant

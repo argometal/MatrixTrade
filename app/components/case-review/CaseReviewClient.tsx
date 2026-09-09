@@ -1,6 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useMemo, useState } from "react";
+import type { FocusedCaseReport } from "@/lib/focused-case-report";
+import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
 import type { ThesisCase } from "@/lib/thesis-case-types";
 import type { MarketRealityViewModel } from "@/lib/market-reality-types";
 import type { ExAnteLegacyPacket } from "@/lib/market-reality";
@@ -22,6 +25,30 @@ function Field({
       <dd className="text-sm text-zinc-200 whitespace-pre-wrap">{value}</dd>
     </div>
   );
+}
+
+function formatMaybeNumber(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return Number(value.toFixed(4)).toString();
+}
+
+function formatMaybeR(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  const sign = value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}R`;
+}
+
+function formatMaybeDurationMs(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value) || value < 0) return "—";
+  const totalMinutes = Math.round(value / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+  return parts.join(" ");
 }
 
 function T0EvidencePanel({ c }: { c: ThesisCase }) {
@@ -398,16 +425,172 @@ function EvaluationPanel({ e }: { e: CaseEvaluation }) {
   );
 }
 
+function OpportunityPathPanel({
+  report,
+}: {
+  report: FocusedCaseReport;
+}) {
+  const path = report.opportunityConsumption;
+  if (!path.available) {
+    return (
+      <p className="text-sm text-zinc-500">
+        {path.reason ?? "Opportunity path is not available for this Case."}
+      </p>
+    );
+  }
+
+  return (
+    <div className="space-y-4" data-case-opportunity-path>
+      <dl className="space-y-2">
+        <Field label="Planned risk" value={formatMaybeNumber(path.plannedRiskPrice)} />
+        <Field
+          label="Favorable displacement"
+          value={
+            path.favorableDisplacementR == null
+              ? formatMaybeNumber(path.favorableDisplacementPrice)
+              : `${formatMaybeNumber(path.favorableDisplacementPrice)} (${formatMaybeR(
+                  path.favorableDisplacementR
+                )} from original frozen risk)`
+          }
+        />
+        <Field
+          label="Peak after decision"
+          value={
+            path.maxFavorablePrice == null
+              ? null
+              : `${formatMaybeNumber(path.maxFavorablePrice)}${
+                  path.maxFavorableAt ? ` @ ${path.maxFavorableAt}` : ""
+                }`
+          }
+        />
+        <Field
+          label="Pullback after peak"
+          value={
+            path.subsequentPullbackPrice == null
+              ? null
+              : `${formatMaybeNumber(path.subsequentPullbackPrice)} (${formatMaybeR(
+                  path.subsequentPullbackR
+                )})`
+          }
+        />
+        <Field
+          label="Retested original entry"
+          value={
+            path.retestedOriginalEntryAfterPeak == null
+              ? null
+              : path.retestedOriginalEntryAfterPeak
+                ? "yes"
+                : "no"
+          }
+        />
+        <Field
+          label="Restored R:R on deepest pullback"
+          value={formatMaybeR(path.restoredRRAtDeepestPullback)}
+        />
+        <Field
+          label="Late-entry geometry"
+          value={`${path.lateEntryGeometryAvailable ? "available" : "unavailable"}${
+            path.lateEntryGeometryReason ? ` · ${path.lateEntryGeometryReason}` : ""
+          }`}
+        />
+      </dl>
+
+      {path.checkpoints.length > 0 ? (
+        <div className="overflow-x-auto rounded-2xl border border-zinc-800">
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-zinc-800 text-[10px] uppercase tracking-wide text-zinc-500">
+              <tr>
+                <th className="px-3 py-2 font-medium">Checkpoint</th>
+                <th className="px-3 py-2 font-medium">Reached</th>
+                <th className="px-3 py-2 font-medium">After crossing</th>
+                <th className="px-3 py-2 font-medium">Pullback / retest</th>
+                <th className="px-3 py-2 font-medium">After path</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {path.checkpoints.map((checkpoint) => (
+                <tr
+                  key={checkpoint.thresholdR}
+                  className="bg-zinc-950/40"
+                  data-case-opportunity-checkpoint={checkpoint.thresholdR}
+                >
+                  <td className="px-3 py-2 text-zinc-100">
+                    {formatMaybeR(checkpoint.thresholdR)} at{" "}
+                    {formatMaybeNumber(checkpoint.thresholdPrice)}
+                  </td>
+                  <td className="px-3 py-2 text-zinc-300">
+                    {checkpoint.reached ? `yes · ${checkpoint.reachedAt ?? "—"}` : "no"}
+                  </td>
+                  <td className="px-3 py-2 text-zinc-300">
+                    {checkpoint.subsequentMfeR == null && checkpoint.subsequentMaeR == null
+                      ? "—"
+                      : `MFE ${formatMaybeR(checkpoint.subsequentMfeR)} · MAE ${formatMaybeR(
+                          checkpoint.subsequentMaeR
+                        )}`}
+                  </td>
+                  <td className="px-3 py-2 text-zinc-300">
+                    {checkpoint.pullbackDepthR == null
+                      ? checkpoint.retestedOriginalEntry == null
+                        ? "—"
+                        : checkpoint.retestedOriginalEntry
+                          ? "retested original entry"
+                          : "no retest observed"
+                      : `${formatMaybeR(checkpoint.pullbackDepthR)} · ${
+                          checkpoint.retestedOriginalEntry == null
+                            ? "retest —"
+                            : checkpoint.retestedOriginalEntry
+                              ? "retest yes"
+                              : "retest no"
+                        } · ${formatMaybeDurationMs(checkpoint.timeToDeepestPullbackMs)}`}
+                  </td>
+                  <td className="px-3 py-2 text-zinc-400">
+                    target{" "}
+                    {checkpoint.targetReachedAfterThreshold == null
+                      ? "—"
+                      : checkpoint.targetReachedAfterThreshold
+                        ? "yes"
+                        : "no"}
+                    {" · "}
+                    stop{" "}
+                    {checkpoint.stopReachedAfterThreshold == null
+                      ? "—"
+                      : checkpoint.stopReachedAfterThreshold
+                        ? "yes"
+                        : "no"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : null}
+
+      <p className="text-xs text-zinc-500">
+        Observational only. Opportunity Path describes what happened after the original
+        decision. It does not imply late-entry geometry, recommendations, or attribution.
+      </p>
+      {path.checkpointOrderingLimitation ? (
+        <p className="text-xs text-zinc-500">
+          Resolution note: {path.checkpointOrderingLimitation}
+        </p>
+      ) : null}
+    </div>
+  );
+}
+
 /**
  * Case review — T0, Reality, Outcome, Evaluation all visible when possessed.
  * No Blind/Reveal ceremony. T0 is never rewritten from live Stock File.
  */
 export function CaseReviewClient({
   thesisCase,
+  focusedCaseReport,
   marketReality,
   evaluation,
+  caseSpine,
 }: {
   thesisCase: ThesisCase;
+  focusedCaseReport: FocusedCaseReport | null;
   marketReality: {
     exAnte: ExAnteLegacyPacket | null;
     primary: MarketRealityViewModel;
@@ -415,14 +598,59 @@ export function CaseReviewClient({
     errors: string[];
   } | null;
   evaluation: CaseEvaluation;
+  caseSpine: InsightsCaseRow[];
 }) {
   const c = thesisCase;
+  const [snapshotBusy, setSnapshotBusy] = useState(false);
+  const [snapshotCopied, setSnapshotCopied] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [snapshotPreview, setSnapshotPreview] = useState<string | null>(null);
   const thesisHref = c.identity.stockThesisId
     ? mxtPath(`/stock-theses/${c.identity.stockThesisId}`)
     : null;
   const scoutHref = mxtPath(
     `/scout?plan=${encodeURIComponent(c.identity.anchorPlanId)}`
   );
+  const insightsHref = mxtPath(
+    `/stats?tab=pipeline&case=${encodeURIComponent(c.identity.anchorPlanId)}`
+  );
+  const snapshotCaseId = useMemo(() => {
+    const anchor = c.identity.anchorPlanId.trim().toUpperCase();
+    return (
+      caseSpine.find((row) => row.planId.trim().toUpperCase() === anchor)?.caseId ??
+      c.identity.anchorPlanId
+    );
+  }, [c.identity.anchorPlanId, caseSpine]);
+
+  async function copySnapshotForAi() {
+    setSnapshotBusy(true);
+    setSnapshotCopied(false);
+    setSnapshotError(null);
+    setSnapshotPreview(null);
+    try {
+      const res = await fetch(
+        mxtPath(`/api/matrix/case-snapshot?case=${encodeURIComponent(snapshotCaseId)}`),
+        { cache: "no-store" }
+      );
+      if (!res.ok) {
+        const text = await res.text();
+        throw new Error(text || `Snapshot request failed (${res.status})`);
+      }
+      const text = await res.text();
+      try {
+        await navigator.clipboard.writeText(text);
+        setSnapshotCopied(true);
+        window.setTimeout(() => setSnapshotCopied(false), 2000);
+      } catch {
+        setSnapshotPreview(text);
+        setSnapshotError("Clipboard unavailable — selected Case Profile snapshot generated below for manual copy.");
+      }
+    } catch (error) {
+      setSnapshotError(error instanceof Error ? error.message : "Snapshot copy failed");
+    } finally {
+      setSnapshotBusy(false);
+    }
+  }
 
   return (
     <div className="mx-auto max-w-3xl space-y-8 px-4 py-8">
@@ -440,11 +668,23 @@ export function CaseReviewClient({
             Scout
           </Link>
           <span className="mx-1.5">→</span>
-          <span className="text-zinc-500">Case</span>
+          <span className="text-zinc-500">Plan / Case</span>
         </p>
         <div className="flex flex-wrap items-baseline justify-between gap-2">
-          <h1 className="text-lg font-semibold text-zinc-100">Case</h1>
+          <h1 className="text-lg font-semibold text-zinc-100">Plan / Case</h1>
           <div className="flex flex-wrap gap-3 text-sm">
+            <button
+              type="button"
+              onClick={() => void copySnapshotForAi()}
+              disabled={snapshotBusy}
+              className="rounded-lg border border-violet-500/40 bg-violet-500/10 px-3 py-1.5 text-violet-200 hover:bg-violet-500/20 disabled:cursor-wait disabled:opacity-70"
+            >
+              {snapshotCopied
+                ? "Copied Snapshot for AI"
+                : snapshotBusy
+                  ? "Copying Snapshot for AI…"
+                  : "Copy Snapshot for AI"}
+            </button>
             {thesisHref ? (
               <Link
                 href={thesisHref}
@@ -456,6 +696,9 @@ export function CaseReviewClient({
             <Link href={scoutHref} className="text-zinc-400 hover:text-zinc-200">
               Back to Scout
             </Link>
+            <Link href={insightsHref} className="text-zinc-400 hover:text-zinc-200">
+              Focus in Insights
+            </Link>
           </div>
         </div>
         <p className="text-sm text-zinc-400">
@@ -465,6 +708,12 @@ export function CaseReviewClient({
           {c.identity.ticker} · {c.identity.anchorPlanId}
           {c.identity.stockThesisId ? ` · ${c.identity.stockThesisId}` : ""}
         </p>
+        <p className="text-xs text-zinc-500">
+          Copy Snapshot for AI exports the selected Case Profile, not the surrounding related-case list.
+        </p>
+        {snapshotError ? (
+          <p className="text-xs text-rose-400">{snapshotError}</p>
+        ) : null}
         <dl className="grid gap-1 text-xs text-zinc-500 sm:grid-cols-2">
           <div>
             T0: {c.identity.t0 ?? "—"} ({c.temporalIntegrity.t0Source})
@@ -491,6 +740,22 @@ export function CaseReviewClient({
           </div>
         </dl>
       </header>
+
+      {snapshotPreview ? (
+        <section className="space-y-3 rounded-xl border border-violet-800/60 bg-violet-950/20 p-4">
+          <div>
+            <h2 className="text-sm font-medium text-violet-100">Case Profile Snapshot</h2>
+            <p className="mt-1 text-xs text-violet-200/80">
+              Clipboard unavailable in this browser context. Copy the generated snapshot for the selected Case Profile below.
+            </p>
+          </div>
+          <textarea
+            readOnly
+            value={snapshotPreview}
+            className="min-h-[20rem] w-full rounded-lg border border-violet-700/50 bg-zinc-950/80 p-3 font-mono text-xs leading-5 text-zinc-100"
+          />
+        </section>
+      ) : null}
 
       <section className="space-y-3">
         <h2 className="text-sm font-medium text-zinc-200">
@@ -525,6 +790,21 @@ export function CaseReviewClient({
           Execution / no-trade and canonical result evidence.
         </p>
         <OutcomePanel c={c} />
+      </section>
+
+      <section className="space-y-3 border-t border-zinc-800 pt-6">
+        <h2 className="text-sm font-medium text-zinc-200">Opportunity Path</h2>
+        <p className="text-xs text-zinc-500">
+          What happened after the original decision under preserved Market Reality,
+          using the existing frozen plan geometry where available.
+        </p>
+        {focusedCaseReport ? (
+          <OpportunityPathPanel report={focusedCaseReport} />
+        ) : (
+          <p className="text-sm text-zinc-500">
+            Opportunity path is unavailable for this Case.
+          </p>
+        )}
       </section>
 
       <section className="space-y-3 border-t border-zinc-800 pt-6">

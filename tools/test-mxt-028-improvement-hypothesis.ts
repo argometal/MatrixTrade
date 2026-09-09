@@ -29,10 +29,11 @@ import type { MafExperiment } from "../lib/maf-types";
 import type { InsightsCaseRow } from "../lib/insights-case-spine-types";
 import type { TradePlan } from "../lib/plan-types";
 
-function samplePlan(id: string, ticker = "TSLA"): TradePlan {
+function samplePlan(id: string, ticker = "TSLA", playbookId?: string): TradePlan {
   return {
     id,
     ticker,
+    playbookId,
     status: "watching",
     analysisTimeframes: ["1H", "5m"],
     entryTimeframe: "5m",
@@ -138,8 +139,8 @@ async function runTests() {
     __setMafExperimentsStoreForTests([sampleMaf()], "memory");
     __setPlansStoreForTests(
       createMemoryPlansStore([
-        samplePlan("PLAN-009"),
-        samplePlan("PLAN-010"),
+        samplePlan("PLAN-009", "TSLA", "PB-1"),
+        samplePlan("PLAN-010", "TSLA", "PB-1"),
       ])
     );
 
@@ -204,6 +205,45 @@ async function runTests() {
     assert.equal(all.length, 1);
   }
 
+  // 4b) Applicability gate: linked evidence must match canonical ticker/playbook context
+  {
+    __setImprovementHypothesesStoreForTests([], "memory");
+    __setMafExperimentsStoreForTests([
+      sampleMaf({ planId: "PLAN-020", playbookId: "PB-KEEP" }),
+    ], "memory");
+    __setPlansStoreForTests(
+      createMemoryPlansStore([
+        samplePlan("PLAN-020", "TSLA", "PB-KEEP"),
+        samplePlan("PLAN-021", "TSLA", "PB-OTHER"),
+        samplePlan("PLAN-022", "AAPL", "PB-KEEP"),
+      ])
+    );
+
+    const created = await createImprovementHypothesisFromAcceptedMaf({
+      originPlanId: "PLAN-020",
+    });
+    assert.ok(created.hypothesis);
+    await authorizeImprovementHypothesisForTesting(created.hypothesis!.id);
+
+    const wrongPlaybook = await linkPlanToImprovementHypothesis({
+      hypothesisId: created.hypothesis!.id,
+      planId: "PLAN-021",
+    });
+    assert.ok(
+      wrongPlaybook.errors?.some((e) => /playbook/i.test(e)),
+      wrongPlaybook.errors?.join("; ")
+    );
+
+    const wrongTicker = await linkPlanToImprovementHypothesis({
+      hypothesisId: created.hypothesis!.id,
+      planId: "PLAN-022",
+    });
+    assert.ok(
+      wrongTicker.errors?.some((e) => /ticker/i.test(e)),
+      wrongTicker.errors?.join("; ")
+    );
+  }
+
   // 5) Unaccepted MAF blocked
   {
     __setImprovementHypothesesStoreForTests(
@@ -235,7 +275,7 @@ async function runTests() {
       "memory"
     );
     __setMafExperimentsStoreForTests([sampleMaf()], "memory");
-    __setPlansStoreForTests(createMemoryPlansStore([samplePlan("PLAN-009")]));
+    __setPlansStoreForTests(createMemoryPlansStore([samplePlan("PLAN-009", "TSLA", "PB-1")]));
 
     const prevRo = process.env.MXT_READ_ONLY;
     process.env.MXT_READ_ONLY = "1";

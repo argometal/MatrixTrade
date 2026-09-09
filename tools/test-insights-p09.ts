@@ -19,6 +19,7 @@ import type { InsightsCaseRow } from "../lib/insights-case-spine-types";
 import type { CaseDiagnosis } from "../lib/case-diagnosis-types";
 import type { MafExperiment } from "../lib/maf-types";
 import { EQ } from "../lib/case-diagnosis";
+import { derivePlanCaseLifecycle } from "../lib/plan-case-lifecycle";
 
 function stubDiagnosis(
   overrides: Partial<CaseDiagnosis> &
@@ -59,6 +60,21 @@ function stubRow(
     realizedPnL: null,
     counterfactualR: null,
     t0Available: overrides.t0Available ?? false,
+    lifecycle:
+      overrides.lifecycle ??
+      derivePlanCaseLifecycle({
+        caseOrigin: "modern",
+        planStatus: "expired",
+        t0Available: overrides.t0Available ?? false,
+        hasValidityWindow: true,
+        hasReality: false,
+        hasExecutionEvidence: false,
+        hasOutcomeEvidence: false,
+        classificationComplete: overrides.family !== "INDETERMINATE",
+        hasLearningEvidence: false,
+        hasAcceptedMaf: Boolean(overrides.mafAttribution),
+        rrCorrectableIssue: false,
+      }),
     missingInputs: overrides.missingInputs ?? ["t0"],
     diagnosisReason: overrides.diagnosis.reason,
     evidenceSummary: "",

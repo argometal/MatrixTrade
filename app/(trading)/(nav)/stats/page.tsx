@@ -12,6 +12,7 @@ import { computeMistakeStats } from "@/lib/review";
 import { getPlaybooks } from "@/lib/playbooks";
 import { getTrades } from "@/lib/storage";
 import { isMxtReadOnlyMode } from "@/lib/mxt-readonly";
+import { listMarketRealityWindowsForRead } from "@/lib/market-reality-store";
 
 function resolveInsightsTab(tabParam: string | undefined): InsightsTabId {
   if (tabParam === "journal") return "journal";
@@ -31,7 +32,7 @@ async function settled<T>(promise: Promise<T>, fallback: T): Promise<T> {
 export default async function StatsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ tab?: string }>;
+  searchParams: Promise<{ tab?: string; case?: string }>;
 }) {
   const [
     statsData,
@@ -44,6 +45,7 @@ export default async function StatsPage({
     mafExperiments,
     caseSpine,
     improvementHypotheses,
+    realityWindows,
   ] = await Promise.all([
     loadStatsPageData(),
     getTrades(),
@@ -55,6 +57,7 @@ export default async function StatsPage({
     settled(getMafExperiments(), []),
     settled(buildInsightsCaseSpine(), []),
     settled(getImprovementHypotheses(), []),
+    settled(listMarketRealityWindowsForRead(), []),
   ]);
 
   const closed = trades
@@ -80,9 +83,11 @@ export default async function StatsPage({
           observations,
           mafExperiments,
         }}
+        realityWindows={realityWindows}
         caseSpine={caseSpine}
         improvementHypotheses={improvementHypotheses}
         persistenceReadOnly={isMxtReadOnlyMode()}
+        initialFocusCaseId={params.case?.trim() || ""}
       />
     </Suspense>
   );

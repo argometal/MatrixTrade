@@ -40,6 +40,11 @@ export default async function StockThesisDetailPage({
   const activePlans = plans.filter(
     (p) => p.stockThesisId === thesis.id && isWarReadyScoutPlan(p)
   );
+  const historicalCasePlans = plans
+    .filter((p) => p.stockThesisId === thesis.id)
+    .sort((a, b) =>
+      (b.updatedAt ?? b.createdAt ?? "").localeCompare(a.updatedAt ?? a.createdAt ?? "")
+    );
   const snapshotItems = stockProfileSnapshotItems({
     thesis,
     playbooks,
@@ -66,6 +71,7 @@ export default async function StockThesisDetailPage({
       activeEvidence={activeEvidence}
       synthesis={synthesis}
       activePlans={activePlans}
+      historicalCasePlans={historicalCasePlans}
       snapshotItems={snapshotItems}
       analyzePackage={analyzePackage}
       latestMtaeAssessment={latestMtaeAssessment ?? null}

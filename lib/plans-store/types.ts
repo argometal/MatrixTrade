@@ -15,4 +15,9 @@ export interface PlansStore {
    * Never overwrites another plan.
    */
   insert(plan: TradePlan): Promise<void>;
+  /**
+   * Hard-delete by id. Used only for contaminated-record cleanup.
+   * Must not cascade to Stock Files / Trades / other Plans.
+   */
+  deleteById?(id: string): Promise<void>;
 }

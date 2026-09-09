@@ -17,10 +17,10 @@ console.log(
   "missing in samples",
   bridge.filter((t) => !sampleKeys.includes(t))
 );
-console.log("thesis-t0-repair sample?", !!AI_BLOCK_SAMPLES["thesis-t0-repair"]);
+console.log("thesis-t0 sample?", !!AI_BLOCK_SAMPLES["thesis-t0"]);
 
 const c = buildApplySchemaContract();
-console.log("acceptedTypes has thesis-t0-repair", c.acceptedTypes.includes("thesis-t0-repair"));
+console.log("acceptedTypes has thesis-t0", c.acceptedTypes.includes("thesis-t0"));
 console.log("schemaVersion", c.schemaVersion);
 console.log("mechanics revision", MATRIX_MECHANICS_REVISION);
 
@@ -33,7 +33,7 @@ writeFileSync(resolve(outDir, "_mxt-029-mta-mechanics.txt"), mechanicsText, "utf
 
 console.log("schema chars", schemaText.length);
 console.log("mechanics chars", mechanicsText.length);
-console.log("schema has thesis-t0-repair", schemaText.includes("thesis-t0-repair"));
+console.log("schema has thesis-t0", schemaText.includes("thesis-t0"));
 console.log("schema has repairKind=corrected", schemaText.includes("repairKind=corrected"));
 console.log("mechanics has stay immutable", mechanicsText.includes("stay immutable"));
 console.log(

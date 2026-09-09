@@ -7,6 +7,7 @@ import type { MafComponentId, MafExperiment } from "./maf-types";
 import { getPlanById } from "./plans";
 import { getPlansStore } from "./plans-store";
 import type { TradePlan } from "./plan-types";
+import { isDuplicateCreationPlan } from "./duplicate-observation";
 import {
   getImprovementHypotheses,
   getImprovementHypothesisById,
@@ -88,6 +89,30 @@ function suggestedFromMaf(
     maf.attributions.find((a) => a.component === maf.primaryDragComponent);
   const text = primary?.suggestedImprovement?.trim();
   return text || undefined;
+}
+
+function applicabilityErrorsForPlan(
+  hypothesis: ImprovementHypothesis,
+  plan: TradePlan
+): string[] {
+  const errors: string[] = [];
+  if (plan.ticker.toUpperCase() !== hypothesis.ticker.toUpperCase()) {
+    errors.push(
+      `Plan ${plan.id} ticker ${plan.ticker.toUpperCase()} does not match hypothesis ticker ${hypothesis.ticker.toUpperCase()}.`
+    );
+  }
+  if (hypothesis.playbookId) {
+    if (!plan.playbookId) {
+      errors.push(
+        `Plan ${plan.id} has no playbookId, so applicability against hypothesis playbook ${hypothesis.playbookId} cannot be verified canonically.`
+      );
+    } else if (plan.playbookId !== hypothesis.playbookId) {
+      errors.push(
+        `Plan ${plan.id} playbook ${plan.playbookId} does not match hypothesis playbook ${hypothesis.playbookId}.`
+      );
+    }
+  }
+  return errors;
 }
 
 export type CreateImprovementHypothesisInput = {
@@ -326,6 +351,17 @@ export async function linkPlanToImprovementHypothesis(input: {
 
   const plan = await getPlanById(planId);
   if (!plan) return { errors: [`Plan ${planId} not found.`] };
+  if (isDuplicateCreationPlan(plan)) {
+    return {
+      errors: [
+        `Plan ${planId} is duplicate_creation — retained historically but not independent confirming evidence.`,
+      ],
+    };
+  }
+  const applicabilityErrors = applicabilityErrorsForPlan(h, plan);
+  if (applicabilityErrors.length > 0) {
+    return { errors: applicabilityErrors };
+  }
 
   const now = new Date().toISOString();
   const evidencePlanIds = h.evidencePlanIds.some(

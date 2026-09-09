@@ -145,5 +145,21 @@ export function createSupabaseLearningOutcomesStore(): LearningOutcomesStore {
       for (const row of rows) out.push(await this.upsert(row));
       return out;
     },
+    async deleteById(id) {
+      assertMxtPersistenceWriteAllowed("learning_outcomes.delete");
+      const key = id.trim().toUpperCase();
+      const supabase = createSupabaseAdmin();
+      const { data, error } = await supabase
+        .from("learning_outcomes")
+        .delete()
+        .eq("id", key)
+        .select("id");
+      if (error) {
+        throw new Error(`Supabase learning_outcomes delete failed: ${error.message}`);
+      }
+      if (!data || data.length === 0) {
+        throw new Error(`Learning Outcome ${key} not found for delete.`);
+      }
+    },
   };
 }

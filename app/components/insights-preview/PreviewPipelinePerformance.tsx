@@ -1,7 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useMemo, useState } from "react";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
+import type { FocusedCaseReport } from "@/lib/focused-case-report";
 import {
   PIPELINE_OUTCOME_BUCKETS,
   PIPELINE_OUTCOME_BUCKET_LABELS,
@@ -44,6 +46,15 @@ import { PreviewImprovementPath } from "@/app/components/insights-preview/Previe
 import type { ImprovementHypothesis } from "@/lib/improvement-hypothesis-types";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { buildInsightsSnapshotBrief } from "@/lib/insights-snapshot";
+import { mxtPath } from "@/lib/mxt-paths";
+import { composeUnifiedSnapshot } from "@/lib/unified-snapshot-presentation";
+import { buildFocusCaseOption } from "@/lib/focus-case-option";
+import {
+  computeOpportunityParticipationComparison,
+  type OpportunityParticipationComparisonRow,
+} from "@/lib/opportunity-participation-comparison";
+import { computeOpportunitySequenceComparison } from "@/lib/opportunity-sequence-comparison";
+import type { MarketRealityCaseWindow } from "@/lib/market-reality-types";
 
 function formatR(value: number): string {
   const sign = value > 0 ? "+" : "";
@@ -66,6 +77,546 @@ function tone(value: number): string {
   return "text-zinc-300";
 }
 
+function valueTone(label: string, value: string | null | undefined): string {
+  if (!value) return "text-zinc-300";
+  if (
+    label.toLowerCase().includes("consistency") &&
+    value.toUpperCase() === "WRONG"
+  ) {
+    return "text-amber-300";
+  }
+  if (value.toLowerCase() === "missing") return "text-amber-300";
+  return "text-zinc-100";
+}
+
+function formatMaybeR(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return formatR(value);
+}
+
+function formatMaybeNumber(value: number | null | undefined, digits = 2): string {
+  if (value == null || !Number.isFinite(value)) return "—";
+  return Number(value.toFixed(digits)).toString();
+}
+
+function formatMaybeDurationMs(value: number | null | undefined): string {
+  if (value == null || !Number.isFinite(value) || value < 0) return "—";
+  const totalMinutes = Math.round(value / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+  const parts: string[] = [];
+  if (days > 0) parts.push(`${days}d`);
+  if (hours > 0) parts.push(`${hours}h`);
+  if (minutes > 0 || parts.length === 0) parts.push(`${minutes}m`);
+  return parts.join(" ");
+}
+
+function FieldGrid({
+  items,
+  columns = "sm:grid-cols-2 xl:grid-cols-3",
+}: {
+  items: Array<{ label: string; value: string; note?: string | null }>;
+  columns?: string;
+}) {
+  return (
+    <dl className={`grid gap-3 ${columns}`}>
+      {items.map((item) => (
+        <div
+          key={`${item.label}:${item.value}:${item.note ?? ""}`}
+          className="rounded-xl border border-zinc-800 bg-zinc-950/40 px-3 py-2"
+        >
+          <dt className="text-[10px] uppercase tracking-wide text-zinc-500">
+            {item.label}
+          </dt>
+          <dd className={`mt-1 text-sm ${valueTone(item.label, item.value)}`}>
+            {item.value}
+          </dd>
+          {item.note ? (
+            <p className="mt-1 text-[11px] leading-snug text-zinc-500">
+              {item.note}
+            </p>
+          ) : null}
+        </div>
+      ))}
+    </dl>
+  );
+}
+
+function FocusedCaseReportPanel({
+  report,
+  loading = false,
+  error = null,
+}: {
+  report: FocusedCaseReport | null;
+  loading?: boolean;
+  error?: string | null;
+}) {
+  if (loading) {
+    return (
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
+        <p className="text-sm text-zinc-500">Loading Case…</p>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="rounded-2xl border border-rose-900/40 bg-rose-950/20 p-4">
+        <p className="text-sm text-rose-200">{error}</p>
+      </section>
+    );
+  }
+
+  if (!report) {
+    return (
+      <section className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4">
+        <p className="text-sm text-zinc-500">Select a Case to load it here.</p>
+      </section>
+    );
+  }
+
+  const timelineItems = report.timeline.items.map((item) => ({
+    label: item.label,
+    value: item.value ?? "—",
+    note: item.note ?? null,
+  }));
+  const frozenPlanItems = [
+    { label: "Entry", value: String(report.frozenPlan.plannedEntry ?? "—") },
+    { label: "Original entry", value: String(report.frozenPlan.originalEntry ?? "—") },
+    { label: "Stop", value: String(report.frozenPlan.stopPrice ?? "—") },
+    { label: "Target", value: String(report.frozenPlan.targetPrice ?? "—") },
+    { label: "Support", value: String(report.frozenPlan.supportLevel ?? "—") },
+    {
+      label: "Recorded R:R",
+      value:
+        report.frozenPlan.recordedRR == null
+          ? "—"
+          : report.frozenPlan.recordedRR.toFixed(4),
+    },
+    {
+      label: "Geometric R:R",
+      value:
+        report.frozenPlan.geometricRR == null
+          ? "—"
+          : report.frozenPlan.geometricRR.toFixed(4),
+    },
+    {
+      label: "RR consistency",
+      value: report.frozenPlan.rrConsistency,
+      note:
+        report.frozenPlan.rrDifference == null
+          ? null
+          : `Difference ${report.frozenPlan.rrDifference}`,
+    },
+  ];
+  const realityItems = [
+    { label: "Entry reached", value: String(report.reality.entryReached ?? "—") },
+    { label: "Stop reached", value: String(report.reality.stopReached ?? "—") },
+    { label: "Target reached", value: String(report.reality.targetReached ?? "—") },
+    { label: "Event order", value: report.reality.eventOrder ?? "—" },
+    { label: "Reality relationship", value: report.reality.relationship ?? "—" },
+  ];
+  const executionItems = [
+    { label: "Trade linked", value: report.execution.tradeLinked ? "true" : "false" },
+    { label: "Trade", value: report.execution.tradeId ?? "—" },
+    {
+      label: "Execution occurred",
+      value: report.execution.executionOccurred ? "true" : "false",
+    },
+    { label: "No-execution reason", value: report.execution.nonExecutionReason ?? "—" },
+    { label: "Plan status", value: report.execution.planStatus ?? "—" },
+  ];
+  const accountingItems = [
+    { label: "Realized R", value: formatMaybeR(report.accounting.realizedR) },
+    {
+      label: "Counterfactual R",
+      value: formatMaybeR(report.accounting.counterfactualR),
+      note: "Planned path only. Never portfolio P/L.",
+    },
+    {
+      label: "Realized P/L",
+      value:
+        report.accounting.realizedPnL == null
+          ? "—"
+          : formatUsd(report.accounting.realizedPnL),
+    },
+  ];
+  const caseItems = [
+    { label: "Family", value: report.caseClassification.family ?? "—" },
+    { label: "Subtype", value: report.caseClassification.subtype ?? "—" },
+    { label: "Diagnosis", value: report.caseClassification.diagnosis ?? "—" },
+    { label: "Evaluation code", value: report.caseClassification.evaluationCode ?? "—" },
+    { label: "Decision quality", value: report.caseClassification.decisionQuality ?? "—" },
+    { label: "Execution quality", value: report.caseClassification.executionQuality ?? "—" },
+    {
+      label: "Reality relationship",
+      value: report.caseClassification.realityRelationship ?? "—",
+    },
+  ];
+  const integrityItems = [
+    { label: "T0 provenance", value: report.integrity.t0Provenance ?? "—" },
+    {
+      label: "Plan-backed",
+      value: report.integrity.missingPlan ? "false" : "true",
+    },
+    { label: "RR consistency", value: report.integrity.rrConsistency },
+  ];
+  const learningItems = [
+    {
+      label: "Learning Outcome",
+      value: report.learning.learningOutcomeId ?? "—",
+      note: report.learning.learningOutcomeKind ?? null,
+    },
+    {
+      label: "Observation",
+      value: report.learning.observationId ?? "—",
+      note: report.learning.observationKind ?? null,
+    },
+    {
+      label: "MAF",
+      value: report.learning.mafId ?? "—",
+      note:
+        [report.learning.mafStatus, report.learning.mafSource]
+          .filter(Boolean)
+          .join(" · ") || null,
+    },
+    {
+      label: "Primary drag",
+      value: report.learning.mafPrimaryDrag ?? "—",
+    },
+  ];
+  const improvementItems = [
+    { label: "Hypothesis", value: report.improvement.hypothesisId ?? "—" },
+    { label: "Target component", value: report.improvement.targetComponent ?? "—" },
+    { label: "Status", value: report.improvement.status ?? "—" },
+    {
+      label: "Evidence count",
+      value:
+        report.improvement.evidenceCount == null
+          ? "—"
+          : String(report.improvement.evidenceCount),
+    },
+    { label: "Verdict", value: report.improvement.verdict ?? "—" },
+  ];
+  const opportunityItems = [
+    {
+      label: "Planned risk",
+      value: formatMaybeNumber(report.opportunityConsumption.plannedRiskPrice),
+      note:
+        report.opportunityConsumption.plannedRiskPrice == null
+          ? null
+          : "Original entry minus stop.",
+    },
+    {
+      label: "Favorable displacement",
+      value: formatMaybeNumber(report.opportunityConsumption.favorableDisplacementPrice),
+      note:
+        report.opportunityConsumption.favorableDisplacementR == null
+          ? null
+          : `${formatMaybeR(report.opportunityConsumption.favorableDisplacementR)} from original-plan risk units without participation`,
+    },
+    {
+      label: "Peak price",
+      value: formatMaybeNumber(report.opportunityConsumption.maxFavorablePrice),
+      note: report.opportunityConsumption.maxFavorableAt,
+    },
+    {
+      label: "Pullback after peak",
+      value: formatMaybeNumber(report.opportunityConsumption.subsequentPullbackPrice),
+      note:
+        report.opportunityConsumption.subsequentPullbackR == null
+          ? report.opportunityConsumption.pullbackLowAfterPeakAt
+          : `${formatMaybeR(report.opportunityConsumption.subsequentPullbackR)} · low ${formatMaybeNumber(report.opportunityConsumption.pullbackLowAfterPeak)} @ ${report.opportunityConsumption.pullbackLowAfterPeakAt ?? "—"}`,
+    },
+    {
+      label: "Retested original entry",
+      value:
+        report.opportunityConsumption.retestedOriginalEntryAfterPeak == null
+          ? "—"
+          : report.opportunityConsumption.retestedOriginalEntryAfterPeak
+            ? "yes"
+            : "no",
+    },
+    {
+      label: "Restored R:R on pullback",
+      value: formatMaybeR(report.opportunityConsumption.restoredRRAtDeepestPullback),
+      note:
+        report.opportunityConsumption.restoredOriginalAsymmetryAfterPeak == null
+          ? null
+          : report.opportunityConsumption.restoredOriginalAsymmetryAfterPeak
+            ? "Recovered to original planned asymmetry or better."
+            : "Did not recover the original planned asymmetry.",
+    },
+    {
+      label: "Late-entry geometry",
+      value: report.opportunityConsumption.lateEntryGeometryAvailable ? "available" : "unavailable",
+      note: report.opportunityConsumption.lateEntryGeometryReason,
+    },
+  ];
+
+  return (
+    <section
+      className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+      data-focused-case-report={report.planId}
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <p className="text-lg font-semibold text-zinc-100">
+            {report.identity.ticker} · {report.planId} · {report.lifecycle.status}
+          </p>
+          {report.lifecycle.blockingLabels.length ? (
+            <p className="mt-1 text-sm text-amber-300">
+              Required information missing: {report.lifecycle.blockingLabels.join(", ")}
+            </p>
+          ) : (
+            <p className="mt-1 text-sm text-zinc-400">
+              Required information is present for analysis.
+            </p>
+          )}
+        </div>
+        <div className="flex flex-wrap gap-2 text-xs">
+          <Link
+            href={report.caseHref}
+            className="rounded-lg border border-zinc-700 px-3 py-1.5 text-zinc-300 hover:border-zinc-500 hover:text-zinc-100"
+          >
+            Open Case Review
+          </Link>
+          <Link
+            href={mxtPath(`/stats?tab=pipeline&case=${encodeURIComponent(report.planId)}`)}
+            className="rounded-lg border border-violet-700/60 px-3 py-1.5 text-violet-300 hover:border-violet-500"
+          >
+            Stable link
+          </Link>
+        </div>
+      </div>
+
+      <div className="mt-4 space-y-5">
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Case
+          </h3>
+          <FieldGrid
+            items={[
+              { label: "Stock File", value: report.identity.stockThesisId ?? "—" },
+              {
+                label: "Playbook",
+                value: report.identity.playbookName ?? report.identity.playbookId ?? "—",
+                note: report.identity.playbookId ?? null,
+              },
+              {
+                label: "Decision",
+                value: report.identity.decisionVerdict ?? "—",
+                note: report.identity.decisionId ?? null,
+              },
+            ]}
+          />
+        </div>
+
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Timeline
+          </h3>
+          <FieldGrid items={timelineItems} />
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Frozen Plan
+            </h3>
+            {report.frozenPlan.available ? (
+              <FieldGrid items={frozenPlanItems} columns="sm:grid-cols-2" />
+            ) : (
+              <p className="mt-2 text-sm text-zinc-500">
+                No plan-backed frozen geometry exists for this Case.
+              </p>
+            )}
+          </div>
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Reality
+            </h3>
+            <FieldGrid
+              items={realityItems}
+              columns="sm:grid-cols-2"
+            />
+            {report.reality.evidence ? (
+              <p className="mt-2 text-[11px] text-zinc-500">
+                Evidence: {report.reality.evidence}
+              </p>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Execution
+            </h3>
+            <FieldGrid items={executionItems} columns="sm:grid-cols-2" />
+          </div>
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Accounting
+            </h3>
+            <FieldGrid items={accountingItems} columns="sm:grid-cols-2" />
+          </div>
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Deterministic Case
+            </h3>
+            <FieldGrid items={caseItems} columns="sm:grid-cols-2" />
+            {report.caseClassification.diagnosisReason ? (
+              <p className="mt-2 text-[11px] text-zinc-500">
+                Reason: {report.caseClassification.diagnosisReason}
+              </p>
+            ) : null}
+          </div>
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Integrity
+            </h3>
+            <FieldGrid items={integrityItems} columns="sm:grid-cols-2" />
+            {report.integrity.warnings.length > 0 ? (
+              <ul className="mt-2 space-y-1 text-[11px] text-amber-300">
+                {report.integrity.warnings.map((warning) => (
+                  <li key={warning}>Warning: {warning}</li>
+                ))}
+              </ul>
+            ) : null}
+            {report.integrity.unresolved.filter((warning) => {
+              const normalized = warning.toLowerCase();
+              return !normalized.includes("no t0 freeze") && !normalized.includes("missing case inputs: t0_freeze");
+            }).length > 0 ? (
+              <ul className="mt-2 space-y-1 text-[11px] text-zinc-500">
+                {report.integrity.unresolved
+                  .filter((warning) => {
+                    const normalized = warning.toLowerCase();
+                    return (
+                      !normalized.includes("no t0 freeze") &&
+                      !normalized.includes("missing case inputs: t0_freeze")
+                    );
+                  })
+                  .map((warning) => (
+                  <li key={warning}>Unresolved: {warning}</li>
+                ))}
+              </ul>
+            ) : null}
+          </div>
+        </div>
+
+        <div className="grid gap-5 xl:grid-cols-2">
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Learning
+            </h3>
+            <FieldGrid items={learningItems} columns="sm:grid-cols-2" />
+          </div>
+          <div>
+            <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+              Improvement
+            </h3>
+            <FieldGrid items={improvementItems} columns="sm:grid-cols-2" />
+          </div>
+        </div>
+
+        <div>
+          <h3 className="text-[11px] font-semibold uppercase tracking-wide text-zinc-500">
+            Opportunity Path
+          </h3>
+          {report.opportunityConsumption.available ? (
+            <>
+              <FieldGrid
+                items={opportunityItems}
+                columns="sm:grid-cols-2 xl:grid-cols-3"
+              />
+              {report.opportunityConsumption.checkpoints.length > 0 ? (
+                <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+                  <table className="min-w-full text-left text-sm">
+                    <thead className="border-b border-zinc-800 text-[10px] uppercase tracking-wide text-zinc-500">
+                      <tr>
+                        <th className="px-3 py-2 font-medium">Checkpoint</th>
+                        <th className="px-3 py-2 font-medium">Reached</th>
+                        <th className="px-3 py-2 font-medium">Path after crossing</th>
+                        <th className="px-3 py-2 font-medium">Pullback</th>
+                        <th className="px-3 py-2 font-medium">Retest entry</th>
+                        <th className="px-3 py-2 font-medium">Restored R:R</th>
+                        <th className="px-3 py-2 font-medium">After path</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-zinc-800">
+                      {report.opportunityConsumption.checkpoints.map((checkpoint) => (
+                        <tr
+                          key={checkpoint.thresholdR}
+                          className="bg-zinc-950/40"
+                          data-opportunity-checkpoint={checkpoint.thresholdR}
+                        >
+                          <td className="px-3 py-2 text-zinc-100">
+                            {formatMaybeR(checkpoint.thresholdR)} at {formatMaybeNumber(checkpoint.thresholdPrice)}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300">
+                            {checkpoint.reached ? `yes · ${checkpoint.reachedAt ?? "—"}` : "no"}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300">
+                            {checkpoint.subsequentMfeR == null && checkpoint.subsequentMaeR == null
+                              ? "—"
+                              : `MFE ${formatMaybeR(checkpoint.subsequentMfeR)} · MAE ${formatMaybeR(checkpoint.subsequentMaeR)}`}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300">
+                            {checkpoint.pullbackDepthR == null
+                              ? "—"
+                              : `${formatMaybeR(checkpoint.pullbackDepthR)} · low ${formatMaybeNumber(checkpoint.pullbackLowAfterThreshold)} · ${formatMaybeDurationMs(checkpoint.timeToDeepestPullbackMs)}`}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300">
+                            {checkpoint.retestedOriginalEntry == null
+                              ? "—"
+                              : checkpoint.retestedOriginalEntry
+                                ? "yes"
+                                : "no"}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-300">
+                            {formatMaybeR(checkpoint.restoredRRAtPullback)}
+                          </td>
+                          <td className="px-3 py-2 text-zinc-400">
+                            target {checkpoint.targetReachedAfterThreshold == null ? "—" : checkpoint.targetReachedAfterThreshold ? "yes" : "no"}
+                            {" · "}
+                            stop {checkpoint.stopReachedAfterThreshold == null ? "—" : checkpoint.stopReachedAfterThreshold ? "yes" : "no"}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              ) : null}
+              <p className="mt-2 text-[11px] text-zinc-500">
+                Observational only. No execution keeps realized R at 0R. Checkpoints are editable hypotheses, not automatic trading rules.
+              </p>
+              {report.opportunityConsumption.checkpointOrderingLimitation ? (
+                <p className="mt-1 text-[11px] text-zinc-500">
+                  Resolution note: {report.opportunityConsumption.checkpointOrderingLimitation}
+                </p>
+              ) : null}
+              {report.opportunityConsumption.excludedFromAggregates ? (
+                <p className="mt-1 text-[11px] text-amber-300">
+                  This path is excluded from aggregate learning weight: {report.opportunityConsumption.exclusionReason ?? "excluded"}.
+                </p>
+              ) : null}
+            </>
+          ) : (
+            <p className="mt-2 text-sm text-zinc-500">
+              {report.opportunityConsumption.reason ?? "Opportunity path is not available for this Case."}
+            </p>
+          )}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function familyChip(row: InsightsCaseRow): string {
   return caseFamilyLabel(row.family);
 }
@@ -81,6 +632,11 @@ function diagnosisChip(row: InsightsCaseRow): string {
     return NO_ENTRY_DIAGNOSIS_LABEL.INDETERMINATE;
   }
   return "—";
+}
+
+function comparisonDiagnosisLabel(row: OpportunityParticipationComparisonRow): string {
+  if (row.noEntryDiagnosis) return noEntryDiagnosisLabel(row.noEntryDiagnosis);
+  return CASE_FAMILY_LABEL[row.caseFamily] ?? row.caseFamily;
 }
 
 function countBy<T extends string>(
@@ -164,16 +720,20 @@ const DQ_OPTIONS: DecisionQuality[] = [
 
 export function PreviewPipelinePerformance({
   input,
+  realityWindows,
   playbooks,
   caseSpine = [],
   improvementHypotheses = [],
   persistenceReadOnly = false,
+  initialFocusCaseId = "",
 }: {
   input: Omit<PipelinePerformanceInput, "filters">;
+  realityWindows: MarketRealityCaseWindow[];
   playbooks: PipelinePerformancePlaybookOption[];
   caseSpine?: InsightsCaseRow[];
   improvementHypotheses?: ImprovementHypothesis[];
   persistenceReadOnly?: boolean;
+  initialFocusCaseId?: string;
 }) {
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -196,8 +756,16 @@ export function PreviewPipelinePerformance({
     DecisionQuality | "all"
   >("all");
   const [filtersOpen, setFiltersOpen] = useState(false);
-  const [focusPlanId, setFocusPlanId] = useState("");
+  const [focusPlanId, setFocusPlanId] = useState(initialFocusCaseId);
   const [snapshotCopied, setSnapshotCopied] = useState(false);
+  const [snapshotBusy, setSnapshotBusy] = useState(false);
+  const [snapshotError, setSnapshotError] = useState<string | null>(null);
+  const [focusedCaseReport, setFocusedCaseReport] = useState<FocusedCaseReport | null>(null);
+  const [focusedCaseReportBusy, setFocusedCaseReportBusy] = useState(false);
+  const [focusedCaseReportError, setFocusedCaseReportError] = useState<string | null>(null);
+  const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
 
   const filters: PipelinePerformanceFilters = useMemo(
     () => ({
@@ -249,18 +817,6 @@ export function PreviewPipelinePerformance({
     return [...set].sort();
   }, [input, caseSpine]);
 
-  const focusPlanOptions = useMemo(() => {
-    const byId = new Map<string, InsightsCaseRow>();
-    for (const row of caseSpine) {
-      const id = row.planId.toUpperCase();
-      if (!byId.has(id)) byId.set(id, row);
-    }
-    return [...byId.values()].sort((a, b) => {
-      const t = a.ticker.localeCompare(b.ticker);
-      return t !== 0 ? t : a.planId.localeCompare(b.planId);
-    });
-  }, [caseSpine]);
-
   const planStatusById = useMemo(() => {
     const map = new Map<string, string>();
     for (const p of input.plans) {
@@ -268,6 +824,38 @@ export function PreviewPipelinePerformance({
     }
     return map;
   }, [input.plans]);
+
+  const focusPlanOptions = useMemo(() => {
+    const byId = new Map<string, InsightsCaseRow>();
+    for (const row of caseSpine) {
+      const id = row.planId.toUpperCase();
+      if (!byId.has(id)) byId.set(id, row);
+    }
+    return [...byId.values()]
+      .map((row) =>
+        buildFocusCaseOption({
+          row,
+          planStatus: planStatusById.get(row.planId.toUpperCase()) ?? null,
+        })
+      )
+      .filter((row): row is NonNullable<typeof row> => Boolean(row))
+      .sort((a, b) => {
+        const t = a.label.localeCompare(b.label);
+        return t !== 0 ? t : a.value.localeCompare(b.value);
+      });
+  }, [caseSpine, planStatusById]);
+
+  const focusPlanRowsById = useMemo(() => {
+    const map = new Map<string, InsightsCaseRow>();
+    for (const row of caseSpine) {
+      const option = buildFocusCaseOption({
+        row,
+        planStatus: planStatusById.get(row.planId.toUpperCase()) ?? null,
+      });
+      if (option) map.set(option.value.toUpperCase(), row);
+    }
+    return map;
+  }, [caseSpine, planStatusById]);
 
   const fvl = caseView.aggregate.falseVirtuousLoop;
   const condition = caseView.aggregate.currentCondition;
@@ -375,6 +963,186 @@ export function PreviewPipelinePerformance({
     ]
   );
 
+  const pipelineContextSnapshotText = useMemo(
+    () =>
+      buildInsightsSnapshotBrief({
+        pipelineInput: input,
+        caseSpine,
+        pipelineFilters: filters,
+        caseFilters: {
+          from: filters.from,
+          to: filters.to,
+          ticker: filters.ticker,
+          playbookId: filters.playbookId,
+          caseFamily,
+          noEntryDiagnosis,
+          decisionQuality,
+        },
+        playbookNames,
+      }),
+    [input, caseSpine, filters, caseFamily, noEntryDiagnosis, decisionQuality, playbookNames]
+  );
+
+  const selectedFocusRow = useMemo(
+    () =>
+      focusPlanRowsById.get(focusPlanId.trim().toUpperCase()) ?? null,
+    [focusPlanId, focusPlanRowsById]
+  );
+
+  const opportunityComparison = useMemo(
+    () =>
+      computeOpportunityParticipationComparison({
+        source: {
+          plans: input.plans,
+          trades: input.trades,
+          learningOutcomes: input.learningOutcomes,
+          caseSpine,
+          realityWindows,
+        },
+        filters: {
+          from: filters.from,
+          to: filters.to,
+          ticker: filters.ticker,
+          playbookId: filters.playbookId,
+        },
+      }),
+    [caseSpine, filters.from, filters.playbookId, filters.ticker, filters.to, input.learningOutcomes, input.plans, input.trades, realityWindows]
+  );
+
+  const focusedComparisonRow = useMemo(
+    () =>
+      focusPlanId.trim()
+        ? opportunityComparison.rows.find(
+            (row) => row.planId.toUpperCase() === focusPlanId.trim().toUpperCase()
+          ) ?? null
+        : null,
+    [focusPlanId, opportunityComparison.rows]
+  );
+
+  const opportunitySequence = useMemo(
+    () =>
+      computeOpportunitySequenceComparison({
+        source: {
+          plans: input.plans,
+          trades: input.trades,
+          learningOutcomes: input.learningOutcomes,
+          caseSpine,
+        },
+        filters: {
+          from: filters.from,
+          to: filters.to,
+          ticker: filters.ticker,
+          playbookId: filters.playbookId,
+        },
+      }),
+    [caseSpine, filters.from, filters.playbookId, filters.ticker, filters.to, input.learningOutcomes, input.plans, input.trades]
+  );
+
+  useEffect(() => {
+    const requested = initialFocusCaseId.trim();
+    if (!requested) {
+      setFocusPlanId("");
+      return;
+    }
+    const match =
+      focusPlanOptions.find(
+        (option) => option.value.toUpperCase() === requested.toUpperCase()
+      ) ?? null;
+    if (match) {
+      setFocusPlanId(match.value);
+      return;
+    }
+    setFocusPlanId("");
+    const params = new URLSearchParams(searchParams.toString());
+    params.delete("case");
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }, [focusPlanOptions, initialFocusCaseId, pathname, router, searchParams]);
+
+  useEffect(() => {
+    setSnapshotError(null);
+    setSnapshotCopied(false);
+  }, [focusPlanId]);
+
+  useEffect(() => {
+    const caseId = focusPlanId.trim();
+    if (!caseId) {
+      setFocusedCaseReport(null);
+      setFocusedCaseReportError(null);
+      setFocusedCaseReportBusy(false);
+      return;
+    }
+    let cancelled = false;
+    setFocusedCaseReportBusy(true);
+    setFocusedCaseReportError(null);
+    fetch(
+      mxtPath(`/api/matrix/case-report?case=${encodeURIComponent(caseId)}`),
+      {
+        method: "GET",
+        credentials: "same-origin",
+        cache: "no-store",
+      }
+    )
+      .then(async (response) => {
+        if (!response.ok) {
+          const detail = await response.text();
+          throw new Error(detail || `HTTP ${response.status}`);
+        }
+        return (await response.json()) as FocusedCaseReport;
+      })
+      .then((report) => {
+        if (!cancelled) setFocusedCaseReport(report);
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setFocusedCaseReport(null);
+        setFocusedCaseReportError(
+          error instanceof Error
+            ? error.message
+            : "Case could not be loaded."
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setFocusedCaseReportBusy(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [focusPlanId]);
+
+  function updateFocusCase(nextCaseId: string) {
+    setFocusPlanId(nextCaseId);
+    const params = new URLSearchParams(searchParams.toString());
+    if (nextCaseId.trim()) {
+      params.set("case", nextCaseId.trim());
+      params.set("tab", "pipeline");
+    } else {
+      params.delete("case");
+    }
+    const query = params.toString();
+    router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
+  }
+
+  async function fetchSnapshotText(kind: "case"): Promise<string | null> {
+    const caseId = focusPlanId.trim();
+    if (!caseId) return null;
+    const response = await fetch(
+      mxtPath(
+        `/api/matrix/case-snapshot?case=${encodeURIComponent(caseId)}&kind=${kind}`
+      ),
+      {
+      method: "GET",
+      credentials: "same-origin",
+      cache: "no-store",
+      }
+    );
+    if (!response.ok) {
+      const detail = await response.text();
+      throw new Error(detail || `HTTP ${response.status}`);
+    }
+    return response.text();
+  }
+
   return (
     <div
       className="space-y-6 px-4 py-4 lg:px-6 lg:py-6"
@@ -382,68 +1150,94 @@ export function PreviewPipelinePerformance({
     >
       <div className="flex flex-wrap items-end justify-between gap-3">
         <p className="min-w-0 flex-1 text-sm text-zinc-500">
-          Canonical Learning surface: Plan → T0 → Reality → Case equation →
-          diagnosis. Realized P/L stays separate from counterfactual Scout R.
-          Missed Scouts are never counted as Trade wins or losses.
+          Canonical Learning surface. Focus a Case, inspect state, copy the snapshot you need.
         </p>
         <div className="flex shrink-0 flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-[10px] uppercase tracking-wide text-zinc-500">
-            Focus plan
+            Focus case
             <select
               value={focusPlanId}
-              onChange={(e) => setFocusPlanId(e.target.value)}
+              onChange={(e) => updateFocusCase(e.target.value)}
               className="min-h-9 min-w-[14rem] max-w-[22rem] rounded-lg border border-zinc-700 bg-zinc-950 px-2 py-1.5 text-sm normal-case text-zinc-200"
               data-testid="improvement-focus-plan"
             >
-              <option value="">Select plan…</option>
-              {focusPlanOptions.map((row) => {
-                const status =
-                  planStatusById.get(row.planId.toUpperCase()) ?? "—";
-                const t0 = row.t0Available ? "T0" : "Missing T0";
+              <option value="">Select case…</option>
+              {focusPlanOptions.map((option) => {
                 return (
-                  <option key={row.planId} value={row.planId}>
-                    {row.ticker} · {row.planId} · {status} · {t0}
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 );
               })}
             </select>
           </label>
-          <div data-testid="insights-snapshot-copy">
-            <button
-              type="button"
-              onClick={async () => {
-                const ok = await copyText(pipelineSnapshotText);
+          <button
+            type="button"
+            onClick={async () => {
+              setSnapshotError(null);
+              setSnapshotBusy(true);
+              try {
+                const caseText = focusPlanId.trim() ? await fetchSnapshotText("case") : null;
+                const text = composeUnifiedSnapshot({
+                  caseSnapshotText: caseText,
+                  insightsSnapshotText: focusPlanId.trim()
+                    ? pipelineContextSnapshotText
+                    : pipelineSnapshotText,
+                });
+                const ok = await copyText(text);
                 if (ok) {
                   setSnapshotCopied(true);
                   window.setTimeout(() => setSnapshotCopied(false), 2000);
                 }
-              }}
-              className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-left hover:border-zinc-500 hover:bg-zinc-800"
-              data-insights-pipeline-snapshot
-            >
-              <span className="block text-xs font-medium text-zinc-100">
-                {snapshotCopied
-                  ? "Copied ✓"
-                  : "Insights Pipeline Snapshot"}
-              </span>
-              <span className="mt-0.5 block text-[11px] text-zinc-500">
-                Copy AI context for this filtered Pipeline view
-              </span>
-            </button>
-          </div>
+              } catch (error) {
+                setSnapshotError(
+                  error instanceof Error
+                    ? error.message
+                    : "Snapshot could not be generated."
+                );
+              } finally {
+                setSnapshotBusy(false);
+              }
+            }}
+            className="rounded-lg border border-zinc-600 bg-zinc-900 px-3 py-2 text-left hover:border-zinc-500 hover:bg-zinc-800"
+            data-insights-pipeline-snapshot
+            data-testid="insights-snapshot-copy"
+          >
+            <span className="block text-xs font-medium text-zinc-100">
+              {snapshotCopied ? "Copied ✓" : snapshotBusy ? "Generating…" : "Copy Snapshot"}
+            </span>
+            <span className="mt-0.5 block text-[11px] text-zinc-500">
+              {focusPlanId.trim()
+                ? "Copy focused Case plus relevant Insights context"
+                : "Copy the current Insights context"}
+            </span>
+          </button>
         </div>
       </div>
+      {snapshotError ? (
+        <p className="text-xs text-rose-400">{snapshotError}</p>
+      ) : null}
+
+      <FocusedCaseReportPanel
+        report={focusedCaseReport}
+        loading={focusedCaseReportBusy}
+        error={focusedCaseReportError}
+      />
 
       <PreviewImprovementPath
         hypotheses={improvementHypotheses}
         caseSpine={caseSpine}
         focusPlanId={focusPlanId}
         persistenceReadOnly={persistenceReadOnly}
-        planOptions={focusPlanOptions.map((row) => ({
+        planOptions={Array.from(focusPlanRowsById.values()).map((row) => ({
           planId: row.planId,
           ticker: row.ticker,
+          playbookId: row.playbookId ?? null,
           status: planStatusById.get(row.planId.toUpperCase()) ?? "—",
+          lifecycleStatus: row.lifecycle.status,
           t0Available: row.t0Available,
+          independentEconomicObservation:
+            row.independentEconomicObservation !== false,
         }))}
       />
 
@@ -650,7 +1444,7 @@ export function PreviewPipelinePerformance({
         <p className="mt-1 text-sm font-medium text-zinc-100">
           {condition.statement}
         </p>
-        <p className="mt-1 text-[11px] text-zinc-500">
+        <p className="mt-1 text-[11px] text-zinc-600">
           {condition.code} · {fvl.equationId}:{" "}
           {fvl.suspected
             ? `suspected — entryRate=${
@@ -659,9 +1453,6 @@ export function PreviewPipelinePerformance({
                   : "—"
               }, overOpt=${fvl.inputs.overOptimization}/${fvl.inputs.noEntryDiagnosedDenom}`
             : "no false-virtuous-loop suspicion"}
-          {" · "}
-          Cards use <span className="text-zinc-400">CURRENT FILTERED</span>{" "}
-          Case universe ({caseView.rows.length}).
         </p>
       </section>
 
@@ -678,9 +1469,436 @@ export function PreviewPipelinePerformance({
           {caseView.aggregate.entryUniverse} · No Entry{" "}
           {caseView.aggregate.noEntryUniverse}
         </p>
-        <p className="mt-1 text-[11px] text-zinc-600">
-          Missing T0 Cases correctly fall to Insufficient Evidence — do not
-          interpret high No Entry alone as conservatism.
+      </section>
+
+      <section
+        className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+        data-opportunity-participation-comparison
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Opportunity Participation Comparison
+            </h2>
+            <p className="mt-1 text-sm text-zinc-300">
+              Eligible opportunities {opportunityComparison.eligibleOpportunityCount} · excluded{" "}
+              {opportunityComparison.excludedOpportunityCount} · unavailable{" "}
+              {opportunityComparison.unavailableOpportunityCount}
+            </p>
+            <p className="mt-1 text-[11px] text-zinc-500">
+              {opportunityComparison.eligibleWindowLabel}
+            </p>
+            <p
+              className="mt-2 text-[11px] text-zinc-500"
+              data-research-universe="participation"
+            >
+              Research universe · unit:{" "}
+              {opportunityComparison.researchUniverse.unitLabel} · N=
+              {opportunityComparison.researchUniverse.n} · excluded{" "}
+              {opportunityComparison.researchUniverse.excluded} · unavailable{" "}
+              {opportunityComparison.researchUniverse.unavailable} · claim:{" "}
+              {opportunityComparison.researchUniverse.claimLevel}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Full evidence</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunityComparison.alternatives.fullParticipationEvidenceCount}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Wait evidence</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunityComparison.alternatives.waitEvidenceCount}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">OLE evidence</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunityComparison.alternatives.oleEvidenceCount}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Late geometry</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunityComparison.alternatives.lateParticipationGeometryCount}
+              </p>
+            </div>
+          </div>
+        </div>
+        <div className="mt-3 grid gap-3 sm:grid-cols-2 xl:grid-cols-4" data-opportunity-participation-evidence>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-zinc-500">Layered config</p>
+            <p className="mt-1 text-sm font-semibold text-zinc-100">
+              {opportunityComparison.participationEvidence.layeredConfigurationCount}
+            </p>
+            <p className="mt-1 text-[11px] text-zinc-500">Capability/configuration only.</p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-zinc-500">Actual OLE participation</p>
+            <p className="mt-1 text-sm font-semibold text-zinc-100">
+              {opportunityComparison.participationEvidence.actualOleParticipationCount}
+            </p>
+            <p className="mt-1 text-[11px] text-zinc-500">Requires preserved fills, not just OLE support.</p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-zinc-500">Actual partial OLE</p>
+            <p className="mt-1 text-sm font-semibold text-zinc-100">
+              {opportunityComparison.participationEvidence.actualOlePartialParticipationCount}
+            </p>
+            <p className="mt-1 text-[11px] text-zinc-500">Observed partial participation only.</p>
+          </div>
+          <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-3">
+            <p className="text-[10px] uppercase tracking-wide text-zinc-500">No participation</p>
+            <p className="mt-1 text-sm font-semibold text-zinc-100">
+              {opportunityComparison.participationEvidence.noParticipationCount}
+            </p>
+            <p className="mt-1 text-[11px] text-zinc-500">Observed no-entry / wait paths in current filter.</p>
+          </div>
+        </div>
+        <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800" data-opportunity-participation-closure>
+          <table className="min-w-full text-left text-sm">
+            <thead className="border-b border-zinc-800 text-[10px] uppercase tracking-wide text-zinc-500">
+              <tr>
+                <th className="px-3 py-2 font-medium">Comparison</th>
+                <th className="px-3 py-2 font-medium">Status</th>
+                <th className="px-3 py-2 font-medium">Evidence</th>
+                <th className="px-3 py-2 font-medium">Remaining gap</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-zinc-800">
+              {(
+                [
+                  { label: "Full vs OLE", value: opportunityComparison.closures.fullVsOle },
+                  { label: "OLE vs wait", value: opportunityComparison.closures.oleVsWait },
+                  {
+                    label: "Early OLE vs late participation",
+                    value: opportunityComparison.closures.earlyOleVsLate,
+                  },
+                  {
+                    label: "OLE after displacement",
+                    value: opportunityComparison.closures.oleAfterDisplacement,
+                  },
+                  {
+                    label: "Partial participation + pullback",
+                    value: opportunityComparison.closures.partialParticipationPullback,
+                  },
+                ] as const
+              ).map(({ label, value }) => (
+                <tr
+                  key={label}
+                  className="bg-zinc-950/40"
+                  data-opportunity-closure-row={label}
+                >
+                  <td className="px-3 py-2 text-zinc-100">{label}</td>
+                  <td className="px-3 py-2">
+                    <span
+                      className={
+                        value.status === "OBSERVED"
+                          ? "text-emerald-300"
+                          : value.status === "INSUFFICIENT EVIDENCE"
+                            ? "text-amber-300"
+                            : "text-zinc-400"
+                      }
+                    >
+                      {value.status}
+                    </span>
+                  </td>
+                  <td className="px-3 py-2 text-zinc-300">{value.evidence}</td>
+                  <td className="px-3 py-2 text-zinc-500">{value.gap ?? "none"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        {focusedComparisonRow ? (
+          <p className="mt-3 text-xs text-violet-300" data-opportunity-focus-row={focusedComparisonRow.planId}>
+            Focused Case in comparison: {focusedComparisonRow.ticker} · {focusedComparisonRow.planId} · displacement{" "}
+            {formatMaybeR(focusedComparisonRow.favorableDisplacementR)} · wait evidence{" "}
+            {focusedComparisonRow.waitEvidenceAvailable ? "available" : "unavailable"} · late geometry{" "}
+            {focusedComparisonRow.lateEntryGeometryAvailable ? "available" : "unavailable"}
+          </p>
+        ) : null}
+        {opportunityComparison.checkpointAggregates.length > 0 ? (
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+            <table className="min-w-full text-left text-sm">
+              <thead className="border-b border-zinc-800 text-[10px] uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Checkpoint</th>
+                  <th className="px-3 py-2 font-medium">Reached</th>
+                  <th className="px-3 py-2 font-medium">Window N</th>
+                  <th className="px-3 py-2 font-medium">Pullback</th>
+                  <th className="px-3 py-2 font-medium">Retest</th>
+                  <th className="px-3 py-2 font-medium">No return observed</th>
+                  <th className="px-3 py-2 font-medium">After path</th>
+                  <th className="px-3 py-2 font-medium">Distribution</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {opportunityComparison.checkpointAggregates.map((row) => (
+                  <tr
+                    key={row.thresholdR}
+                    className="bg-zinc-950/40"
+                    data-opportunity-comparison-checkpoint={row.thresholdR}
+                  >
+                    <td className="px-3 py-2 text-zinc-100">{formatMaybeR(row.thresholdR)}</td>
+                    <td className="px-3 py-2 text-zinc-300">{row.reachedCount}</td>
+                    <td className="px-3 py-2 text-zinc-300">{row.observationWindowEligibleCount}</td>
+                    <td className="px-3 py-2 text-zinc-300">{row.pullbackObservedCount}</td>
+                    <td className="px-3 py-2 text-zinc-300">{row.retestObservedCount}</td>
+                    <td className="px-3 py-2 text-zinc-300">{row.noReturnObservedCount}</td>
+                    <td className="px-3 py-2 text-zinc-400">
+                      target {row.targetReachedAfterCount} · stop {row.stopReachedAfterCount}
+                    </td>
+                    <td className="px-3 py-2 text-zinc-400">
+                      pullback avg {formatMaybeR(row.averagePullbackDepthR)} · median{" "}
+                      {formatMaybeR(row.medianPullbackDepthR)}
+                      <div className="text-[10px] text-zinc-600">
+                        time avg {formatMaybeDurationMs(row.averageTimeToPullbackMs)} · median{" "}
+                        {formatMaybeDurationMs(row.medianTimeToPullbackMs)}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-zinc-500">
+            No eligible non-executed opportunity paths match the current filter.
+          </p>
+        )}
+        {opportunityComparison.rows.length > 0 ? (
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+            <table className="min-w-[1040px] w-full text-left text-sm">
+              <thead className="border-b border-zinc-800 text-[10px] uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Case</th>
+                  <th className="px-3 py-2 font-medium">Displacement</th>
+                  <th className="px-3 py-2 font-medium">Pullback / wait</th>
+                  <th className="px-3 py-2 font-medium">0.5R path</th>
+                  <th className="px-3 py-2 font-medium">1R path</th>
+                  <th className="px-3 py-2 font-medium">Alternatives</th>
+                  <th className="px-3 py-2 font-medium">Segmentation</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {opportunityComparison.rows.map((row) => {
+                  const c05 = row.checkpoints.find((item) => item.thresholdR === 0.5) ?? null;
+                  const c10 = row.checkpoints.find((item) => item.thresholdR === 1) ?? null;
+                  return (
+                    <tr
+                      key={row.planId}
+                      className="bg-zinc-950/40"
+                      data-opportunity-comparison-row={row.planId}
+                    >
+                      <td className="px-3 py-2 text-zinc-100">
+                        <div className="font-mono text-xs">{row.ticker} · {row.planId}</div>
+                        <div className="text-[10px] text-zinc-500">
+                          {row.lifecycleStatus} · {comparisonDiagnosisLabel(row)} · {row.windowKind}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">
+                        {formatMaybeR(row.favorableDisplacementR)} · {formatMaybeNumber(row.favorableDisplacementPrice)}
+                        <div className="text-[10px] text-zinc-600">
+                          risk {formatMaybeNumber(row.plannedRiskPrice)} · {row.windowStart.slice(0, 10)} →{" "}
+                          {row.windowEnd.slice(0, 10)} · window {formatMaybeNumber(row.observationWindowDays)}d
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">
+                        pullback {formatMaybeR(row.pullbackAfterPeakR)}
+                        <div className="text-[10px] text-zinc-600">
+                          retest {row.retestedOriginalEntryAfterPeak == null ? "—" : row.retestedOriginalEntryAfterPeak ? "yes" : "no"} · restored R:R{" "}
+                          {formatMaybeR(row.restoredRRAtDeepestPullback)}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">
+                        {c05?.reached ? `MFE ${formatMaybeR(c05.subsequentMfeR)} · MAE ${formatMaybeR(c05.subsequentMaeR)}` : "not reached"}
+                        <div className="text-[10px] text-zinc-600">
+                          retest {c05?.retestedOriginalEntry == null ? "—" : c05.retestedOriginalEntry ? "yes" : "no"} · time{" "}
+                          {formatMaybeDurationMs(c05?.timeToDeepestPullbackMs)}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">
+                        {c10?.reached ? `MFE ${formatMaybeR(c10.subsequentMfeR)} · MAE ${formatMaybeR(c10.subsequentMaeR)}` : "not reached"}
+                        <div className="text-[10px] text-zinc-600">
+                          retest {c10?.retestedOriginalEntry == null ? "—" : c10.retestedOriginalEntry ? "yes" : "no"} · time{" "}
+                          {formatMaybeDurationMs(c10?.timeToDeepestPullbackMs)}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-400">
+                        full {row.originalPlanGeometryAvailable ? "evidence" : "—"} · wait{" "}
+                        {row.waitEvidenceAvailable ? "evidence" : "—"}
+                        <div className="text-[10px] text-zinc-600">
+                          OLE config {row.oleEvidenceAvailable ? row.oleExecutionModel ?? "yes" : "unavailable"} · actual OLE{" "}
+                          {row.actualOleParticipationObserved ? "observed" : "not observed"} · late geometry{" "}
+                          {row.lateEntryGeometryAvailable ? "available" : "unavailable"}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-[10px] text-zinc-500">
+                        PB {row.playbookId ?? "—"} · support {row.supportLevelAvailable ? "yes" : "no"}
+                        <br />
+                        trend {row.trendIntegrity ?? "—"} · state {row.familyBState ?? "—"}
+                        <br />
+                        pullback {row.pullbackQuality ?? "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+        {opportunityComparison.excludedRows.length > 0 ? (
+          <p className="mt-2 text-[11px] text-amber-300">
+            Excluded from aggregate weight:{" "}
+            {opportunityComparison.excludedRows
+              .map((row) => `${row.planId}${row.exclusionReason ? ` (${row.exclusionReason})` : ""}`)
+              .join(", ")}
+          </p>
+        ) : null}
+        <p className="mt-2 text-[11px] text-zinc-500">
+          Checkpoint rows are path observations inside one opportunity, not independent trades or independent opportunities.
+        </p>
+      </section>
+
+      <section
+        className="rounded-2xl border border-zinc-800 bg-zinc-900/40 p-4"
+        data-opportunity-sequence-accounting
+      >
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
+              Opportunity Sequence Accounting
+            </h2>
+            <p className="mt-1 text-sm text-zinc-300">
+              Opportunities {opportunitySequence.eligibleOpportunityCount} · attempts{" "}
+              {opportunitySequence.actualAttemptCount} · multi-attempt{" "}
+              {opportunitySequence.multiAttemptOpportunityCount}
+            </p>
+            <p className="mt-1 text-[11px] text-zinc-500">{opportunitySequence.summaryNote}</p>
+            <p
+              className="mt-2 text-[11px] text-zinc-500"
+              data-research-universe="sequence"
+            >
+              Research universe · unit: {opportunitySequence.researchUniverse.unitLabel} · N=
+              {opportunitySequence.researchUniverse.n} · duplicate zero-weight{" "}
+              {opportunitySequence.researchUniverse.excluded} · indeterminate lineage{" "}
+              {opportunitySequence.researchUniverse.unavailable} · claim:{" "}
+              {opportunitySequence.researchUniverse.claimLevel}
+            </p>
+          </div>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Actual opportunities</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunitySequence.actualExecutedOpportunityCount}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Indeterminate lineage</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunitySequence.indeterminateLineageCount}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Duplicate zero-weight</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">
+                {opportunitySequence.duplicateZeroWeightCount}
+              </p>
+            </div>
+            <div className="rounded-xl border border-zinc-800 bg-zinc-950/50 px-3 py-2">
+              <p className="text-[10px] uppercase tracking-wide text-zinc-500">Counterfactual in actual R</p>
+              <p className="mt-1 text-sm font-semibold text-zinc-100">never</p>
+            </div>
+          </div>
+        </div>
+        {opportunitySequence.rows.length > 0 ? (
+          <div className="mt-3 overflow-x-auto rounded-2xl border border-zinc-800">
+            <table className="min-w-[1080px] w-full text-left text-sm">
+              <thead className="border-b border-zinc-800 text-[10px] uppercase tracking-wide text-zinc-500">
+                <tr>
+                  <th className="px-3 py-2 font-medium">Opportunity</th>
+                  <th className="px-3 py-2 font-medium">Attempt</th>
+                  <th className="px-3 py-2 font-medium">Geometry</th>
+                  <th className="px-3 py-2 font-medium">Actual R</th>
+                  <th className="px-3 py-2 font-medium">Cumulative actual R</th>
+                  <th className="px-3 py-2 font-medium">Context</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-zinc-800">
+                {opportunitySequence.rows.flatMap((row) =>
+                  row.attempts.map((attempt) => (
+                    <tr
+                      key={`${row.opportunityKey}:${attempt.tradeId}`}
+                      className="bg-zinc-950/40"
+                      data-opportunity-sequence-row={row.opportunityKey}
+                    >
+                      <td className="px-3 py-2 text-zinc-100">
+                        <div className="font-mono text-xs">
+                          {row.ticker} · {row.opportunityKey}
+                        </div>
+                        <div className="text-[10px] text-zinc-500">
+                          plans {row.planIds.join(", ")} · lineage{" "}
+                          {row.canonicalLineage ? "canonical" : "single-plan"}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">
+                        #{attempt.attemptNumber} · {attempt.tradeId}
+                        <div className="text-[10px] text-zinc-600">
+                          {attempt.orderingAvailable ? attempt.orderedAt?.slice(0, 10) : "ordering unavailable"} ·{" "}
+                          {attempt.tradeStatus}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">
+                        entry {formatMaybeNumber(attempt.plannedEntry)} · stop {formatMaybeNumber(attempt.stopPrice)} · target{" "}
+                        {formatMaybeNumber(attempt.targetPrice)}
+                        <div className="text-[10px] text-zinc-600">
+                          planned R:R {formatMaybeR(attempt.plannedRR)} · {attempt.geometryRelationToPrior.replaceAll("_", " ")}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2 text-zinc-300">{formatMaybeR(attempt.realizedR)}</td>
+                      <td className="px-3 py-2 text-zinc-100">
+                        {formatMaybeR(attempt.cumulativeRealizedR)}
+                      </td>
+                      <td className="px-3 py-2 text-[10px] text-zinc-500">
+                        PB {attempt.playbookId ?? "—"} · support {formatMaybeNumber(attempt.supportLevel)}
+                        <br />
+                        trend {attempt.trendIntegrity ?? "—"} · state {attempt.familyBState ?? "—"}
+                        <br />
+                        pullback {attempt.pullbackQuality ?? "—"} · plan {attempt.planId ?? "—"}
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        ) : (
+          <p className="mt-3 text-sm text-zinc-500">
+            No actual plan-linked attempt sequences match the current filter. No-execution Cases remain 0R actual and do not create attempts.
+          </p>
+        )}
+        {opportunitySequence.indeterminateLineage.length > 0 ? (
+          <div className="mt-3 rounded-2xl border border-zinc-800 bg-zinc-950/30 p-3" data-opportunity-sequence-indeterminate>
+            <p className="text-[10px] uppercase tracking-wide text-zinc-500">Indeterminate lineage</p>
+            <div className="mt-2 space-y-2">
+              {opportunitySequence.indeterminateLineage.map((row) => (
+                <div key={`${row.ticker}:${row.stockThesisId ?? "none"}`} className="text-sm text-zinc-300">
+                  <span className="font-mono text-xs text-zinc-100">
+                    {row.ticker} · {row.stockThesisId ?? "no-stock-thesis"}
+                  </span>
+                  <div className="text-[11px] text-zinc-500">
+                    plans {row.planIds.join(", ")} · {row.reason}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        ) : null}
+        <p className="mt-2 text-[11px] text-zinc-500">
+          Planned R:R, actual Realized R, counterfactual R, and cumulative actual sequence R remain separate. Counterfactual no-execution outcomes never enter cumulative actual sequence R.
         </p>
       </section>
 
@@ -689,10 +1907,6 @@ export function PreviewPipelinePerformance({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
           Case accounting
         </h2>
-        <p className="mt-1 text-[11px] text-zinc-600">
-          Equations from the Learning engine. B = No Entry (see filter quality).
-          Rates vs filtered total Cases. Use ? Help for family meanings.
-        </p>
         <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
           <MetricCard metric={caseView.cards.totalCases} testId="total" />
           <MetricCard
@@ -733,12 +1947,6 @@ export function PreviewPipelinePerformance({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
           No-entry filter quality
         </h2>
-        <p className="mt-1 text-[11px] text-zinc-600">
-          Denominator = No Entry Cases in filtered universe (
-          {caseView.aggregate.noEntryUniverse}). Good Filter vs Missed /
-          Possible Over-Optimization — equations, not narrative. Later price alone does
-          not prove a missed entry.
-        </p>
         <div className="mt-3 grid grid-cols-1 gap-2 sm:grid-cols-3">
           <MetricCard
             metric={caseView.cards.goodFilter}
@@ -826,10 +2034,6 @@ export function PreviewPipelinePerformance({
         <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
           Cases needing review
         </h2>
-        <p className="mt-1 text-[11px] text-zinc-600">
-          Priority queue: missing T0, over-optimization suspicion, D failures,
-          UNLINKED thesis/playbook. Open Case Review for equation evidence.
-        </p>
         {casesForReview.length === 0 ? (
           <p className="mt-2 text-sm text-zinc-500">No review priorities in filter.</p>
         ) : (
@@ -838,6 +2042,7 @@ export function PreviewPipelinePerformance({
               <thead className="border-b border-zinc-800 text-xs uppercase tracking-wide text-zinc-500">
                 <tr>
                   <th className="px-2 py-2 font-medium">Case</th>
+                  <th className="px-2 py-2 font-medium">Lifecycle</th>
                   <th className="px-2 py-2 font-medium">Family</th>
                   <th className="px-2 py-2 font-medium">Why</th>
                   <th className="px-2 py-2 font-medium">Link</th>
@@ -850,12 +2055,15 @@ export function PreviewPipelinePerformance({
                     <td className="px-2 py-2 font-mono text-xs text-zinc-300">
                       {row.ticker} · {row.planId}
                     </td>
+                    <td className="px-2 py-2 text-xs text-zinc-300">
+                      {row.lifecycle.status}
+                    </td>
                     <td className="px-2 py-2 text-xs text-zinc-200">
                       {familyChip(row)}
                     </td>
                     <td className="px-2 py-2 text-xs text-zinc-400">
-                      {!row.t0Available
-                        ? "Missing T0"
+                      {row.lifecycle.blockingLabels.length
+                        ? row.lifecycle.blockingLabels.join(", ")
                         : row.noEntryDiagnosis
                           ? diagnosisChip(row)
                           : row.equationId}
@@ -867,14 +2075,24 @@ export function PreviewPipelinePerformance({
                       Thesis {row.linkage?.planThesis ?? "—"} · PB{" "}
                       {row.linkage?.planPlaybook ?? "—"}
                     </td>
-                    <td className="px-2 py-2">
-                      <Link
-                        href={row.caseHref}
-                        className="text-violet-400 hover:underline"
-                      >
-                        Case
-                      </Link>
-                    </td>
+                      <td className="px-2 py-2 text-xs">
+                        <div className="flex flex-wrap gap-2">
+                          <Link
+                            href={mxtPath(
+                              `/stats?tab=pipeline&case=${encodeURIComponent(row.planId)}`
+                            )}
+                            className="text-violet-300 hover:underline"
+                          >
+                            Insights
+                          </Link>
+                          <Link
+                            href={row.caseHref}
+                            className="text-violet-400 hover:underline"
+                          >
+                            Case
+                          </Link>
+                        </div>
+                      </td>
                   </tr>
                 ))}
               </tbody>
@@ -960,12 +2178,6 @@ export function PreviewPipelinePerformance({
               <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
                 Counterfactual / Planned R (Scout — not portfolio P/L)
               </h2>
-              <p className="mt-1 text-[11px] text-zinc-600">
-                Counterfactual R is hypothetical planned-path magnitude (symmetric:
-                missed upside = +R; avoided planned loss = −R). It is never realized
-                portfolio P/L, not Decision Quality, and not automatic MAF attribution.
-                0R realized + (−1R CF) does not mean the portfolio lost 1R.
-              </p>
               <dl className="mt-3 grid grid-cols-2 gap-3 text-sm">
                 <div>
                   <dt className="text-zinc-500">Evaluated Scouts</dt>
@@ -1092,11 +2304,6 @@ export function PreviewPipelinePerformance({
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
               Playbook Learning
             </h2>
-            <p className="mt-1 text-[11px] text-zinc-600">
-              Case family rates by playbook from the filtered Case spine. Zero
-              evaluable Cases is valid when evidence is insufficient — no
-              manufactured rates.
-            </p>
             {playbookLearning.length === 0 ? (
               <p className="mt-2 text-sm text-zinc-500">No Cases in filter.</p>
             ) : (
@@ -1200,12 +2407,6 @@ export function PreviewPipelinePerformance({
             <h2 className="text-xs font-semibold uppercase tracking-wide text-zinc-500">
               Historical recovery (pre-MXT)
             </h2>
-            <p className="mt-1 text-[11px] text-zinc-600">
-              Closed trades without contemporaneous T0. Accepted MAF is canonical
-              component attribution when present. Historical Reconstruction is
-              reconstructed evidence/hints — not accepted MAF, never verified T0.
-              016a family stays INDETERMINATE without freeze.
-            </p>
             {caseView.rows.filter((r) => r.caseOrigin === "historical_trade")
               .length === 0 ? (
               <p className="mt-2 text-sm text-zinc-500">
@@ -1234,12 +2435,22 @@ export function PreviewPipelinePerformance({
                           <span className="font-mono text-xs text-zinc-200">
                             {row.ticker} · {row.caseId}
                           </span>
-                          <Link
-                            href={row.caseHref}
-                            className="text-xs text-violet-400 hover:underline"
-                          >
-                            Trade
-                          </Link>
+                          <div className="flex gap-2">
+                            <Link
+                              href={mxtPath(
+                                `/stats?tab=pipeline&case=${encodeURIComponent(row.planId)}`
+                              )}
+                              className="text-xs text-violet-300 hover:underline"
+                            >
+                              Insights
+                            </Link>
+                            <Link
+                              href={row.caseHref}
+                              className="text-xs text-violet-400 hover:underline"
+                            >
+                              Trade
+                            </Link>
+                          </div>
                         </div>
                         <p
                           className="mt-2 text-xs text-emerald-300/90"
@@ -1282,9 +2493,7 @@ export function PreviewPipelinePerformance({
               Case drill-down
             </h2>
             <p className="mt-1 text-[11px] text-zinc-600">
-              Showing {caseView.rows.length}{" "}
-              {caseView.rows.length === 1 ? "Case" : "Cases"} (filtered). Family and
-              Diagnosis stay distinct. Record opens Case Review.
+              {caseView.rows.length} {caseView.rows.length === 1 ? "Case" : "Cases"} in filter.
             </p>
             {caseView.rows.length === 0 ? (
               <p className="mt-3 text-sm text-zinc-500">
@@ -1298,6 +2507,7 @@ export function PreviewPipelinePerformance({
                       <th className="px-3 py-2 font-medium">Date</th>
                       <th className="px-3 py-2 font-medium">Ticker</th>
                       <th className="px-3 py-2 font-medium">Plan / Case</th>
+                      <th className="px-3 py-2 font-medium">Lifecycle</th>
                       <th className="px-3 py-2 font-medium">Family</th>
                       <th className="px-3 py-2 font-medium">Diagnosis</th>
                       <th className="px-3 py-2 font-medium">DQ</th>
@@ -1332,6 +2542,14 @@ export function PreviewPipelinePerformance({
                         <td className="px-3 py-2 text-zinc-100">{row.ticker}</td>
                         <td className="px-3 py-2 font-mono text-xs text-zinc-300">
                           {row.planId}
+                        </td>
+                        <td className="px-3 py-2 text-xs text-zinc-300">
+                          {row.lifecycle.status}
+                          {row.lifecycle.blockingLabels.length ? (
+                            <div className="text-[10px] text-amber-300">
+                              {row.lifecycle.blockingLabels.join(", ")}
+                            </div>
+                          ) : null}
                         </td>
                         <td className="px-3 py-2 text-xs text-zinc-200">
                           {familyChip(row)}
@@ -1399,14 +2617,24 @@ export function PreviewPipelinePerformance({
                             ? formatR(row.counterfactualR)
                             : "—"}
                         </td>
-                        <td className="px-3 py-2">
-                          <Link
-                            href={row.caseHref}
-                            className="text-violet-400 hover:text-violet-300 hover:underline"
-                            data-case-drill-href={row.caseHref}
-                          >
-                            Case
-                          </Link>
+                        <td className="px-3 py-2 text-xs">
+                          <div className="flex flex-wrap gap-2">
+                            <Link
+                              href={mxtPath(
+                                `/stats?tab=pipeline&case=${encodeURIComponent(row.planId)}`
+                              )}
+                              className="text-violet-300 hover:text-violet-200 hover:underline"
+                            >
+                              Insights
+                            </Link>
+                            <Link
+                              href={row.caseHref}
+                              className="text-violet-400 hover:text-violet-300 hover:underline"
+                              data-case-drill-href={row.caseHref}
+                            >
+                              Case
+                            </Link>
+                          </div>
                         </td>
                       </tr>
                     ))}

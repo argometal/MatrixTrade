@@ -6,6 +6,7 @@ import type { MafExperiment } from "./maf-types";
 import type { TradePlan } from "./plan-types";
 import type { Trade } from "./types";
 import { computeRMultiple } from "./review";
+import { isDuplicateCreationPlan } from "./duplicate-observation";
 
 export type LearningPlanAggregateFilters = {
   ticker?: string;
@@ -76,7 +77,10 @@ export function computeLearningPlanAggregates(input: {
 }): LearningPlanAggregates {
   const f = input.filters ?? {};
   const evaluated = input.plans.filter(
-    (p) => p.outcome?.recordedAt && planMatches(p, f)
+    (p) =>
+      p.outcome?.recordedAt &&
+      !isDuplicateCreationPlan(p) &&
+      planMatches(p, f)
   );
 
   let triggeredPlanCount = 0;

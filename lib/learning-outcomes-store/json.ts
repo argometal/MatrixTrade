@@ -105,6 +105,16 @@ export function createJsonLearningOutcomesStore(): LearningOutcomesStore {
       for (const row of rows) out.push(await this.upsert(row));
       return out;
     },
+    async deleteById(id) {
+      assertJsonLearningOutcomeWritesAllowed();
+      const key = id.trim().toUpperCase();
+      const all = await readLearningOutcomesJsonFile();
+      const next = all.filter((row) => row.id.toUpperCase() !== key);
+      if (next.length === all.length) {
+        throw new Error(`Learning Outcome ${key} not found for delete.`);
+      }
+      await writeAll(next);
+    },
   };
 }
 

@@ -19,7 +19,7 @@ export const AI_BRIDGE_BLOCK_TYPES = [
   "attribution",
   "observation-update",
   "plan-outcome",
-  "thesis-t0-repair",
+  "thesis-t0",
   "external-position-create",
   "external-position-update",
   "external-position-reduction",

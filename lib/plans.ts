@@ -27,6 +27,12 @@ import {
   PlanIdCollisionError,
 } from "./plan-id";
 import {
+  buildGeometryStall,
+  findIdenticalGeometryMatches,
+  parsePlanGeometryLevels,
+  type PlanGeometryStall,
+} from "./plan-geometry-integrity";
+import {
   PLAN_TIMEFRAME_ORDER,
   PLAN_TIMEFRAMES,
   type PlanTimeframe,
@@ -128,6 +134,8 @@ export async function savePlan(input: SavePlanInput): Promise<{
   plan?: TradePlan;
   errors?: string[];
   warnings?: string[];
+  /** Present when create is stalled on identical entry/stop/target. */
+  geometryStall?: PlanGeometryStall;
 }> {
   const errors: string[] = [];
   const ticker = input.ticker.trim().toUpperCase();
@@ -177,6 +185,26 @@ export async function savePlan(input: SavePlanInput): Promise<{
   }
 
   const isCreate = !existing;
+
+  // Identical geometry STALL — create only; before id allocation / persist.
+  if (isCreate && !input.identicalGeometryOverride) {
+    const proposedLevels = parsePlanGeometryLevels({
+      entry: plannedEntry,
+      stop: stopPrice,
+      target: targetPrice,
+    });
+    if (proposedLevels) {
+      const matches = findIdenticalGeometryMatches({
+        proposed: { ticker, ...proposedLevels },
+        existingPlans: plans,
+      });
+      const stall = buildGeometryStall(matches);
+      if (stall) {
+        return { geometryStall: stall };
+      }
+    }
+  }
+
   let planId: string;
   if (existing) {
     planId = existing.id;

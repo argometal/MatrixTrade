@@ -19,6 +19,7 @@ import type { DecisionVerdict } from "./scout-decision-types";
 import type { LearningOutcomeKind } from "./learning-outcome-types";
 import type { MafComponentId } from "./maf-types";
 import type { HistoricalCaseAttribution } from "./historical-case-attribution";
+import type { PlanCaseLifecycle } from "./plan-case-lifecycle";
 
 /** Product Case family for Insights cards / filters. */
 export type InsightsCaseFamily = "A" | "B" | "C" | "D" | "INDETERMINATE";
@@ -48,6 +49,13 @@ export type InsightsCaseRow = {
   /** modern = decided Plan Case; historical_trade = pre-MXT / planless closed Trade */
   caseOrigin?: "modern" | "historical_trade";
 
+  /**
+   * False when plan/LO is duplicate_creation — zero independent economic/Case
+   * weight in Insights aggregates (integrity guard if such a row still exists).
+   * Defaults to true when omitted (legacy rows / historical trades).
+   */
+  independentEconomicObservation?: boolean;
+
   participation: CaseParticipationClass | null;
   verdict: DecisionVerdict | null;
   /** Product family: A/C/D entry; B = no-entry; else INDETERMINATE. */
@@ -70,8 +78,9 @@ export type InsightsCaseRow = {
   counterfactualR: number | null;
 
   t0Available: boolean;
-  /** Freeze recordKind when T0 present (original|reconstructed|corrected). */
+  /** Freeze recordKind when T0 present (original|corrected; legacy reconstructed normalizes to corrected). */
   t0RecordKind?: import("./correction-types").RecordKind | null;
+  lifecycle: PlanCaseLifecycle;
   missingInputs: string[];
   diagnosisReason: string;
   evidenceSummary: string;
@@ -125,6 +134,8 @@ export type InsightsCaseSpineView = {
   /** Cards/rates recompute against this filtered universe. */
   universeScope: "filtered";
   rows: InsightsCaseRow[];
+  /** Governance contract for independent economic Case rates. */
+  researchUniverse?: import("./research-universe").ResearchUniverseDescriptor;
   aggregate: DiagnosisAggregate;
   cards: {
     totalCases: InsightsCaseCardMetric;

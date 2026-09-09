@@ -1,5 +1,29 @@
 # Matrix — product vision & strategic core
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+A-Iteration Anchors are constraints, not complete implementation specifications.
+Everything not constrained by an Anchor remains available for AI reasoning, design, simplification, implementation, and improvement.
+The AI has an objective obligation to improve the system within those remaining degrees of freedom.
+Do not treat absence of explicit human instruction as a prohibition on improvement.
+If proceeding requires changing an Anchor or inventing unresolved semantics necessary to satisfy it, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+UI may simplify, hide, reorganize, or derive presentation from canonical data when this does not change meaning.
+When genuinely blocked, isolate the smallest unresolved question.
+Verify the result.
+
+
 **Start here for MatrixTrade / MXT identity** (not ARGUS).
 
 **Sealed MXT Core (two complementary documents):**  
@@ -9,8 +33,18 @@
 **Evidence contracts:**  
 - [mxt-market-reality-evidence-contract.md](mxt-market-reality-evidence-contract.md) — Market Reality (OHLCV + Volume Reality) · `SEALED EVIDENCE CONTRACT` (#12A)
 
+**Studied foundations + Case equations (Library — not sealed Core):**  
+- [mxt-experimental-learning-foundations.md](mxt-experimental-learning-foundations.md) — Pardo / Tharp / López de Prado / outcome bias → MXT loop  
+- [mxt-case-family-equations-016a.md](mxt-case-family-equations-016a.md) — A/B/C/D · Good Filter · Over-Optimization principles (016a)
+- [mxt-plan-failure-evaluation.md](mxt-plan-failure-evaluation.md) — falsify Plan against Reality · SHOP PLAN-005 · provisional 2–3×(Entry→Stop) band · inconclusive allowed
+
 **Agent entry (discoverability — do not duplicate seals):**  
 repo root [`AGENTS.md`](../../AGENTS.md) · Cursor [`.cursor/rules/mxt-agent-entry.mdc`](../../.cursor/rules/mxt-agent-entry.mdc)
+
+**Recoverable A-Iteration Anchors:**  
+Scout/T0 operational Anchors live in [`scout-execution-model.md`](scout-execution-model.md), including: “Simplifica T0: debe permitir corregir cualquier T0. Mantenerlo sencillo.”
+MXT 033 research/completion Anchors live in [`mxt-033-handoff-70-points.md`](mxt-033-handoff-70-points.md).
+Plan-failure evaluation Anchors live in [`mxt-plan-failure-evaluation.md`](mxt-plan-failure-evaluation.md).
 
 ---
 
@@ -21,6 +55,9 @@ repo root [`AGENTS.md`](../../AGENTS.md) · Cursor [`.cursor/rules/mxt-agent-ent
 | **0a** | [mxt-edge-learning-mission-governance.md](mxt-edge-learning-mission-governance.md) | **SEALED** — Edge Learning Mission (success criterion / feature filter) |
 | **0b** | [mxt-core-learning-adaptation-doctrine.md](mxt-core-learning-adaptation-doctrine.md) | **SEALED** — Core Learning & Adaptation Doctrine (identity + external pillars) |
 | **0c** | [mxt-market-reality-evidence-contract.md](mxt-market-reality-evidence-contract.md) | **SEALED** — Market Reality Evidence Contract (OHLCV + Volume; no provider yet) |
+| **0d** | [mxt-case-family-equations-016a.md](mxt-case-family-equations-016a.md) | **Library** — Case family A/B/C/D + no-entry Good Filter / Over-Opt (016a) |
+| **0e** | [mxt-experimental-learning-foundations.md](mxt-experimental-learning-foundations.md) | **Library** — walk-forward / R-expectancy / anti-overfit foundations for Improvement tests |
+| **0f** | [mxt-plan-failure-evaluation.md](mxt-plan-failure-evaluation.md) | **Library** — falsify Plan vs Reality · SHOP PLAN-005 example · ~2–3×(Entry→Stop) provisional band (not Mechanics law) · inconclusive OK |
 | 1 | [strategic-planning-vision.md](strategic-planning-vision.md) | Architecture layers — Playbook → Stock File → Scout → Trade (mission/identity superseded by 0a/0b for Core) |
 | 2 | [v2-engine-architecture.md](v2-engine-architecture.md) | **V2 target** — five engines + Probe |
 | 3 | [stock-profile-design.md](stock-profile-design.md) | Suspect dossier — append, light, chat patches |
@@ -29,6 +66,7 @@ repo root [`AGENTS.md`](../../AGENTS.md) · Cursor [`.cursor/rules/mxt-agent-ent
 | 4z2 | [scout-convergence-audit-16-07.md](scout-convergence-audit-16-07.md) | **16-07** — Scout Learning Queue / Watching / Execute convergence (diagnose only) |
 | 4z3 | [scout-trim-16-08.md](scout-trim-16-08.md) | **16-08** — Scout UI trim: Watching scan · Open Scout · Execute |
 | 4a | [asymmetric-entry-confirmation-cost.md](asymmetric-entry-confirmation-cost.md) | **Expectancy & asymmetry** — Playbook layer only |
+| 4a1 | [mxt-033-handoff-70-points.md](mxt-033-handoff-70-points.md) | **Library** — A-Iteration handoff anchors for MXT 033 research/completion |
 | 4a2 | [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md) | **Layered entry** — strategy vs execution, no chase |
 | 4a3 | [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md) | **Risk-weighted layered entry** — R budget by expectancy, common stop |
 | 4a3b | [modified-kelly-layered-entry.md](modified-kelly-layered-entry.md) | **Modified Kelly layered entry** — base R + capped fractional-Kelly extension |

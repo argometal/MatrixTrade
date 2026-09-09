@@ -84,6 +84,8 @@ export interface LayeredEntryLimit {
   uncertaintyNote?: string;
   /** Whether this limit has executed. */
   filled?: boolean;
+  /** When Matrix first recorded this layer as filled. Prospective capture only. */
+  fillRecordedAt?: string;
   fillPrice?: number;
   filledQuantity?: number;
   /** Deterministic Matrix output — strip and recompute on Apply. */

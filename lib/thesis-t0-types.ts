@@ -2,7 +2,7 @@
  * Thesis T0 freeze + finite evaluation horizon (Prompt #8).
  * Analytical ThesisEpisode — no separate episode table.
  * Compact decision-time freeze at first committed Scout decision.
- * Body is stable except status/t1, planIds (same Plan), and controlled thesis-t0-repair.
+ * Body is stable except status/t1, planIds (same Plan), and controlled thesis-t0 Apply.
  */
 
 import type { ConfirmationCost } from "./asymmetry-types";
@@ -101,13 +101,26 @@ export type ThesisT0Freeze = {
   createdAt: string;
   /**
    * Payload body is frozen at create except: status/t1, planIds (same Plan only),
-   * and controlled repair via thesis-t0-repair (audit preserved).
+   * and controlled write/update via thesis-t0 Apply (audit preserved).
    */
   updatedAt: string;
-  /** original (default) | reconstructed (was missing) | corrected (was wrong). */
+  /** Legacy optional field; current canonical T0 path relies on correctionAudit. */
   recordKind?: import("./correction-types").RecordKind;
   /** Prior freeze id when this record supersedes a corrected freeze. */
   supersededFreezeId?: string | null;
   /** Append-only repair provenance. */
   correctionAudit?: import("./correction-types").CorrectionAuditEntry[];
 };
+
+/**
+ * Legacy compatibility: older repaired freezes may still persist recordKind
+ * "reconstructed". Canonical T0 correction semantics now collapse that branch
+ * to "corrected" for reads and user-facing surfaces.
+ */
+export function normalizeThesisT0RecordKind(
+  value: string | null | undefined
+): "original" | "corrected" | null {
+  if (value === "original") return "original";
+  if (value === "corrected" || value === "reconstructed") return "corrected";
+  return null;
+}

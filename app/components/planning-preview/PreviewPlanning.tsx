@@ -7,6 +7,7 @@ import { PlanRecordOutcomePanel } from "@/app/components/planning-preview/PlanRe
 import { ScoutWatchingScan } from "@/app/components/planning-preview/ScoutWatchingScan";
 import { buildPlanLevelsView } from "@/lib/plan-levels-board";
 import {
+  isClosedScoutLearningUnit,
   isWarReadyScoutPlan,
   planNeedsLearningSyncRepair,
   planNeedsStrategyReview,
@@ -44,6 +45,7 @@ import {
 } from "@/lib/scout-operational-state";
 import { listScoutWarCases } from "@/lib/scout-war-cases";
 import { resolvePlannedRRFromPlan } from "@/lib/plan-risk";
+import { PLAN_OUTCOME_KIND_LABELS } from "@/lib/plan-outcome-types";
 import {
   buildTradeProspects,
   findTradeProspect,
@@ -52,6 +54,7 @@ import {
 import { ActiveScoutsComparisonTable } from "@/app/components/planning-preview/ActiveScoutsComparisonTable";
 import { ScoutAllocationProvider } from "@/app/components/planning-preview/ScoutAllocationProvider";
 import { ScoutAllocationStrip } from "@/app/components/planning-preview/ScoutAllocationStrip";
+import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
 
 type ScoutCard = {
   key: string;
@@ -104,6 +107,83 @@ function resolveScoutCardPlannedRR(
   return undefined;
 }
 
+function buildPlanScoutCard(input: {
+  plan: TradePlan;
+  thesis: StockThesis | null;
+  plans: TradePlan[];
+  trades: Trade[];
+  reservations: CapitalReservation[];
+}): ScoutCard {
+  const { plan, thesis, plans, trades, reservations } = input;
+  const linkedTrades = thesis
+    ? tradesForScoutCase({
+        thesis,
+        thesisPlans: [plan],
+        trades,
+      })
+    : trades.filter((trade) => trade.planId?.toUpperCase() === plan.id.toUpperCase());
+  const levelsView = thesis ? buildPlanLevelsView(thesis, plan) : null;
+  const verdict = thesis ? resolveScoutingVerdict(thesis, plan) : null;
+  const operational = evaluateScoutOperationalState({
+    plan,
+    linkedTrades,
+    reservations,
+    now: new Date().toISOString(),
+    minimumRR: thesis?.riskRules?.minimumRR ?? 3,
+  });
+  return {
+    key: plan.id,
+    thesis,
+    ticker: plan.ticker,
+    thesisPlans: plans.filter((p) => p.stockThesisId === plan.stockThesisId),
+    primaryPlan: plan,
+    levelsView,
+    plannedRR: resolveScoutCardPlannedRR(plan, levelsView),
+    verdict,
+    activeScoutCount: 1,
+    linkedTrades,
+    orphan: false,
+    operational,
+  };
+}
+
+function formatScoutCardTag(card: ScoutCard): string {
+  const plan = card.primaryPlan;
+  if (plan && isClosedScoutLearningUnit(plan)) {
+    return plan.outcome?.outcomeKind
+      ? PLAN_OUTCOME_KIND_LABELS[plan.outcome.outcomeKind].toUpperCase()
+      : "OUTCOME RECORDED";
+  }
+
+  const op = card.operational.confirmedAssessment ?? card.operational.detectedAssessment;
+  const displayOp =
+    plan?.executionReadiness === "armed"
+      ? { ...op, operationalState: "armed" as const, nextAction: "act" as const }
+      : op;
+
+  return formatConsolidatedOperationalTag({
+    verdict: card.verdict,
+    assessment: displayOp,
+  });
+}
+
+function formatScoutSelectorLabel(input: {
+  card: ScoutCard;
+  caseRow: InsightsCaseRow | null;
+  rrLabel: string;
+}): string {
+  const { card, caseRow, rrLabel } = input;
+  const planId = card.primaryPlan?.id ?? card.key;
+  const lifecycle = caseRow?.lifecycle.status ?? null;
+  const tag = formatScoutCardTag(card);
+  const segments = [card.ticker, planId];
+  if (lifecycle) segments.push(lifecycle);
+  segments.push(tag);
+  if (rrLabel !== "—") segments.push(rrLabel);
+  if (card.orphan) segments.push("ORPHAN FILL");
+  return segments.join(" · ");
+}
+
 /**
  * Scout war room — one selected case in detail (radiografía + execute).
  * Migrated Enter Trade capabilities live in ScoutExecutePanel → Control.
@@ -115,6 +195,7 @@ export function PreviewPlanning({
   monthly,
   trades,
   suggestedTradeId,
+  caseSpine,
   focusPlanId,
   focusThesisId,
   focusTicker,
@@ -128,6 +209,7 @@ export function PreviewPlanning({
   monthly: MonthlyRisk;
   trades: Trade[];
   suggestedTradeId: string;
+  caseSpine: InsightsCaseRow[];
   focusPlanId?: string;
   focusThesisId?: string;
   /** Preserved from Needs Attention Go — preselects ticker Case when plan already focused. */
@@ -147,44 +229,34 @@ export function PreviewPlanning({
     () => stockTheses.filter((t) => isActiveStockThesisStatus(t.status)),
     [stockTheses]
   );
+  const thesisById = useMemo(
+    () => new Map(stockTheses.map((thesis) => [thesis.id, thesis] as const)),
+    [stockTheses]
+  );
 
   const prospects = useMemo(() => buildTradeProspects(plans), [plans]);
+  const caseRowByPlanId = useMemo(
+    () =>
+      new Map(
+        caseSpine
+          .filter((row) => row.planId)
+          .map((row) => [row.planId.trim().toUpperCase(), row] as const)
+      ),
+    [caseSpine]
+  );
 
   const scoutCards = useMemo((): ScoutCard[] => {
     // One Case per war-ready plan (same universe as Dashboard active_plans).
     // Multiple plans on one Stock File / ticker are independent tactical windows.
-    const fromWar = listScoutWarCases(plans, stockTheses).map((ref): ScoutCard => {
-      const { thesis, plan: primaryPlan } = ref;
-      const thesisPlans = plans.filter((p) => p.stockThesisId === thesis.id);
-      const levelsView = buildPlanLevelsView(thesis, primaryPlan);
-      const verdict = resolveScoutingVerdict(thesis, primaryPlan);
-      const linkedTrades = tradesForScoutCase({
-        thesis,
-        thesisPlans: [primaryPlan],
-        trades,
-      });
-      const evaluation = evaluateScoutOperationalState({
-        plan: primaryPlan,
-        linkedTrades,
-        reservations,
-        now: new Date().toISOString(),
-        minimumRR: thesis.riskRules?.minimumRR ?? 3,
-      });
-      return {
-        key: ref.key,
-        thesis,
-        ticker: thesis.ticker,
-        thesisPlans,
-        primaryPlan,
-        levelsView,
-        plannedRR: resolveScoutCardPlannedRR(primaryPlan, levelsView),
-        verdict,
-        activeScoutCount: 1,
-        linkedTrades,
-        orphan: false,
-        operational: evaluation,
-      };
-    });
+      const fromWar = listScoutWarCases(plans, stockTheses).map((ref): ScoutCard =>
+        buildPlanScoutCard({
+          plan: ref.plan,
+          thesis: ref.thesis,
+          plans,
+          trades,
+          reservations,
+        })
+      );
 
     const orphanTickers = orphanIncompleteTradeTickers(trades, activeTheses);
     const orphans: ScoutCard[] = orphanTickers.map((ticker) => {
@@ -226,26 +298,45 @@ export function PreviewPlanning({
     });
   }, [activeTheses, plans, stockTheses, trades, reservations]);
 
+  const pinnedPlanCard = useMemo(() => {
+    if (!focusPlanId) return null;
+    if (scoutCards.some((card) => card.primaryPlan?.id === focusPlanId)) return null;
+    const plan = plans.find((item) => item.id === focusPlanId);
+    if (!plan) return null;
+    return buildPlanScoutCard({
+      plan,
+      thesis: plan.stockThesisId ? thesisById.get(plan.stockThesisId) ?? null : null,
+      plans,
+      trades,
+      reservations,
+    });
+  }, [focusPlanId, plans, reservations, scoutCards, thesisById, trades]);
+
+  const scoutDeskCards = useMemo(
+    () => (pinnedPlanCard ? [pinnedPlanCard, ...scoutCards] : scoutCards),
+    [pinnedPlanCard, scoutCards]
+  );
+
   const focusedScoutCard = useMemo(() => {
     if (scoutCaseKey) {
-      const byKey = scoutCards.find((card) => card.key === scoutCaseKey);
+      const byKey = scoutDeskCards.find((card) => card.key === scoutCaseKey);
       if (byKey) return byKey;
       // Legacy deep-link: thesis id selected the collapsed Case; pick first plan for that file.
-      const byThesis = scoutCards.find((card) => card.thesis?.id === scoutCaseKey);
+      const byThesis = scoutDeskCards.find((card) => card.thesis?.id === scoutCaseKey);
       if (byThesis) return byThesis;
     }
     if (focusPlanId) {
-      const byPlan = scoutCards.find(
+      const byPlan = scoutDeskCards.find(
         (card) => card.key === focusPlanId || card.primaryPlan?.id === focusPlanId
       );
       if (byPlan) return byPlan;
     }
     if (focusThesisId) {
-      const byThesis = scoutCards.find((card) => card.thesis?.id === focusThesisId);
+      const byThesis = scoutDeskCards.find((card) => card.thesis?.id === focusThesisId);
       if (byThesis) return byThesis;
     }
-    return scoutCards[0] ?? null;
-  }, [scoutCards, scoutCaseKey, focusPlanId, focusThesisId]);
+    return scoutDeskCards[0] ?? null;
+  }, [scoutDeskCards, scoutCaseKey, focusPlanId, focusThesisId]);
 
   const scoutThesis = focusedScoutCard?.thesis ?? null;
   const scoutPrimaryPlan = focusedScoutCard?.primaryPlan ?? null;
@@ -290,6 +381,7 @@ export function PreviewPlanning({
       if (prev) {
         // Keep an explicit plan selection under this thesis.
         const card = scoutCards.find((c) => c.key === prev);
+        
         if (card?.thesis?.id === focusThesisId) return prev;
         if (prev === focusThesisId) return prev;
       }
@@ -312,13 +404,13 @@ export function PreviewPlanning({
   useEffect(() => {
     if (focusPlanId || focusThesisId || !focusTicker) return;
     const ticker = focusTicker.trim().toUpperCase();
-    const byTicker = scoutCards.find(
+    const byTicker = scoutDeskCards.find(
       (card) => card.ticker.toUpperCase() === ticker
     );
     if (byTicker) setScoutCaseKey(byTicker.key);
-  }, [focusTicker, focusPlanId, focusThesisId, scoutCards]);
+  }, [focusTicker, focusPlanId, focusThesisId, scoutDeskCards]);
 
-  const hasCases = scoutCards.length > 0;
+  const hasCases = scoutDeskCards.length > 0;
   const mapFocusCompact = planPanelOpen;
 
   const allocationPlans = useMemo(
@@ -381,7 +473,9 @@ export function PreviewPlanning({
                   mapFocusCompact ? "hidden lg:block" : ""
                 }`}
               >
-                Active plans · decision · readiness
+                {pinnedPlanCard
+                  ? "Plan snapshot · decision · readiness"
+                  : "Active plans · decision · readiness"}
               </p>
             </div>
             <nav
@@ -460,7 +554,7 @@ export function PreviewPlanning({
                       mapFocusCompact ? "sr-only lg:not-sr-only" : ""
                     }`}
                   >
-                    Plan
+                    Case / Plan
                   </label>
                   <select
                     id="scout-plan"
@@ -468,7 +562,7 @@ export function PreviewPlanning({
                     onChange={(e) => setScoutCaseKey(e.target.value)}
                     className="min-w-[10rem] flex-1 rounded-lg border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-200"
                   >
-                    {scoutCards.map((card) => {
+                    {scoutDeskCards.map((card) => {
                       const op =
                         card.operational.confirmedAssessment ??
                         card.operational.detectedAssessment;
@@ -477,20 +571,16 @@ export function PreviewPlanning({
                           ? { ...op, operationalState: "armed" as const, nextAction: "act" as const }
                           : op;
                       const rrLabel = formatOperationalR(displayOp.currentExecutableRR);
-                      const tag = formatConsolidatedOperationalTag({
-                        verdict: card.verdict,
-                        assessment: displayOp,
-                      });
+                      const caseRow = card.primaryPlan
+                        ? caseRowByPlanId.get(card.primaryPlan.id.trim().toUpperCase()) ?? null
+                        : null;
                       return (
                         <option key={card.key} value={card.key}>
-                          {card.ticker}
-                          {` · ${tag}`}
-                          {` · ${rrLabel}`}
-                          {card.orphan ? " · orphan fill" : ""}
-                          {card.linkedTrades.length
-                            ? ` · ${card.linkedTrades.length} open loop`
-                            : ""}
-                          {card.primaryPlan ? ` · ${card.primaryPlan.id}` : ""}
+                          {formatScoutSelectorLabel({
+                            card,
+                            caseRow,
+                            rrLabel,
+                          })}
                         </option>
                       );
                     })}
@@ -643,7 +733,7 @@ export function PreviewPlanning({
                 </details>
               ) : null}
 
-              {!focusedScoutCard?.orphan ? (
+              {!focusedScoutCard?.orphan && !(focusPlan && isClosedScoutLearningUnit(focusPlan)) ? (
                 <div className={mapFocusCompact ? "hidden lg:block" : undefined}>
                   <ScoutExecutePanel
                     key={focusPlan?.id ?? scoutThesis?.id ?? "execute"}

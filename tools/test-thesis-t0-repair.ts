@@ -1,5 +1,5 @@
 /**
- * MXT 029 — T0 repair + Plan-specific freeze integrity.
+ * MXT 029 — T0 write/update + Plan-specific freeze integrity.
  * Run: npx tsx tools/test-thesis-t0-repair.ts
  */
 import assert from "node:assert/strict";
@@ -18,8 +18,8 @@ import {
 } from "../lib/thesis-t0";
 import { findFreezeForPlan } from "../lib/thesis-case";
 import {
-  applyThesisT0Repair,
-  validateThesisT0RepairProposal,
+  applyThesisT0,
+  validateThesisT0Proposal,
 } from "../lib/thesis-t0-repair";
 import { validateProposalPayload } from "../lib/bridge";
 import { formatAnalyzeT0Section } from "../lib/stock-file-analyze";
@@ -85,7 +85,6 @@ async function run() {
   assert.equal(e009.status, "created");
   assert.ok(e009.freeze);
   assert.equal(e009.freeze!.plan.plannedEntry, 280);
-  assert.equal(e009.freeze!.recordKind, "original");
 
   const plan001 = appendDecision(basePlan("PLAN-001", 349, thesis.id), {
     verdict: "wait",
@@ -122,9 +121,8 @@ async function run() {
   contaminated.planIds = ["PLAN-009", "PLAN-001"];
   await store.insert(contaminated);
 
-  const validated = validateThesisT0RepairProposal({
+  const validated = validateThesisT0Proposal({
     planId: "PLAN-001",
-    repairKind: "reconstructed",
     t0: "2025-06-15T14:00:00.000Z",
     plannedEntry: 349,
     stopPrice: 320,
@@ -136,13 +134,12 @@ async function run() {
   assert.equal(validated.ok, true);
   if (!validated.ok) throw new Error(String((validated as { error: string }).error));
 
-  const repaired = await applyThesisT0Repair({
+  const repaired = await applyThesisT0({
     plan: plan001,
-    repair: validated.value,
+    update: validated.value,
     thesis,
   });
   assert.equal(repaired.created, true);
-  assert.equal(repaired.freeze.recordKind, "reconstructed");
   assert.equal(repaired.freeze.plan.plannedEntry, 349);
   assert.ok(repaired.freeze.correctionAudit?.length);
   assert.ok(repaired.detachedFromFreezeIds.includes(contaminated.id));
@@ -152,18 +149,16 @@ async function run() {
   assert.ok(!foreign.planIds.some((id) => id.toUpperCase() === "PLAN-001"));
   assert.equal(findFreezeForPlan(plan001, after)?.plan.plannedEntry, 349);
 
-  const corr = await applyThesisT0Repair({
+  const corr = await applyThesisT0({
     plan: plan001,
-    repair: {
+    update: {
       planId: "PLAN-001",
-      repairKind: "corrected",
       plannedEntry: 350,
       note: "Persisted entry was wrong; contemporaneous plan said 350.",
       evidenceRefs: ["human:plan-sheet"],
     },
     thesis,
   });
-  assert.equal(corr.freeze.recordKind, "corrected");
   assert.equal(corr.freeze.plan.plannedEntry, 350);
   const prev = corr.freeze.correctionAudit?.at(-1)?.previous as {
     plan?: { plannedEntry?: number };
@@ -174,7 +169,6 @@ async function run() {
     type: "thesis-t0-repair",
     proposal: {
       planId: "PLAN-001",
-      repairKind: "reconstructed",
       t0: "2025-06-15T14:00:00.000Z",
       plannedEntry: 349,
       stopPrice: 320,
@@ -184,15 +178,28 @@ async function run() {
   });
   assert.equal(bridge.ok, true);
 
+  const directBridge = validateProposalPayload({
+    type: "thesis-t0",
+    proposal: {
+      planId: "PLAN-001",
+      t0: "2025-06-15T14:00:00.000Z",
+      plannedEntry: 349,
+      stopPrice: 320,
+      targetPrice: 430,
+      note: "Enough characters for note field here.",
+    },
+  });
+  assert.equal(directBridge.ok, true);
+
   const analyzeMissing = formatAnalyzeT0Section(null, "PLAN-001");
   assert.match(analyzeMissing, /NO PERSISTED T0/);
-  assert.match(analyzeMissing, /thesis-t0-repair/);
+  assert.match(analyzeMissing, /thesis-t0/);
   const analyzeRepaired = formatAnalyzeT0Section(corr.freeze, "PLAN-001");
-  assert.match(analyzeRepaired, /record_kind:corrected/);
+  assert.match(analyzeRepaired, /correction_audit_entries:/);
 
   const mechanics = buildMatrixMechanicsBrief();
   assert.match(mechanics, /DATA CORRECTABILITY/);
-  assert.match(mechanics, /thesis-t0-repair/);
+  assert.match(mechanics, /thesis-t0/);
   assert.ok(MATRIX_MECHANICS_REVISION >= 45);
 
   console.log("test-thesis-t0-repair: PASS");

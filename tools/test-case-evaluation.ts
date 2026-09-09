@@ -445,6 +445,74 @@ async function run() {
     console.log("E WAIT+favorable isolation: ok");
   }
 
+  // E2 — Sparse synthetic OBS must not suppress Case-bound OHLCV classification
+  {
+    const { plan, freeze } = await seedGoWithCriteria({
+      id: "PLAN-E2",
+    });
+    const waitPlan = {
+      ...plan,
+      decision: {
+        ...plan.decision!,
+        verdict: "wait" as const,
+      },
+    };
+    const c = await buildCase(
+      waitPlan.id,
+      {
+        ...makeDeps({
+          plans: [waitPlan],
+          freezes: [
+            {
+              ...freeze,
+              decision: freeze.decision
+                ? { ...freeze.decision, verdict: "wait" }
+                : freeze.decision,
+              plan: { ...freeze.plan, planId: waitPlan.id },
+            },
+          ],
+          learningByPlan: {
+            [waitPlan.id]: lo(waitPlan.id, "unexecuted_plan_loss", {
+              realizedR: 0,
+              counterfactualR: -1,
+            }),
+          },
+        }),
+        getObservations: async () => [
+          {
+            id: "OBS-E2",
+            planId: waitPlan.id,
+            ticker: "TEST",
+            status: "concluded",
+            startedAt: "2026-02-01T00:00:00.000Z",
+            endsAt: "2026-05-01T00:00:00.000Z",
+            durationDays: 90,
+            observationKind: "plan_counterfactual_observation",
+            firstTerminalEvent: "invalidation",
+            targetReached: false,
+            createdAt: "2026-02-01T00:00:00.000Z",
+            lastUpdatedAt: "2026-02-01T00:00:00.000Z",
+          },
+        ],
+      }
+    );
+    const e = evaluateCase({
+      thesisCase: c!,
+      ohlcv: {
+        planId: waitPlan.id,
+        available: true,
+        thesisZoneReached: "YES",
+        stopLevelReached: "YES",
+        targetReached: "NO",
+        entryLevelReached: "YES",
+        windowHigh: 109,
+        windowLow: 97,
+      },
+    });
+    assert.equal(e.realityRelationship.value, "mixed");
+    console.log("E2 sparse OBS still uses OHLCV: ok");
+  }
+
   // F — Missing T0 → Decision Quality INDETERMINATE (no hindsight)
   {
     const decided = decide(basePlan({ id: "PLAN-F" }), {

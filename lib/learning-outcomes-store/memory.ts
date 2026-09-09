@@ -75,6 +75,12 @@ export function createMemoryLearningOutcomesStore(
       for (const row of list) out.push(await store.upsert(row));
       return out;
     },
+    async deleteById(id) {
+      const key = id.trim().toUpperCase();
+      const idx = rows.findIndex((x) => x.id.toUpperCase() === key);
+      if (idx < 0) throw new Error(`Learning Outcome ${key} not found for delete.`);
+      rows.splice(idx, 1);
+    },
   };
   return store;
 }

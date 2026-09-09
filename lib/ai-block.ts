@@ -20,7 +20,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
-- scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; REQUIRED executionInstruction (AI Plan Map sentence — see md/matrix/execution-instruction-spec.md); optional layeredEntry{stopModel,sizingMode,authorizedRiskAmount,primaryTargetPrice,commonStopPrice,limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]} (persist structured layers — never leave layers only in notes/reasoning), optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Server allocates a NEW PLAN-<n> (min 3-digit pad; PLAN-1000+ allowed). Do NOT supply id/planId. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
+- scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; REQUIRED executionInstruction (AI Plan Map sentence — see md/matrix/execution-instruction-spec.md); optional layeredEntry{stopModel,sizingMode,authorizedRiskAmount,primaryTargetPrice,commonStopPrice,limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]} (persist structured layers — never leave layers only in notes/reasoning), optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Identical entry/stop/target vs any existing Plan STALLs (shows comparison; CANCEL or identicalGeometryOverride:true). Server allocates a NEW PLAN-<n> (min 3-digit pad; PLAN-1000+ allowed). Do NOT supply id/planId. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
 - technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter{primary?|state+directionalEfficiency+rangeProgression,evidence,confidence},historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern,rationale,scoutImplication,confidence}), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
@@ -34,7 +34,7 @@ Trade layer (use only when scouting approves):
 - attribution: MAF component attribution — tradeId and/or planId (or experimentId); components[] with component, classification, aiInterpretationConfidence (0-100), reasoning; optional tag, suggestedImprovement, summary, primaryDragComponent, observation{mfe,mae,…}. NEVER invent prices — only supply observation numbers the human stated.
 - observation-update: Observation Engine — observationId or tradeId or planId; at least one of targetReached, targetReachedAt, thesisInvalidated, invalidationReachedAt, firstTerminalEvent, maxPrice, minPrice, mfe, mae, betterEntryAvailable, status (observing|concluded). Never invent prices.
 - plan-outcome: terminal Scout plan without Trade — planId, outcomeKind (unexecuted_plan_loss|missed_opportunity|duplicate_creation). UPL: entryReached=true, stopReachedBeforeTarget=true, targetReachedBeforeStop=false, nonExecutionReason from execution-failure enum; server derives realizedR=0, counterfactualR=-1. Missed opportunity: entryReached=false, targetReachedBeforeStop=true, stopReachedBeforeTarget=false, nonExecutionReason=entry_not_reached; server derives realizedR=0, counterfactualR=+planned R. Wrong persisted outcome: re-Apply with repairKind=corrected + repairNote/note (≥8) — prior outcome stays in correctionAudit; LO/OBS re-sync. Never invent fills/risk; do not chase; do not use decision-update or fictitious Trade
-- thesis-t0-repair: controlled T0 reconstruct/correct for ONE planId — repairKind (reconstructed|corrected), note (≥8), evidenceRefs[]; reconstructed requires t0+plannedEntry+stopPrice+targetPrice when Missing T0; corrected patches a wrong freeze and keeps prior body in correctionAudit. Never inherit another Plan's T0 via shared Stock File. Hindsight price/P&L alone is never sufficient evidence.
+- thesis-t0: controlled Plan-specific T0 write/update for ONE planId — note (≥8), evidenceRefs[]; supply t0 when creating a missing freeze, optional geometry fields only when updating supported T0 fields. Prior body stays in correctionAudit. Never inherit another Plan's T0 via shared Stock File. Hindsight price/P&L alone is never sufficient evidence.
 - playbook-create / playbook-update: playbook CRUD
 
 Rules:
@@ -76,7 +76,7 @@ All Apply-ready block types:
 - layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
-- scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice, REQUIRED executionInstruction; optional layeredEntry; optional verdict+challenges; allocates NEW PLAN-xxx (same-ticker new window)
+- scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice, REQUIRED executionInstruction; optional layeredEntry; optional verdict+challenges; identical geometry STALLs unless identicalGeometryOverride:true; allocates NEW PLAN-xxx (same-ticker new window)
 - technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation / movementCharacter expansion fields), integrated{} (+ optional participationSynthesis, momentumAssessment), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
@@ -88,7 +88,7 @@ All Apply-ready block types:
 - attribution: MAF — tradeId/planId/experimentId; components[{component, classification, aiInterpretationConfidence, reasoning}]; optional observation{} (never invent prices)
 - observation-update: Observation Engine — observationId|tradeId|planId + measurable fields (targetReached, mfe/mae, …)
 - plan-outcome: Scout closure without Trade — outcomeKind + event booleans; wrong outcome → repairKind=corrected + repairNote/note (≥8)
-- thesis-t0-repair: Plan-specific T0 reconstruct/correct — repairKind reconstructed|corrected + note; never share freeze across Plans
+- thesis-t0: Plan-specific T0 write/update + note; never share freeze across Plans
 - external-position-create/update/reduction/settle/exit-plan-update: holdings outside Scout→Trade; never invent Trade/MAF
 - capital-configuration-create/update · capital-reservation-* · capital-ledger-adjustment: Settings → Capital prepares; Control → Apply persists; settled amounts immutable (reversals = new events)
 - playbook-create / playbook-update: playbook CRUD
@@ -232,8 +232,8 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     hint: "UPL or missed_opportunity — human-confirmed event order; server derives R — never invent fills",
   },
   {
-    type: "thesis-t0-repair",
-    label: "thesis-t0-repair — reconstruct or correct Plan T0",
+    type: "thesis-t0",
+    label: "thesis-t0 — write or update Plan T0",
     hint: "Missing or wrong T0 with audit — never inherit another Plan's freeze",
   },
   {
@@ -857,19 +857,18 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       evidenceRefs: [],
     },
   },
-  "thesis-t0-repair": {
-    type: "thesis-t0-repair",
+  "thesis-t0": {
+    type: "thesis-t0",
     source: "ai-block",
     proposal: {
       planId: "PLAN-001",
-      repairKind: "reconstructed",
       t0: "2025-06-15T14:00:00.000Z",
       plannedEntry: 349,
       stopPrice: 320,
       targetPrice: 430,
       plannedRR: 2.79,
       note:
-        "Missing Plan-specific T0; reconstructing from contemporaneous decision-time geometry confirmed by human (not from later price path).",
+        "Corrected Plan-specific T0 supplied from contemporaneous decision-time geometry confirmed by human (not from later price path).",
       evidenceRefs: ["human:plan-geometry-notebook", "decision:PLAN-001"],
     },
   },

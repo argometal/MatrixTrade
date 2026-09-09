@@ -74,6 +74,22 @@ export function createSupabasePlansStore(): PlansStore {
         throw new Error(`Supabase trade_plans insert failed: ${error.message}`);
       }
     },
+    async deleteById(id) {
+      assertMxtPersistenceWriteAllowed("trade_plans.delete");
+      const key = id.trim().toUpperCase();
+      const supabase = createSupabaseAdmin();
+      const { data, error } = await supabase
+        .from("trade_plans")
+        .delete()
+        .eq("id", key)
+        .select("id");
+      if (error) {
+        throw new Error(`Supabase trade_plans delete failed: ${error.message}`);
+      }
+      if (!data || data.length === 0) {
+        throw new Error(`Plan ${key} not found for delete.`);
+      }
+    },
   };
 }
 

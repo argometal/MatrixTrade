@@ -5,6 +5,7 @@ import { getStockThesesByTicker, getStockThesisById } from "./stock-theses";
 import { getPlaybookById, slugifyPlaybookId } from "./playbooks";
 import { getMtaeAssessmentById, getMtaeCalibrations } from "./mtae-store";
 import { getTradeById } from "./storage";
+import { normalizeHistoricalAnalysis } from "./stock-thesis-types";
 import type { Trade } from "./types";
 
 export interface ApplyVerifyResult {
@@ -52,8 +53,8 @@ export async function verifyApplyPersistence(
       return verifyObservationUpdatePersistence(parsed);
     case "plan-outcome":
       return verifyPlanOutcomePersistence(parsed);
-    case "thesis-t0-repair":
-      return verifyThesisT0RepairPersistence(parsed);
+    case "thesis-t0":
+      return verifyThesisT0Persistence(parsed);
     case "trade-proposal":
     case "trade-close":
     case "trade-review":
@@ -413,21 +414,20 @@ async function verifyObservationUpdatePersistence(
   };
 }
 
-async function verifyThesisT0RepairPersistence(
+async function verifyThesisT0Persistence(
   parsed: TradingInboxPayload
 ): Promise<ApplyVerifyResult> {
   const planId = String(parsed.proposal.planId ?? "").trim();
-  const repairKind = String(parsed.proposal.repairKind ?? "").trim();
   const { getPlanById } = await import("./plans");
   const { findFreezeForPlan } = await import("./thesis-case");
   const { listThesisT0Freezes } = await import("./thesis-t0");
   const plan = await getPlanById(planId);
   if (!plan) {
-    return { ok: false, detail: `Plan ${planId} not found after T0 repair.` };
+    return { ok: false, detail: `Plan ${planId} not found after T0 apply.` };
   }
   const freeze = findFreezeForPlan(plan, await listThesisT0Freezes());
   if (!freeze) {
-    return { ok: false, detail: `No T0 freeze bound to ${planId} after repair.` };
+    return { ok: false, detail: `No T0 freeze bound to ${planId} after apply.` };
   }
   if (freeze.plan.planId.toUpperCase() !== planId.toUpperCase()) {
     return {
@@ -435,24 +435,12 @@ async function verifyThesisT0RepairPersistence(
       detail: `T0 freeze plan.planId=${freeze.plan.planId} does not match ${planId}.`,
     };
   }
-  if (repairKind === "reconstructed" && freeze.recordKind !== "reconstructed") {
-    return {
-      ok: false,
-      detail: `Expected recordKind=reconstructed, got ${freeze.recordKind ?? "—"}`,
-    };
-  }
-  if (repairKind === "corrected" && freeze.recordKind !== "corrected") {
-    return {
-      ok: false,
-      detail: `Expected recordKind=corrected, got ${freeze.recordKind ?? "—"}`,
-    };
-  }
   if (!freeze.correctionAudit?.length) {
-    return { ok: false, detail: `Freeze ${freeze.id} missing correctionAudit after repair.` };
+    return { ok: false, detail: `Freeze ${freeze.id} missing correctionAudit after apply.` };
   }
   return {
     ok: true,
-    detail: `T0 ${repairKind} verified · ${freeze.id} · recordKind=${freeze.recordKind} · plan=${planId}`,
+    detail: `T0 verified · ${freeze.id} · plan=${planId}`,
   };
 }
 
@@ -562,6 +550,15 @@ async function verifyStockFilePersistence(
   }
   if (p.status !== undefined && reloaded.status !== String(p.status)) {
     return { ok: false, detail: `Status not updated on ${id}.` };
+  }
+  if (p.historicalAnalysis !== undefined) {
+    const normalized = normalizeHistoricalAnalysis(p.historicalAnalysis);
+    if (!normalized.ok) {
+      return { ok: false, detail: normalized.errors.join("; ") };
+    }
+    if (JSON.stringify(reloaded.historicalAnalysis) !== JSON.stringify(normalized.value)) {
+      return { ok: false, detail: `historicalAnalysis not updated on ${id}.` };
+    }
   }
   if (p.initialScout !== undefined) {
     const scout = p.initialScout as Record<string, unknown>;

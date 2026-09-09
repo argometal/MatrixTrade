@@ -1,5 +1,45 @@
 # Scout & execution model
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+A-Iteration Anchors are constraints, not complete implementation specifications.
+Everything not constrained by an Anchor remains available for AI reasoning, design, simplification, implementation, and improvement.
+The AI has an objective obligation to improve the system within those remaining degrees of freedom.
+Do not treat absence of explicit human instruction as a prohibition on improvement.
+If proceeding requires changing an Anchor or inventing unresolved semantics necessary to satisfy it, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+UI may simplify, hide, reorganize, or derive presentation from canonical data when this does not change meaning.
+When genuinely blocked, isolate the smallest unresolved question.
+Verify the result.
+
+## A-Iteration Anchors
+
+`AIT-A — Snapshot`: Snapshot must be one. It automatically represents the current context, including the selected Case and relevant Insights when applicable.
+
+`AIT-T0 — Simplify T0`: Simplifica T0: debe permitir corregir cualquier T0. Mantenerlo sencillo.
+
+`AIT-CASE-1`: No stop → mismo caso.
+
+`AIT-CASE-2`: Stop → caso cerrado.
+
+`AIT-CASE-3`: Nueva oportunidad posterior → nuevo caso.
+
+Only `AIT-A`, `AIT-T0`, `AIT-CASE-1`, `AIT-CASE-2`, and `AIT-CASE-3` are defined here as Scout A-Iteration Anchors.
+
+Research/completion A-Iteration Anchors for MXT 033 live in [`mxt-033-handoff-70-points.md`](mxt-033-handoff-70-points.md).
+
+
 **Status:** Canonical design (2026-07-10).  
 **Purpose:** One clear picture of what a **Scout** is vs **Trade** vs **Probe** — today and V2.
 

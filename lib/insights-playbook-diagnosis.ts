@@ -4,6 +4,7 @@
  */
 
 import type { InsightsCaseRow } from "./insights-case-spine-types";
+import { independentEconomicCaseRows } from "./insights-case-spine-view";
 import { CASE_FAMILY_LABEL, NO_ENTRY_DIAGNOSIS_LABEL } from "./insights-case-labels";
 
 export type PlaybookDiagnosisAggregate = {
@@ -50,7 +51,7 @@ export function aggregatePlaybookDiagnosis(
   };
 
   const byKey = new Map<string, InsightsCaseRow[]>();
-  for (const row of rows) {
+  for (const row of independentEconomicCaseRows(rows)) {
     const key = row.playbookId ?? "";
     const list = byKey.get(key);
     if (list) list.push(row);

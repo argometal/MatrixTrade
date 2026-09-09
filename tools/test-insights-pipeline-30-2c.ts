@@ -305,7 +305,7 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.equal(row.observationId, "OBS-99");
   assert.equal(row.learningOutcomeId, "LO-D");
   assert.equal(row.mafExperimentId, "MAF-99");
-  assert.equal(row.href, "/trades/H099");
+  assert.equal(row.href, "/mxt/trades/H099");
 }
 
 {
@@ -372,7 +372,7 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.equal(view.pendingObservationCount, 1);
   assert.equal(
     view.rows.find((r) => r.planId === "PLAN-EXP")?.href,
-    "/planning?plan=PLAN-EXP"
+    "/mxt/planning?plan=PLAN-EXP"
   );
 }
 
@@ -406,6 +406,15 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.match(ui, /data-pipeline-counterfactual/);
   assert.match(ui, /data-pipeline-triggered-without-trade/);
   assert.match(ui, /data-pipeline-thesis-failure-rate/);
+  assert.match(ui, /data-opportunity-participation-comparison/);
+  assert.match(ui, /data-opportunity-participation-evidence/);
+  assert.match(ui, /data-opportunity-participation-closure/);
+  assert.match(ui, /data-research-universe="participation"/);
+  assert.match(ui, /data-research-universe="sequence"/);
+  assert.match(ui, /data-opportunity-closure-row/);
+  assert.match(ui, /data-opportunity-comparison-checkpoint/);
+  assert.match(ui, /data-opportunity-comparison-row/);
+  assert.match(ui, /data-opportunity-sequence-accounting/);
   assert.match(ui, /min-h-11/);
   assert.match(ui, /sm:grid-cols-2/);
   assert.match(ui, /overflow-x-auto/);
@@ -413,6 +422,7 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
   assert.match(page, /getMafExperiments/);
   assert.match(page, /getObservations/);
   assert.match(page, /getPlans/);
+  assert.match(page, /listMarketRealityWindowsForRead/);
   assert.doesNotMatch(page, /app\/\(trading\).*\/insights\/page/);
   assert.doesNotMatch(hub, /create table|maf_experiments/);
 
@@ -420,9 +430,9 @@ function maf(partial: Partial<MafExperiment> & Pick<MafExperiment, "id" | "ticke
     join(root, "app/components/planning-preview/PreviewPlanning.tsx"),
     "utf8"
   );
-  assert.match(planning, /data-scout-learning-queue/);
+  assert.match(planning, /data-scout-case-selector/);
   assert.match(planning, /planNeedsLearningSyncRepair/);
-  assert.match(planning, /data-scout-needs-outcome/);
+  assert.match(planning, /data-scout-outcome-panel/);
 }
 
 console.log("test-insights-pipeline-30-2c: ok");

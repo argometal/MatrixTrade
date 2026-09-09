@@ -1,5 +1,5 @@
 /**
- * Insights Pipeline Snapshot (MXT 029) — parity + PLAN-001/009 separations.
+ * Insights Snapshot (MXT 029) — parity + PLAN-001/009 separations.
  * Run: npx tsx tools/test-insights-snapshot.ts
  */
 import assert from "node:assert/strict";
@@ -371,17 +371,16 @@ const pipelineInput = {
     playbookNames,
     generatedAt: "2026-09-04T19:00:00.000Z",
   });
-  assert.match(text, /=== INSIGHTS PIPELINE SNAPSHOT ===/);
+  assert.match(text, /=== INSIGHTS SNAPSHOT ===/);
   assert.match(text, /SCOPE: Universe/);
-  assert.match(text, /--- 1\. DECISION UNIVERSE ---/);
-  assert.match(text, /--- 5\. CASES NEEDING REVIEW ---/);
-  assert.match(text, /Case classification ≠ MAF attribution/);
-  assert.match(text, /Realized R\/P&L ≠ Counterfactual/);
-  assert.match(text, /totalCases: 3/);
-  assert.match(text, /PLAN-009/);
-  assert.match(text, /PLAN-001/);
-  assert.match(text, /realizedR=/);
-  assert.match(text, /cfR=/);
+  assert.match(text, /--- 1\. UNIVERSE ---/);
+  assert.match(text, /--- 2\. CASES ---/);
+  assert.match(text, /--- 3\. LEARNING ---/);
+  assert.match(text, /--- 4\. ATTENTION ---/);
+  assert.match(text, /Cases: 3/);
+  assert.match(text, /No individual Case is selected in the current Insights context\./);
+  assert.match(text, /Counterfactual R is not portfolio P\/L\./);
+  assert.doesNotMatch(text, /pathRows:/);
   console.log("UNIVERSE TEST: ok");
 }
 
@@ -411,12 +410,10 @@ const pipelineInput = {
   });
   assert.match(text, /PLAN-009/);
   assert.match(text, /PLAN-001/);
-  assert.match(text, /ST=ST-TSLA-001/);
   // Distinct playbooks / MAF — not fused
   assert.match(text, /expectancy-asymmetry/);
   assert.match(text, /weekly-breakout/);
-  assert.match(text, /MAF-TSLA-001\/entry_quality/);
-  assert.match(text, /MAF-TSLA-002\/timing_quality/);
+  assert.match(text, /No individual Case is selected in the current Insights context\./);
   assert.doesNotMatch(text, /AAPL/);
   console.log("TSLA TEST: ok");
 }
@@ -454,19 +451,12 @@ const pipelineInput = {
     playbookNames,
     generatedAt: "2026-09-04T19:00:00.000Z",
   });
-  assert.match(text, /--- 10\. FOCUS CASE ---/);
-  assert.match(text, /planId: PLAN-001/);
-  assert.match(text, /t0Available: false/);
-  assert.match(text, /evaluable: false/);
   assert.match(text, /unexecuted_plan_loss/);
-  assert.match(text, /realizedR: \+?0\.00R/);
-  assert.match(text, /counterfactualR: -1\.00R/);
-  assert.match(text, /drag=Timing quality/);
-  assert.match(text, /NOT portfolio P\/L/);
-  assert.match(text, /noEntryDiagnosis: Insufficient Evidence/);
-  assert.match(text, /equationId: EQ-016A-NE-MISSING-T0/);
-  // Must not inherit PLAN-009 geometry
-  assert.doesNotMatch(text, /geometry@plan: entry=280/);
+  assert.match(text, /TSLA · PLAN-001 · INCOMPLETE/);
+  assert.match(text, /Counterfactual: -1\.00R/);
+  assert.match(text, /Timing: evaluated 1 · weak\/fail 1 · primary drag 1/);
+  assert.match(text, /Counterfactual R is not portfolio P\/L\./);
+  assert.doesNotMatch(text, /FOCUS CASE/);
   console.log("PLAN-001 FOCUS TEST: ok");
 }
 
@@ -502,30 +492,33 @@ const pipelineInput = {
     playbookNames,
     generatedAt: "2026-09-04T19:00:00.000Z",
   });
-  assert.match(text, /--- 10\. FOCUS CASE ---/);
-  assert.match(text, /planId: PLAN-009/);
-  assert.match(text, /noEntryDiagnosis: Possible Over-Optimization/);
-  assert.match(text, /MAF: MAF-TSLA-001 status=concluded source=supabase drag=Entry quality/);
-  assert.match(text, /counterfactualR: \+5\.83R/);
-  assert.doesNotMatch(text, /MAF: MAF-TSLA-002/);
-  assert.doesNotMatch(text, /equationId: EQ-016A-NE-MISSING-T0/);
+  assert.match(text, /TSLA · PLAN-009 · COMPLETE/);
+  assert.match(text, /Counterfactual: \+5\.83R/);
+  assert.doesNotMatch(text, /FOCUS CASE/);
   console.log("PLAN-009 FOCUS TEST: ok");
   console.log("--- PLAN-009 SAMPLE SNAPSHOT ---");
   console.log(text);
 }
 
-// UI + visible menu
+// UI + unified snapshot action
 {
   const src = readFileSync(
     "app/components/insights-preview/PreviewPipelinePerformance.tsx",
     "utf8"
   );
-  assert.match(src, /Insights Pipeline Snapshot/);
+  assert.match(src, /Copy Snapshot/);
+  assert.match(src, /composeUnifiedSnapshot/);
   assert.match(src, /buildInsightsSnapshotBrief/);
   assert.match(src, /data-testid="insights-snapshot-copy"/);
+  assert.doesNotMatch(src, /consumed from original entry/);
+  assert.match(src, /without participation/);
+  assert.doesNotMatch(src, /Snapshots ▾/);
+  assert.doesNotMatch(src, /\bReport\b/);
+  assert.match(src, /\bInsights\b/);
   assert.ok(
-    VISIBLE_SNAPSHOT_MENU_LABELS.includes("Insights Pipeline Snapshot")
+    VISIBLE_SNAPSHOT_MENU_LABELS.includes("Insights Snapshot")
   );
+  assert.ok(!VISIBLE_SNAPSHOT_MENU_LABELS.includes("Plan Snapshot"));
   console.log("LOCAL UI WIRING: ok");
 }
 

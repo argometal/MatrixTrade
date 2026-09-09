@@ -512,7 +512,7 @@ function attachPlanOutcomeRepair(
     return {
       ok: false,
       errors: [
-        "plan-outcome repairKind must be corrected when set (use thesis-t0-repair for Missing T0)",
+        "plan-outcome repairKind must be corrected when set (use thesis-t0 for Missing T0)",
       ],
     };
   }

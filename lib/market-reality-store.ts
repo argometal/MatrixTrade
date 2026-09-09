@@ -1,25 +1,94 @@
 /**
- * Case-bound Market Reality window persistence (local JSON).
+ * Case-bound Market Reality window persistence.
+ * Local JSON by default; durable Supabase storage on Vercel/runtime protection paths.
  * Not a market warehouse — only windows acquired for Cases.
  */
 
 import { promises as fs } from "fs";
 import path from "path";
+import { createSupabaseAdmin } from "./supabase/server";
+import { assertMxtPersistenceWriteAllowed } from "./mxt-readonly";
 import type { MarketRealityCaseWindow } from "./market-reality-types";
+
+const MXT_MR_STORAGE_BUCKET = "mxt-artifacts";
+const STORAGE_PREFIX = "market-reality-windows";
 
 function windowsPath(): string {
   return path.join(process.cwd(), "data", "market-reality-case-windows.json");
 }
 
-function assertWritesAllowed(): void {
-  if (process.env.VERCEL || process.env.VERCEL_ENV) {
+function useSupabaseStorage(): boolean {
+  return Boolean(process.env.VERCEL || process.env.VERCEL_ENV);
+}
+
+function objectPath(id: string): string {
+  return `${STORAGE_PREFIX}/${id.toUpperCase()}.json`;
+}
+
+async function ensureBucket(): Promise<void> {
+  const supabase = createSupabaseAdmin();
+  const { data: buckets, error } = await supabase.storage.listBuckets();
+  if (error) {
+    throw new Error(`Supabase storage listBuckets failed: ${error.message}`);
+  }
+  if (buckets?.some((b) => b.name === MXT_MR_STORAGE_BUCKET)) return;
+  const { error: createError } = await supabase.storage.createBucket(
+    MXT_MR_STORAGE_BUCKET,
+    { public: false, fileSizeLimit: 10_000_000 }
+  );
+  if (createError && !/already exists/i.test(createError.message)) {
     throw new Error(
-      "Market Reality JSON store cannot write on Vercel in #12C MVP (local Case evaluation)."
+      `Supabase storage createBucket(${MXT_MR_STORAGE_BUCKET}) failed: ${createError.message}`
     );
   }
 }
 
+async function readAllFromSupabase(): Promise<MarketRealityCaseWindow[]> {
+  await ensureBucket();
+  const supabase = createSupabaseAdmin();
+  const { data, error } = await supabase.storage
+    .from(MXT_MR_STORAGE_BUCKET)
+    .list(STORAGE_PREFIX, { limit: 1000 });
+  if (error) {
+    throw new Error(`Supabase Market Reality storage list failed: ${error.message}`);
+  }
+  const ids = (data ?? [])
+    .map((f) => f.name)
+    .filter((n) => n.toLowerCase().endsWith(".json"))
+    .map((n) => n.replace(/\.json$/i, ""));
+  const rows: MarketRealityCaseWindow[] = [];
+  for (const id of ids) {
+    const { data: blob, error: dlErr } = await supabase.storage
+      .from(MXT_MR_STORAGE_BUCKET)
+      .download(objectPath(id));
+    if (dlErr) {
+      const msg = String(dlErr.message ?? "").toLowerCase();
+      if (msg.includes("not found") || msg.includes("404")) continue;
+      throw new Error(`Supabase Market Reality download failed: ${dlErr.message}`);
+    }
+    rows.push(JSON.parse(await blob.text()) as MarketRealityCaseWindow);
+  }
+  return rows;
+}
+
+async function upsertSupabase(row: MarketRealityCaseWindow): Promise<void> {
+  assertMxtPersistenceWriteAllowed("market_reality_windows.storage.upsert");
+  await ensureBucket();
+  const supabase = createSupabaseAdmin();
+  const body = JSON.stringify(row, null, 2);
+  const { error } = await supabase.storage
+    .from(MXT_MR_STORAGE_BUCKET)
+    .upload(objectPath(row.id), body, {
+      contentType: "application/json",
+      upsert: true,
+    });
+  if (error) {
+    throw new Error(`Supabase Market Reality upload failed: ${error.message}`);
+  }
+}
+
 async function readAll(): Promise<MarketRealityCaseWindow[]> {
+  if (useSupabaseStorage()) return readAllFromSupabase();
   try {
     const raw = await fs.readFile(windowsPath(), "utf-8");
     const parsed = JSON.parse(raw) as MarketRealityCaseWindow[];
@@ -32,7 +101,15 @@ async function readAll(): Promise<MarketRealityCaseWindow[]> {
 }
 
 async function writeAll(rows: MarketRealityCaseWindow[]): Promise<void> {
-  assertWritesAllowed();
+  if (useSupabaseStorage()) {
+    const existing = await readAllFromSupabase();
+    const merged = new Map(existing.map((row) => [row.id, row] as const));
+    for (const row of rows) merged.set(row.id, row);
+    for (const row of merged.values()) {
+      await upsertSupabase(row);
+    }
+    return;
+  }
   await fs.mkdir(path.dirname(windowsPath()), { recursive: true });
   await fs.writeFile(windowsPath(), JSON.stringify(rows, null, 2), "utf-8");
 }

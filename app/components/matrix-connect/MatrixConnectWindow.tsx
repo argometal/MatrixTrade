@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
-import { acceptAiBlockAction } from "@/app/actions";
+import { acceptAiBlockAction, validateAiBlockAction } from "@/app/control-actions";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { ProposalSketchCard } from "@/app/components/matrix-connect/ProposalSketchCard";
 import { parseAiBlock } from "@/lib/ai-block";
@@ -16,7 +16,7 @@ import {
 } from "@/lib/matrix-connect-types";
 import { buildProposalSketch } from "@/lib/proposal-sketch";
 import type { SnapshotMenuItem } from "@/lib/snapshot-types";
-import { validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
+import type { TradingInboxPayload } from "@/lib/bridge";
 
 type Step = "intent" | "snapshot" | "import" | "success";
 
@@ -162,28 +162,43 @@ export function MatrixConnectWindow({
   }, [open]);
 
   const sketch = useMemo(() => (preview ? buildProposalSketch(preview) : null), [preview]);
-  const validation = useMemo(
-    () => (preview ? validateProposalPayload(preview) : { ok: false as const, errors: ["Validate first"] }),
-    [preview]
-  );
-  const applyReady = Boolean(preview && validation.ok && isApplyImplemented(preview.type));
+  const applyReady = Boolean(preview && isApplyImplemented(preview.type));
 
   function handleValidate() {
     setParseError(null);
     setAcceptError(null);
-    const result = parseAiBlock(pasteValue);
-    if (!result.ok) {
-      setPreview(null);
-      setParseError(
-        result.details?.length ? `${result.error}\n${result.details.join("\n")}` : result.error
-      );
-      return;
-    }
-    setPreview(result.payload);
-    const payloadCheck = validateProposalPayload(result.payload);
-    if (!payloadCheck.ok) {
-      setAcceptError(payloadCheck.errors.join("\n"));
-    }
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.set("aiBlock", pasteValue);
+        const serverResult = await validateAiBlockAction(formData);
+        if (!serverResult.ok) {
+          setPreview(null);
+          setAcceptError(
+            serverResult.details?.length
+              ? `${serverResult.error}\n${serverResult.details.join("\n")}`
+              : serverResult.error
+          );
+          return;
+        }
+
+        const result = parseAiBlock(pasteValue);
+        if (!result.ok) {
+          setPreview(null);
+          setParseError(
+            result.details?.length ? `${result.error}\n${result.details.join("\n")}` : result.error
+          );
+          return;
+        }
+
+        setPreview(result.payload);
+      } catch (err) {
+        setPreview(null);
+        setAcceptError(
+          err instanceof Error ? err.message : "Server-side Validate failed unexpectedly."
+        );
+      }
+    });
   }
 
   function resolvePreviewForAccept(): TradingInboxPayload | null {
@@ -205,12 +220,6 @@ export function MatrixConnectWindow({
 
     const payload = resolvePreviewForAccept();
     if (!payload) return;
-
-    const payloadCheck = validateProposalPayload(payload);
-    if (!payloadCheck.ok) {
-      setAcceptError(payloadCheck.errors.join("\n"));
-      return;
-    }
     if (!isApplyImplemented(payload.type)) {
       setAcceptError(`Apply is not implemented for type ${payload.type}.`);
       return;
@@ -316,17 +325,6 @@ export function MatrixConnectWindow({
                 {pending || accepting ? (
                   <div className="rounded-xl border border-violet-500/30 bg-violet-950/30 px-3 py-2 text-xs text-violet-200">
                     Applying… do not click again until this finishes.
-                  </div>
-                ) : null}
-
-                {preview && !validation.ok ? (
-                  <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-                    <p className="font-medium">Fix before Accept:</p>
-                    <ul className="mt-1 list-inside list-disc">
-                      {validation.errors.map((err) => (
-                        <li key={err}>{err}</li>
-                      ))}
-                    </ul>
                   </div>
                 ) : null}
 

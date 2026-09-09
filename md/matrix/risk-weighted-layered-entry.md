@@ -1,5 +1,23 @@
 # Risk-Weighted Layered Entry — architectural proposal
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+If conflict or ambiguity exists, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+Verify the result.
+
+
 **Status:** Engine-supported (2026-07-22) — use `sizingMode: "risk_percent"` + `authorizedRiskAmount` on Scout `layeredEntry`  
 **Layer:** Playbook — `risk-weighted-layered-entry` + Scout risk calc (`lib/layered-entry-risk.ts`)  
 **Scope:** Execution only — NOT stock-specific thesis generation  

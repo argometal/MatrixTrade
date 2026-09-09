@@ -2,6 +2,10 @@ import { authorizeLayeredEntry, parseLayeredEntryInput } from "./layered-entry";
 import { computePlannedRR } from "./plan-risk";
 import type { PlanTimeframe, SavePlanInput, TradePlan } from "./plan-types";
 import { PLAN_TIMEFRAMES } from "./plan-types";
+import {
+  isIdenticalGeometryOverride,
+  type PlanGeometryStall,
+} from "./plan-geometry-integrity";
 import { getPlansStore } from "./plans-store";
 import { recordScoutDecision, savePlan } from "./plans";
 import {
@@ -26,7 +30,12 @@ const DEFAULT_ENTRY: PlanTimeframe = "5m";
  */
 export async function applyScoutPlanCreate(
   proposal: Record<string, unknown>
-): Promise<{ plan?: TradePlan; errors?: string[]; warnings?: string[] }> {
+): Promise<{
+  plan?: TradePlan;
+  errors?: string[];
+  warnings?: string[];
+  geometryStall?: PlanGeometryStall;
+}> {
   const check = validateScoutPlanCreateProposal(proposal);
   if (!check.ok) return { errors: check.errors };
 
@@ -130,9 +139,13 @@ export async function applyScoutPlanCreate(
     validUntil: parseOptionalIso(proposal.validUntil),
     thesis: proposal.thesis !== undefined ? String(proposal.thesis).trim() || undefined : undefined,
     chatNotes: noteParts.filter(Boolean).join("\n") || undefined,
+    identicalGeometryOverride: isIdenticalGeometryOverride(
+      proposal.identicalGeometryOverride ?? proposal.geometryOverride
+    ),
   };
 
   const saved = await savePlan(input);
+  if (saved.geometryStall) return { geometryStall: saved.geometryStall };
   if (saved.errors?.length) return { errors: saved.errors };
   if (!saved.plan) return { errors: ["Failed to create Scout Plan."] };
   if (saved.warnings?.length) warnings.push(...saved.warnings);

@@ -1,5 +1,5 @@
 /**
- * Controlled T0 freeze repair (MXT 029) — server persist path.
+ * Controlled Plan-specific T0 write/update — server persist path.
  * Validation lives in thesis-t0-repair-validate.ts (client-safe for bridge).
  */
 
@@ -21,10 +21,13 @@ import type {
 } from "./thesis-t0-types";
 import { isMxtReadOnlyMode } from "./mxt-readonly";
 import { DEFAULT_THESIS_HORIZON_DAYS } from "./thesis-t0-types";
-import type { ThesisT0RepairProposal } from "./thesis-t0-repair-validate";
+import {
+  validateThesisT0Proposal,
+  type ThesisT0Proposal,
+} from "./thesis-t0-repair-validate";
 
-export type { ThesisT0RepairProposal } from "./thesis-t0-repair-validate";
-export { validateThesisT0RepairProposal } from "./thesis-t0-repair-validate";
+export type { ThesisT0Proposal } from "./thesis-t0-repair-validate";
+export { validateThesisT0Proposal } from "./thesis-t0-repair-validate";
 
 function freezeAuditSnapshot(f: ThesisT0Freeze): Record<string, unknown> {
   return {
@@ -44,27 +47,27 @@ function freezeAuditSnapshot(f: ThesisT0Freeze): Record<string, unknown> {
 
 function patchPlanGeometry(
   base: ThesisT0PlanGeometry,
-  repair: ThesisT0RepairProposal
+  update: ThesisT0Proposal
 ): ThesisT0PlanGeometry {
   return {
     ...base,
     plannedEntry:
-      repair.plannedEntry !== undefined ? repair.plannedEntry : base.plannedEntry,
-    stopPrice: repair.stopPrice !== undefined ? repair.stopPrice : base.stopPrice,
+      update.plannedEntry !== undefined ? update.plannedEntry : base.plannedEntry,
+    stopPrice: update.stopPrice !== undefined ? update.stopPrice : base.stopPrice,
     targetPrice:
-      repair.targetPrice !== undefined ? repair.targetPrice : base.targetPrice,
-    plannedRR: repair.plannedRR !== undefined ? repair.plannedRR : base.plannedRR,
+      update.targetPrice !== undefined ? update.targetPrice : base.targetPrice,
+    plannedRR: update.plannedRR !== undefined ? update.plannedRR : base.plannedRR,
     executionInstruction:
-      repair.executionInstruction !== undefined
-        ? repair.executionInstruction
+      update.executionInstruction !== undefined
+        ? update.executionInstruction
         : base.executionInstruction,
     playbookId:
-      repair.playbookId !== undefined ? repair.playbookId : base.playbookId,
+      update.playbookId !== undefined ? update.playbookId : base.playbookId,
     originalEntry: base.originalEntry ?? base.plannedEntry,
   };
 }
 
-export type ThesisT0RepairResult = {
+export type ThesisT0Result = {
   freeze: ThesisT0Freeze;
   created: boolean;
   detachedFromFreezeIds: string[];
@@ -74,13 +77,13 @@ export type ThesisT0RepairResult = {
  * Apply a validated T0 repair for one Plan.
  * Case diagnosis / Insights recompute from the new freeze on next read.
  */
-export async function applyThesisT0Repair(input: {
+export async function applyThesisT0(input: {
   plan: TradePlan;
-  repair: ThesisT0RepairProposal;
+  update: ThesisT0Proposal;
   thesis?: StockThesis | null;
-}): Promise<ThesisT0RepairResult> {
+}): Promise<ThesisT0Result> {
   if (isMxtReadOnlyMode()) {
-    throw new Error("[MXT_READ_ONLY] thesis-t0-repair blocked");
+    throw new Error("[MXT_READ_ONLY] thesis-t0 blocked");
   }
   const store = getThesisT0Store();
   const now = new Date().toISOString();
@@ -102,26 +105,19 @@ export async function applyThesisT0Repair(input: {
 
   const existing = findFreezeForPlan(input.plan, await listThesisT0Freezes());
 
-  if (input.repair.repairKind === "reconstructed") {
-    if (existing) {
-      throw new Error(
-        "Plan already has a T0 freeze — use repairKind=corrected, not reconstructed"
-      );
+  if (!existing) {
+    if (!input.update.t0) {
+      throw new Error("t0 is required when the plan has no existing freeze");
     }
-    if (!input.repair.t0) {
-      throw new Error("reconstructed repair requires t0");
-    }
-
-    // Prefer plan decision if present; geometry from repair + plan.
     const syntheticPlan: TradePlan = {
       ...input.plan,
-      plannedEntry: input.repair.plannedEntry ?? input.plan.plannedEntry,
-      stopPrice: input.repair.stopPrice ?? input.plan.stopPrice,
-      targetPrice: input.repair.targetPrice ?? input.plan.targetPrice,
-      plannedRR: input.repair.plannedRR ?? input.plan.plannedRR,
+      plannedEntry: input.update.plannedEntry ?? input.plan.plannedEntry,
+      stopPrice: input.update.stopPrice ?? input.plan.stopPrice,
+      targetPrice: input.update.targetPrice ?? input.plan.targetPrice,
+      plannedRR: input.update.plannedRR ?? input.plan.plannedRR,
       executionInstruction:
-        input.repair.executionInstruction ?? input.plan.executionInstruction,
-      playbookId: input.repair.playbookId ?? input.plan.playbookId,
+        input.update.executionInstruction ?? input.plan.executionInstruction,
+      playbookId: input.update.playbookId ?? input.plan.playbookId,
     };
 
     let freeze = buildThesisT0Freeze({
@@ -132,36 +128,35 @@ export async function applyThesisT0Repair(input: {
     });
     freeze = {
       ...freeze,
-      t0: input.repair.t0,
+      t0: input.update.t0,
       evaluationHorizonEndsAt: addDaysIso(
-        input.repair.t0,
+        input.update.t0,
         freeze.evaluationHorizonDays || DEFAULT_THESIS_HORIZON_DAYS
       ),
-      recordKind: "reconstructed",
-      confidence: input.plan.decision ? "partial" : "partial",
+      confidence: input.plan.decision ? freeze.confidence : "partial",
       correctionAudit: [
         {
           at: now,
-          kind: "reconstructed",
-          note: input.repair.note,
-          evidenceRefs: input.repair.evidenceRefs,
-          mechanism: "apply:thesis-t0-repair",
+          kind: "updated",
+          note: input.update.note,
+          evidenceRefs: input.update.evidenceRefs,
+          mechanism: "apply:thesis-t0",
           previous: { missing: true, planId: input.plan.id },
         },
       ],
     };
-    if (input.repair.thesisText != null || input.repair.currentHypothesis != null) {
+    if (input.update.thesisText != null || input.update.currentHypothesis != null) {
       freeze = {
         ...freeze,
         stock: {
           ...freeze.stock,
           thesis:
-            input.repair.thesisText !== undefined
-              ? input.repair.thesisText
+            input.update.thesisText !== undefined
+              ? input.update.thesisText
               : freeze.stock.thesis,
           currentHypothesis:
-            input.repair.currentHypothesis !== undefined
-              ? input.repair.currentHypothesis
+            input.update.currentHypothesis !== undefined
+              ? input.update.currentHypothesis
               : freeze.stock.currentHypothesis,
         },
       };
@@ -181,24 +176,17 @@ export async function applyThesisT0Repair(input: {
     return { freeze, created: true, detachedFromFreezeIds };
   }
 
-  // corrected
-  if (!existing) {
-    throw new Error(
-      "No T0 freeze to correct — use repairKind=reconstructed when Missing T0"
-    );
-  }
-
   const auditEntry: CorrectionAuditEntry = {
     at: now,
-    kind: "corrected",
-    note: input.repair.note,
-    evidenceRefs: input.repair.evidenceRefs,
-    mechanism: "apply:thesis-t0-repair",
+    kind: "updated",
+    note: input.update.note,
+    evidenceRefs: input.update.evidenceRefs,
+    mechanism: "apply:thesis-t0",
     previous: freezeAuditSnapshot(existing),
   };
 
-  const nextPlan = patchPlanGeometry(existing.plan, input.repair);
-  const nextT0 = input.repair.t0 ?? existing.t0;
+  const nextPlan = patchPlanGeometry(existing.plan, input.update);
+  const nextT0 = input.update.t0 ?? existing.t0;
   let updated: ThesisT0Freeze = {
     ...existing,
     t0: nextT0,
@@ -208,7 +196,6 @@ export async function applyThesisT0Repair(input: {
     ),
     plan: nextPlan,
     planIds: [input.plan.id],
-    recordKind: "corrected",
     supersededFreezeId: existing.id,
     correctionAudit: appendCorrectionAudit(existing.correctionAudit, auditEntry),
     updatedAt: now,
@@ -219,18 +206,18 @@ export async function applyThesisT0Repair(input: {
   // Prefer same id: upsert overwrites effective body; previous in audit.
   updated = { ...updated, id: existing.id, supersededFreezeId: null };
 
-  if (input.repair.thesisText !== undefined || input.repair.currentHypothesis !== undefined) {
+  if (input.update.thesisText !== undefined || input.update.currentHypothesis !== undefined) {
     updated = {
       ...updated,
       stock: {
         ...updated.stock,
         thesis:
-          input.repair.thesisText !== undefined
-            ? input.repair.thesisText
+          input.update.thesisText !== undefined
+            ? input.update.thesisText
             : updated.stock.thesis,
         currentHypothesis:
-          input.repair.currentHypothesis !== undefined
-            ? input.repair.currentHypothesis
+          input.update.currentHypothesis !== undefined
+            ? input.update.currentHypothesis
             : updated.stock.currentHypothesis,
       },
     };
@@ -244,3 +231,8 @@ export async function applyThesisT0Repair(input: {
 export function allocateSupersedingFreezeId(): string {
   return newThesisT0FreezeId();
 }
+
+export type ThesisT0RepairProposal = ThesisT0Proposal;
+export type ThesisT0RepairResult = ThesisT0Result;
+export const applyThesisT0Repair = applyThesisT0;
+export const validateThesisT0RepairProposal = validateThesisT0Proposal;

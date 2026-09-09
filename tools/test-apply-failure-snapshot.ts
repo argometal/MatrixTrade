@@ -124,4 +124,19 @@ assert.equal(
   assert.ok(formatApplyFailureSnapshot(record).includes(payload));
 }
 
+// Redirect stack frames must not become schema field paths
+{
+  const record = buildApplyFailureRecord({
+    submittedJson: '{"type":"file-update","proposal":{"id":"ST-MSFT-001"}}',
+    kind: "validation",
+    errorMessage: "NEXT_REDIRECT",
+    details: [
+      "Error: NEXT_REDIRECT",
+      "at process.processTicksAndRejections (node:internal/process/task_queues:105:5)",
+    ],
+  });
+  assert.equal(record.fieldPath, "");
+  assert.equal(record.validationStage, "validation");
+}
+
 console.log("test-apply-failure-snapshot: all assertions passed");

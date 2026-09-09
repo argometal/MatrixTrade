@@ -144,6 +144,12 @@ export async function createInitialScoutPlan(
   }
 
   const result = await savePlan(input);
+  if (result.geometryStall) {
+    return {
+      errors: [result.geometryStall.comparisonText],
+      warnings: result.warnings,
+    };
+  }
   if (result.errors?.length) return { errors: result.errors };
   return {
     planId: result.plan?.id,

@@ -19,6 +19,7 @@ import {
   CASE_FAMILY_LABEL,
   NO_ENTRY_DIAGNOSIS_LABEL,
 } from "./insights-case-labels";
+import { buildCaseSpineResearchUniverse } from "./research-universe";
 
 export type {
   InsightsCaseRow,
@@ -77,6 +78,7 @@ export function pickCasesNeedingReview(
   limit = 12
 ): Array<{ row: InsightsCaseRow; score: number }> {
   return rows
+    .filter((row) => row.independentEconomicObservation !== false)
     .map((row) => ({ row, score: scoreInsightsCaseForReview(row) }))
     .filter((x) => x.score > 0)
     .sort(
@@ -84,6 +86,13 @@ export function pickCasesNeedingReview(
         b.score - a.score || a.row.planId.localeCompare(b.row.planId)
     )
     .slice(0, limit);
+}
+
+/** Cases that count as independent economic / learning observations. */
+export function independentEconomicCaseRows(
+  rows: InsightsCaseRow[]
+): InsightsCaseRow[] {
+  return rows.filter((row) => row.independentEconomicObservation !== false);
 }
 
 export function filterInsightsCaseRows(
@@ -146,36 +155,43 @@ export function buildInsightsCaseSpineView(
   filters?: InsightsCaseSpineFilters
 ): InsightsCaseSpineView {
   const filtered = filterInsightsCaseRows(rows, filters ?? {});
-  const diagnoses = filtered.map((r) => r.diagnosis);
+  // Duplicate_creation records stay in filtered.rows for historical access,
+  // but cards/rates use only independent economic observations.
+  const economic = independentEconomicCaseRows(filtered);
+  const diagnoses = economic.map((r) => r.diagnosis);
   let entryCases = 0;
   let noEntryCases = 0;
   let missingT0Cases = 0;
-  for (const r of filtered) {
+  for (const r of economic) {
     if (r.participation === "entry") entryCases += 1;
     else if (r.participation === "no_entry") noEntryCases += 1;
     if (!r.t0Available) missingT0Cases += 1;
   }
   const aggregate = aggregateDiagnoses({
     diagnoses,
-    totalCases: filtered.length,
+    totalCases: economic.length,
     entryCases,
     noEntryCases,
     missingT0Cases,
   });
 
-  const total = filtered.length;
+  const total = economic.length;
   const ne = aggregate.noEntryUniverse;
   const ids = (pred: (r: InsightsCaseRow) => boolean) =>
-    filtered.filter(pred).map((r) => r.planId);
+    economic.filter(pred).map((r) => r.planId);
 
   return {
     universeScope: "filtered",
     rows: filtered,
+    researchUniverse: buildCaseSpineResearchUniverse({
+      independentEconomicCaseCount: economic.length,
+      rawCaseRowCount: filtered.length,
+    }),
     aggregate,
     cards: {
       totalCases: cardMetric(
         "TOTAL CASES",
-        filtered.map((r) => r.planId),
+        economic.map((r) => r.planId),
         total
       ),
       familyA: cardMetric(

@@ -50,9 +50,7 @@ function saveInput(overrides: Partial<Parameters<typeof savePlan>[0]> = {}) {
     ticker: "TEST",
     analysisTimeframes: ["1D", "5m"] as TradePlan["analysisTimeframes"],
     entryTimeframe: "5m" as const,
-    plannedEntry: 100,
-    stopPrice: 95,
-    targetPrice: 120,
+    // Plan-id tests omit geometry so the identical-geometry stall does not fire.
     ...overrides,
   };
 }

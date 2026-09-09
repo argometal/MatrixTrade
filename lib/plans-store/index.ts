@@ -72,6 +72,11 @@ export function createMemoryPlansStore(seed: TradePlan[] = []): PlansStore {
         if (n > highWater) highWater = n;
       });
     },
+    async deleteById(id) {
+      const key = id.trim().toUpperCase();
+      if (!map.has(key)) throw new Error(`Plan ${key} not found for delete.`);
+      map.delete(key);
+    },
   };
 }
 

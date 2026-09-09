@@ -5,6 +5,8 @@
 
 import { calculateTradeResult } from "./calculate";
 import type { TradePlan } from "./plan-types";
+import { buildPlanEnterHref, isClosedScoutLearningUnit } from "./plan-helpers";
+import { PLAN_OUTCOME_KIND_LABELS } from "./plan-outcome-types";
 import { isTradeReviewed } from "./review";
 import type { Trade } from "./types";
 
@@ -103,10 +105,13 @@ export function buildTradesLedger(trades: Trade[], plans: TradePlan[]): LedgerRo
       ticker: plan.ticker,
       verdict,
       label: `${plan.ticker} · ${plan.id}`,
-      href: `/mxt/planning?plan=${plan.id}`,
+      href: buildPlanEnterHref(plan),
       date: plan.updatedAt?.slice(0, 10) ?? plan.createdAt.slice(0, 10),
       pnl: null,
-      detail: plan.outcome?.lesson ?? plan.status,
+      detail:
+        isClosedScoutLearningUnit(plan) && plan.outcome?.outcomeKind
+          ? PLAN_OUTCOME_KIND_LABELS[plan.outcome.outcomeKind]
+          : plan.outcome?.lesson ?? plan.status,
     });
   }
 

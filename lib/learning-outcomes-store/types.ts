@@ -7,4 +7,6 @@ export type LearningOutcomesStore = {
   /** Persist and return the canonical row (may differ in id after identity conflict). */
   upsert(row: LearningOutcome): Promise<LearningOutcome>;
   upsertMany?(rows: LearningOutcome[]): Promise<LearningOutcome[]>;
+  /** Hard-delete by id. Used only for contaminated-record cleanup. */
+  deleteById?(id: string): Promise<void>;
 };

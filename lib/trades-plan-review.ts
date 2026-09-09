@@ -1,4 +1,6 @@
 import type { TradePlan } from "./plan-types";
+import { isClosedScoutLearningUnit, planNeedsLearningSyncRepair, buildPlanEnterHref } from "./plan-helpers";
+import { PLAN_OUTCOME_KIND_LABELS } from "./plan-outcome-types";
 import type { Trade } from "./types";
 import {
   evaluateScoutOperationalState,
@@ -36,6 +38,22 @@ export function buildNonExecutedPlanRows(
           plan.outcome?.recordedAt === undefined)
     )
     .map((plan) => {
+      if (isClosedScoutLearningUnit(plan)) {
+        const kind = plan.outcome?.outcomeKind;
+        return {
+          id: plan.id,
+          ticker: plan.ticker,
+          planId: plan.id,
+          outcome: kind ? PLAN_OUTCOME_KIND_LABELS[kind] : "Outcome recorded",
+          strategyState: "Outcome recorded",
+          originalR: formatOperationalR(plan.plannedRR),
+          executableR: formatOperationalR(plan.outcome?.theoreticalResultR ?? null),
+          requiredAction: planNeedsLearningSyncRepair(plan)
+            ? "Retry learning sync"
+            : "Open in Scout",
+          href: buildPlanEnterHref(plan),
+        };
+      }
       const evaluation = evaluateScoutOperationalState({
         plan,
         linkedTrades: [],
@@ -69,7 +87,7 @@ export function buildNonExecutedPlanRows(
         requiredAction: formatOperationalActionLabel(
           evaluation.detectedAssessment.nextAction
         ),
-        href: `/mxt/planning?plan=${plan.id}`,
+        href: buildPlanEnterHref(plan),
       };
     })
     .sort((a, b) => a.ticker.localeCompare(b.ticker) || a.planId.localeCompare(b.planId));

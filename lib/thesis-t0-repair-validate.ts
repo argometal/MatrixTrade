@@ -1,16 +1,13 @@
 /**
- * Client-safe T0 repair proposal validation (MXT 029).
+ * Client-safe T0 proposal validation.
  * Must NOT import stores, thesis-case, or Node fs — bridge/ControlPanel use this on the client.
  */
 
-import { isRepairKind, type RepairKind } from "./correction-types";
-
-export type ThesisT0RepairProposal = {
+export type ThesisT0Proposal = {
   planId: string;
-  repairKind: RepairKind;
   note: string;
   evidenceRefs?: string[];
-  /** Decision-time ISO — required for reconstruct; optional override for correct. */
+  /** Decision-time ISO — required when supplying a missing freeze. */
   t0?: string;
   plannedEntry?: number | null;
   stopPrice?: number | null;
@@ -38,18 +35,12 @@ function strOrNull(v: unknown): string | null | undefined {
   return t || null;
 }
 
-export function validateThesisT0RepairProposal(
+export function validateThesisT0Proposal(
   proposal: Record<string, unknown>
-): { ok: true; value: ThesisT0RepairProposal } | { ok: false; error: string } {
+): { ok: true; value: ThesisT0Proposal } | { ok: false; error: string } {
   const planId =
     typeof proposal.planId === "string" ? proposal.planId.trim() : "";
   if (!planId) return { ok: false, error: "planId is required" };
-  if (!isRepairKind(proposal.repairKind)) {
-    return {
-      ok: false,
-      error: "repairKind must be reconstructed | corrected",
-    };
-  }
   const note =
     typeof proposal.note === "string" ? proposal.note.trim() : "";
   if (note.length < 8) {
@@ -73,13 +64,6 @@ export function validateThesisT0RepairProposal(
     return { ok: false, error: "t0 must be a valid ISO timestamp" };
   }
 
-  if (proposal.repairKind === "reconstructed" && !t0) {
-    return {
-      ok: false,
-      error: "reconstructed repair requires t0 (decision-time ISO)",
-    };
-  }
-
   const plannedEntry = numOrNull(proposal.plannedEntry);
   const stopPrice = numOrNull(proposal.stopPrice);
   const targetPrice = numOrNull(proposal.targetPrice);
@@ -94,21 +78,10 @@ export function validateThesisT0RepairProposal(
     return { ok: false, error: "targetPrice must be a finite number or null" };
   }
 
-  if (proposal.repairKind === "reconstructed") {
-    if (plannedEntry == null || stopPrice == null || targetPrice == null) {
-      return {
-        ok: false,
-        error:
-          "reconstructed repair requires plannedEntry, stopPrice, and targetPrice",
-      };
-    }
-  }
-
   return {
     ok: true,
     value: {
       planId,
-      repairKind: proposal.repairKind,
       note,
       evidenceRefs,
       t0,
@@ -123,3 +96,6 @@ export function validateThesisT0RepairProposal(
     },
   };
 }
+
+export type ThesisT0RepairProposal = ThesisT0Proposal;
+export const validateThesisT0RepairProposal = validateThesisT0Proposal;

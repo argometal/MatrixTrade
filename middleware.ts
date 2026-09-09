@@ -40,6 +40,10 @@ function clearSessionCookies(response: NextResponse): void {
   response.cookies.delete(GUEST_LOCK_OVERRIDE_COOKIE);
 }
 
+function isServerActionPost(request: NextRequest): boolean {
+  return request.method === "POST" && Boolean(request.headers.get("next-action"));
+}
+
 /**
  * Host → product root for "/" only.
  * Explicit paths are untouched. alexandria.* is reserved (no special case).
@@ -75,8 +79,14 @@ function guestLockBlocks(policy: GuestLockPolicy, request: NextRequest): boolean
   return false;
 }
 
+function requestPathWithSearch(request: NextRequest): string {
+  const search = request.nextUrl.search || "";
+  return `${request.nextUrl.pathname}${search}`;
+}
+
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
+  const serverActionPost = isServerActionPost(request);
 
   if (pathname === "/health" || pathname.startsWith("/health/")) {
     let next = pathname.replace(/^\/health/, "/argus");
@@ -135,8 +145,11 @@ export async function middleware(request: NextRequest) {
             ? "/login"
             : null;
     if (loginPath) {
+      if (serverActionPost) {
+        return NextResponse.next();
+      }
       const login = new URL(loginPath, request.url);
-      login.searchParams.set("next", pathname);
+      login.searchParams.set("next", requestPathWithSearch(request));
       login.searchParams.set("guest_expired", "1");
       const response = NextResponse.redirect(login);
       clearSessionCookies(response);
@@ -149,15 +162,21 @@ export async function middleware(request: NextRequest) {
     const isSharedSecurity =
       inner === "/settings/security" || inner.startsWith("/settings/security/");
     if (!(isSharedSecurity && request.cookies.get("argus-auth")?.value)) {
+      if (serverActionPost) {
+        return NextResponse.next();
+      }
       const login = new URL("/login", request.url);
-      login.searchParams.set("next", pathname);
+      login.searchParams.set("next", requestPathWithSearch(request));
       return NextResponse.redirect(login);
     }
   }
 
   if (argusPasswordSet && isArgusSessionPath(pathname) && !request.cookies.get("argus-auth")?.value) {
+    if (serverActionPost) {
+      return NextResponse.next();
+    }
     const login = new URL("/argus/login", request.url);
-    login.searchParams.set("next", pathname);
+    login.searchParams.set("next", requestPathWithSearch(request));
     return NextResponse.redirect(login);
   }
 

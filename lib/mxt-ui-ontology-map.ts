@@ -126,15 +126,15 @@ export const MXT_ONTOLOGY_UI_MAP: readonly MxtOntologyUiRow[] = [
   {
     concept: "Historical T0 repair",
     canonicalObject: "ThesisT0Freeze / plan-specific T0",
-    internalOperations: ["thesis-t0-repair"],
+    internalOperations: ["thesis-t0"],
     humanUi: {
       kind: "control",
       visibleLabel: "Apply",
       location: "Header → Control → Apply",
     },
     humanAction:
-      "Use surviving plan-specific decision evidence, then paste thesis-t0-repair in Apply. Never inherit another Plan's T0 via shared Stock File.",
-    resultingState: "Plan-specific T0 freeze reconstructed or corrected with audit provenance",
+      "Use surviving plan-specific decision evidence, then paste thesis-t0 in Apply. Never inherit another Plan's T0 via shared Stock File.",
+    resultingState: "Plan-specific T0 freeze corrected with audit provenance",
   },
   {
     concept: "Case Review / completion check",
@@ -300,7 +300,7 @@ export const MXT_INTERNAL_OPS_NOT_UI = [
   "scout-plan-create",
   "scout-plan-update",
   "decision-update",
-  "thesis-t0-repair",
+  "thesis-t0",
   "recordScoutDecision",
   "technical-assessment",
   "trade-proposal",

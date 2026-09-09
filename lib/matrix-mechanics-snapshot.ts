@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 45;
+export const MATRIX_MECHANICS_REVISION = 48;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -44,7 +44,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- attribution — MAF component attribution (process quality ≠ P/L; never invent prices)",
     "- observation-update — Observation Engine (target/invalidation timestamps, MFE/MAE; partial OK; ≠ attribution)",
     "- plan-outcome — Scout terminal without Trade: UPL/Miss/duplicate; server-derived CF R; repairKind=corrected + note supersedes wrong outcome with audit; never mix CF into portfolio P/L",
-    "- thesis-t0-repair — Plan-specific T0 reconstruct/correct with audit (recordKind + correctionAudit); never share freeze across Plans; hindsight alone insufficient",
+    "- thesis-t0 — Plan-specific T0 write/update path with correctionAudit; never share freeze across Plans; hindsight alone insufficient",
     "- trade-update (legacy dates) — datesReconstructed + dateCorrectionNote on closed legacy fills only",
     "",
     "Method layer:",

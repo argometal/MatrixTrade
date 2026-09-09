@@ -459,6 +459,35 @@ export function applyFilledThroughIndex(
   });
 }
 
+function stampNewlyFilledLimits(
+  previous: LayeredEntryPlan,
+  next: LayeredEntryPlan,
+  recordedAt: string
+): LayeredEntryPlan {
+  return {
+    ...next,
+    limits: next.limits.map((limit, index) => {
+      const wasFilled = previous.limits[index]?.filled === true;
+      const alreadyStamped = typeof previous.limits[index]?.fillRecordedAt === "string";
+      if (limit.filled && !wasFilled) {
+        return {
+          ...limit,
+          fillRecordedAt: alreadyStamped
+            ? previous.limits[index]?.fillRecordedAt
+            : recordedAt,
+        };
+      }
+      if (alreadyStamped) {
+        return {
+          ...limit,
+          fillRecordedAt: previous.limits[index]?.fillRecordedAt,
+        };
+      }
+      return limit;
+    }),
+  };
+}
+
 export function enrichLayeredEntryMetrics(entry: LayeredEntryPlan): LayeredEntryPlan {
   const filledIndexes = entry.limits
     .map((l, i) => (l.filled ? i : -1))
@@ -598,6 +627,8 @@ export function applyLayeredEntryUpdate(
   } else {
     return { errors: ["filledThroughIndex or status required."] };
   }
+
+  entry = stampNewlyFilledLimits(plan.layeredEntry, entry, now);
 
   return {
     plan: {

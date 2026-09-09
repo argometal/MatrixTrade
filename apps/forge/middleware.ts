@@ -20,6 +20,11 @@ function needsForgeAuth(pathname: string): boolean {
   return false;
 }
 
+function requestPathWithSearch(request: NextRequest): string {
+  const search = request.nextUrl.search || "";
+  return `${request.nextUrl.pathname}${search}`;
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
@@ -41,7 +46,7 @@ export function middleware(request: NextRequest) {
   }
 
   const login = new URL("/login", request.url);
-  login.searchParams.set("next", pathname);
+  login.searchParams.set("next", requestPathWithSearch(request));
   return NextResponse.redirect(login);
 }
 

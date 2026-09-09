@@ -21,7 +21,7 @@ import { __setTradesStoreForTests, createMemoryTradesStore } from "../lib/trades
 import { buildCase } from "../lib/thesis-case";
 import { createMemoryThesisT0Store, setThesisT0StoreForTests } from "../lib/thesis-t0-store";
 import type { ThesisT0Freeze } from "../lib/thesis-t0-types";
-import { applyThesisT0Repair } from "../lib/thesis-t0-repair";
+import { applyThesisT0 } from "../lib/thesis-t0-repair";
 
 function loadJson<T>(path: string): T {
   return JSON.parse(readFileSync(path, "utf8")) as T;
@@ -70,12 +70,11 @@ async function run() {
   assert.equal(decisionUpdate.plan!.validUntil, undefined);
   assert.ok(Math.abs((decisionUpdate.plan!.plannedRR ?? 0) - 2.9285714285714284) < 1e-9);
 
-  const repaired = await applyThesisT0Repair({
+  const repaired = await applyThesisT0({
     plan: decisionUpdate.plan!,
     thesis: thesis!,
-    repair: {
+    update: {
       planId: "PLAN-001",
-      repairKind: "reconstructed",
       t0: "2026-07-10T18:00:00.000Z",
       plannedEntry: 348,
       stopPrice: 320,
@@ -86,7 +85,6 @@ async function run() {
       evidenceRefs: ["human:case-verification"],
     },
   });
-  assert.equal(repaired.freeze.recordKind, "reconstructed");
   assert.notEqual(repaired.freeze.id, freeze009!.id);
   assert.ok(!repaired.freeze.planIds.includes("PLAN-009"));
 
@@ -116,7 +114,7 @@ async function run() {
   const thesisCase = await buildCase("PLAN-001");
   assert.ok(reloaded);
   assert.ok(thesisCase);
-  assert.equal(thesisCase!.freeze?.recordKind, "reconstructed");
+  assert.ok(thesisCase!.freeze?.correctionAudit?.length);
   assert.equal(thesisCase!.freeze?.plan.planId, "PLAN-001");
   assert.equal(thesisCase!.postDecision.outcome.planOutcome?.outcomeKind, "unexecuted_plan_loss");
 
@@ -155,7 +153,7 @@ async function run() {
   const row = spine.find((r) => r.planId === "PLAN-001");
   assert.ok(row);
   assert.equal(row!.t0Available, true);
-  assert.equal(row!.t0RecordKind, "reconstructed");
+  assert.equal(row!.t0RecordKind, "corrected");
   assert.equal(row!.reality, "mixed");
   assert.equal(row!.loKind, "unexecuted_plan_loss");
 

@@ -90,7 +90,7 @@ export type CaseT0Decision = {
 
 /**
  * T0 / original evidence — ONLY decision-time information from the effective freeze.
- * Never populated from live Stock File. Freeze body changes only via thesis-t0-repair.
+ * Never populated from live Stock File. Freeze body changes only via thesis-t0 Apply.
  */
 export type CaseT0Evidence = {
   available: boolean;

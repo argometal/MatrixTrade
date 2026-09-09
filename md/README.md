@@ -1,5 +1,23 @@
 # The Library — Matrix / MatrixTrade architecture
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+If conflict or ambiguity exists, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+Verify the result.
+
+
 **Start here.** `md/` is **the Library** — the documentation architecture for this project.  
 It is the source of truth for how the system is built, ruled, and evolved.  
 **Enough to reconstruct the entire system** without guessing.
@@ -65,6 +83,8 @@ See [`architecture/matrixtrade-app.md`](architecture/matrixtrade-app.md) for rou
 | [matrix/mxt-edge-learning-mission-governance.md](matrix/mxt-edge-learning-mission-governance.md) | **SEALED PRODUCT GOVERNANCE** — Edge Learning Mission (what MXT must achieve) |
 | [matrix/mxt-core-learning-adaptation-doctrine.md](matrix/mxt-core-learning-adaptation-doctrine.md) | **SEALED CORE GOVERNANCE** — Learning & Adaptation Doctrine (what class of system + pillars) |
 | [matrix/mxt-market-reality-evidence-contract.md](matrix/mxt-market-reality-evidence-contract.md) | **SEALED EVIDENCE CONTRACT** — Market Reality (OHLCV + Volume Reality); no provider yet |
+| [matrix/mxt-case-family-equations-016a.md](matrix/mxt-case-family-equations-016a.md) | **Library** — A/B/C/D + Good Filter / Over-Optimization equation principles (016a) |
+| [matrix/mxt-experimental-learning-foundations.md](matrix/mxt-experimental-learning-foundations.md) | **Library** — Pardo / Tharp / López de Prado / outcome bias → Diagnosis→Improvement loop |
 | [matrix/README.md](matrix/README.md) | **Index** — reading order, code vs vision map |
 | [matrix/strategic-planning-vision.md](matrix/strategic-planning-vision.md) | Architecture layers — Playbook → Stock File → Scouting Desk → Trade |
 | [matrix/v2-engine-architecture.md](matrix/v2-engine-architecture.md) | **V2** — five engines + Probe |
@@ -221,6 +241,8 @@ Add one `.md` per subject as the system grows.
 | Document | Contents |
 |----------|----------|
 | [trading-journal-product-research.md](research/trading-journal-product-research.md) | **Product research:** TraderSync, Edgewonk, TradesViz, etc. — principles before design |
+| [mxt-experimental-learning-foundations.md](matrix/mxt-experimental-learning-foundations.md) | **Method research:** walk-forward / R / anti-overfit — apply on existing MXT infra |
+| [mxt-case-family-equations-016a.md](matrix/mxt-case-family-equations-016a.md) | **Runtime principles:** Case family equations A/B/C/D (016a) |
 | [companies-model.md](topics/companies-model.md) | Per-ticker folder structure |
 | [decision-framework.md](topics/decision-framework.md) | Why this company, why now |
 | [analysis-workflow.md](topics/analysis-workflow.md) | Multi-timeframe workflow |

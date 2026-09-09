@@ -8,7 +8,7 @@ import {
   createImprovementHypothesisAction,
   linkPlanToImprovementHypothesisAction,
   setImprovementHypothesisVerdictAction,
-} from "@/app/actions";
+} from "@/app/improvement-actions";
 import { MAF_COMPONENT_LABELS } from "@/lib/maf-types";
 import {
   IMPROVEMENT_HYPOTHESIS_STATUS_LABELS,
@@ -21,8 +21,12 @@ import type { InsightsCaseRow } from "@/lib/insights-case-spine-types";
 export type ImprovementPlanOption = {
   planId: string;
   ticker: string;
+  playbookId?: string | null;
   status: string;
+  lifecycleStatus?: string;
   t0Available: boolean;
+  /** False for duplicate_creation historical records. */
+  independentEconomicObservation?: boolean;
 };
 
 export function PreviewImprovementPath({
@@ -155,9 +159,11 @@ export function PreviewImprovementPath({
               const summary = summaries.get(h.id);
               const linkChoices = planOptions.filter(
                 (p) =>
+                  p.independentEconomicObservation !== false &&
                   p.planId.toUpperCase() !== h.originPlanId.toUpperCase() &&
                   (!h.ticker ||
-                    p.ticker.toUpperCase() === h.ticker.toUpperCase())
+                    p.ticker.toUpperCase() === h.ticker.toUpperCase()) &&
+                  (!h.playbookId || p.playbookId === h.playbookId)
               );
               return (
                 <li
@@ -239,7 +245,7 @@ export function PreviewImprovementPath({
                           <option value="">Future evidence plan…</option>
                           {linkChoices.map((p) => (
                             <option key={p.planId} value={p.planId}>
-                              {p.ticker} · {p.planId} · {p.status}
+                              {p.ticker} · {p.planId} · {p.lifecycleStatus ?? p.status}
                               {p.t0Available ? "" : " · Missing T0"}
                             </option>
                           ))}

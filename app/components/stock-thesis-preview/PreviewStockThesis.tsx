@@ -55,6 +55,7 @@ export function PreviewStockThesis({
   activeEvidence = [],
   synthesis,
   activePlans = [],
+  historicalCasePlans = [],
   snapshotItems,
   analyzePackage,
   latestMtaeAssessment,
@@ -64,6 +65,7 @@ export function PreviewStockThesis({
   activeEvidence?: MarketEvidence[];
   synthesis?: StockProfileSynthesis;
   activePlans?: TradePlan[];
+  historicalCasePlans?: TradePlan[];
   snapshotItems: SnapshotMenuItem[];
   /** MTA-002A one-copy Analyze package (Mechanics + MTAE + dossier + Scout). */
   analyzePackage: string;
@@ -85,6 +87,13 @@ export function PreviewStockThesis({
   } | null>(null);
   const [pending, startTransition] = useTransition();
   const [grantPending, startGrantTransition] = useTransition();
+  const historicalOnlyPlans = useMemo(
+    () =>
+      historicalCasePlans.filter(
+        (plan) => !activePlans.some((active) => active.id === plan.id)
+      ),
+    [activePlans, historicalCasePlans]
+  );
 
   function submitForm(formData: FormData) {
     startTransition(async () => {
@@ -359,8 +368,29 @@ export function PreviewStockThesis({
             </div>
           ) : (
             <div className="mt-3 rounded-xl border border-dashed border-zinc-700 px-4 py-3 text-sm text-zinc-500">
-              No active scout — Analyze with AI can propose{" "}
-              <code className="text-zinc-400">scout-plan-create</code> after technical Accept.
+              <p>
+                No active scout — Analyze with AI can propose{" "}
+                <code className="text-zinc-400">scout-plan-create</code> after technical
+                Accept.
+              </p>
+              {historicalOnlyPlans.length > 0 ? (
+                <div className="mt-3 border-t border-zinc-800 pt-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-500">
+                    Historical Cases
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {historicalOnlyPlans.map((plan) => (
+                      <Link
+                        key={plan.id}
+                        href={mxtPath(`/scout/case?plan=${plan.id}`)}
+                        className="rounded-lg border border-violet-500/30 bg-violet-500/10 px-3 py-2 text-xs font-medium text-violet-200 hover:border-violet-400/60 hover:bg-violet-500/15"
+                      >
+                        {plan.id} Case Review
+                      </Link>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
           )}
 

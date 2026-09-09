@@ -16,8 +16,8 @@ import { applyAttribution } from "./maf-apply";
 import { applyObservationUpdateProposal } from "./observation-apply";
 import { applyPlanOutcomeProposal } from "./plan-outcome";
 import {
-  applyThesisT0Repair,
-  validateThesisT0RepairProposal,
+  applyThesisT0,
+  validateThesisT0Proposal,
 } from "./thesis-t0-repair";
 import { getPlanById } from "./plans";
 import {
@@ -179,8 +179,8 @@ async function applyTradingProposalInner(
       return applyObservationUpdateBlock(parsed);
     case "plan-outcome":
       return applyPlanOutcomeBlock(parsed);
-    case "thesis-t0-repair":
-      return applyThesisT0RepairBlock(parsed);
+    case "thesis-t0":
+      return applyThesisT0Block(parsed);
     case "external-position-create":
       return applyExternalPositionCreateBlock(parsed);
     case "external-position-update":
@@ -375,6 +375,13 @@ async function applyScoutPlanCreateBlock(
   parsed: TradingInboxPayload
 ): Promise<ApplyTradingProposalResult> {
   const result = await applyScoutPlanCreate(parsed.proposal);
+  if (result.geometryStall) {
+    return {
+      ok: false,
+      errors: [result.geometryStall.comparisonText],
+      type: "scout-plan-create",
+    };
+  }
   if (result.errors?.length) return { ok: false, errors: result.errors };
   const plan = result.plan;
   const parts = [`Created Scout Plan ${plan?.id ?? ""} · ${plan?.ticker ?? ""}`];
@@ -483,32 +490,32 @@ async function applyPlanOutcomeBlock(
   };
 }
 
-async function applyThesisT0RepairBlock(
+async function applyThesisT0Block(
   parsed: TradingInboxPayload
 ): Promise<ApplyTradingProposalResult> {
-  const validated = validateThesisT0RepairProposal(parsed.proposal);
+  const validated = validateThesisT0Proposal(parsed.proposal);
   if (!validated.ok) {
     return { ok: false, errors: [validated.error] };
   }
-  const repair = validated.value;
-  const plan = await getPlanById(repair.planId);
+  const update = validated.value;
+  const plan = await getPlanById(update.planId);
   if (!plan) {
-    return { ok: false, errors: [`Plan not found: ${repair.planId}`] };
+    return { ok: false, errors: [`Plan not found: ${update.planId}`] };
   }
   const thesis = plan.stockThesisId
     ? (await getStockThesisById(plan.stockThesisId)) ?? null
     : null;
   try {
-    const result = await applyThesisT0Repair({ plan, repair, thesis });
+    const result = await applyThesisT0({ plan, update, thesis });
     const detach =
       result.detachedFromFreezeIds.length > 0
         ? ` · detached from ${result.detachedFromFreezeIds.join(",")}`
         : "";
     return {
       ok: true,
-      type: "thesis-t0-repair",
+      type: "thesis-t0",
       planId: plan.id,
-      message: `T0 ${repair.repairKind} for ${plan.id} · freeze ${result.freeze.id} · recordKind=${result.freeze.recordKind ?? "—"} · T0=${result.freeze.t0}${detach}`,
+      message: `T0 updated for ${plan.id} · freeze ${result.freeze.id} · T0=${result.freeze.t0}${detach}`,
     };
   } catch (err) {
     return {

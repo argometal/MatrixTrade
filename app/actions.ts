@@ -64,6 +64,10 @@ export type ImportAiBlockActionResult =
   | { ok: true; inboxItemId: string; origin: string }
   | { error: string; details?: string[] };
 
+export type ValidateAiBlockActionResult =
+  | { ok: true; type: string }
+  | { ok: false; error: string; details?: string[] };
+
 export type AcceptAiBlockActionResult =
   | {
       ok: true;
@@ -75,6 +79,8 @@ export type AcceptAiBlockActionResult =
       planId?: string;
       inboxItemId?: string;
       alreadyApplied?: boolean;
+      verified?: boolean;
+      verifyDetail?: string;
       fundingFollowUp?: import("@/lib/scout-funding-follow-up").FundingFollowUpResult;
     }
   | { ok: false; error: string; details?: string[] };
@@ -82,6 +88,29 @@ export type AcceptAiBlockActionResult =
 export type CreateAiSessionActionResult =
   | { token: string; connectUrl: string; qrDataUrl: string }
   | { error: string };
+
+function toActionSafe<T>(value: T): T {
+  if (value === undefined) return value;
+  return JSON.parse(JSON.stringify(value)) as T;
+}
+
+function formatActionError(
+  err: unknown,
+  fallback: string
+): { ok: false; error: string; details?: string[] } {
+  const message = err instanceof Error ? err.message : fallback;
+  return {
+    ok: false,
+    error: message || fallback,
+    details:
+      err instanceof Error && err.stack
+        ? err.stack
+            .split("\n")
+            .slice(0, 6)
+            .map((line) => line.trim())
+        : undefined,
+  };
+}
 
 function revalidateTradingPaths() {
   revalidatePath("/");
@@ -129,67 +158,108 @@ export async function importAiBlockAction(formData: FormData): Promise<ImportAiB
   };
 }
 
+export async function validateAiBlockAction(
+  formData: FormData
+): Promise<ValidateAiBlockActionResult> {
+  try {
+    await requireTradingSession();
+
+    const raw = String(formData.get("aiBlock") ?? "");
+    const parsed = parseAiBlock(raw);
+    if (!parsed.ok) {
+      return {
+        ok: false,
+        error: parsed.error,
+        details: toActionSafe(parsed.details),
+      };
+    }
+
+    return {
+      ok: true,
+      type: parsed.payload.type,
+    };
+  } catch (err) {
+    return formatActionError(err, "Server-side Validate failed unexpectedly.");
+  }
+}
+
 /** Parse, audit-log to inbox, and apply ? inline Accept from Connect wizard. */
 export async function acceptAiBlockAction(formData: FormData): Promise<AcceptAiBlockActionResult> {
-  await requireTradingSession();
-
-  const raw = String(formData.get("aiBlock") ?? "");
-  const parsed = parseAiBlock(raw);
-  if (!parsed.ok) {
-    return { ok: false, error: parsed.error, details: parsed.details };
-  }
-
-  if (!isApplyImplemented(parsed.payload.type)) {
-    return {
-      ok: false,
-      error: `Apply is not implemented for type ${parsed.payload.type}.`,
-    };
-  }
-
-  const inboxResult = await submitToTradingInbox({
-    ...parsed.body,
-    source: "ai-block",
-  });
-
-  let applyResult;
   try {
-    applyResult = await applyTradingProposal(parsed.body);
-  } catch (err) {
-    return {
-      ok: false,
-      error: err instanceof Error ? err.message : "Apply failed unexpectedly.",
-    };
-  }
+    await requireTradingSession();
 
-  if (!applyResult.ok) {
-    return { ok: false, error: applyResult.errors.join("; ") };
-  }
-
-  if (inboxResult.ok) {
-    try {
-      await markInboxItemStatus(inboxResult.inboxItemId, inboxResult.origin, "applied");
-    } catch {
-      /* audit mark best-effort */
+    const raw = String(formData.get("aiBlock") ?? "");
+    const parsed = parseAiBlock(raw);
+    if (!parsed.ok) {
+      return {
+        ok: false,
+        error: parsed.error,
+        details: toActionSafe(parsed.details),
+      };
     }
+
+    if (!isApplyImplemented(parsed.payload.type)) {
+      return {
+        ok: false,
+        error: `Apply is not implemented for type ${parsed.payload.type}.`,
+      };
+    }
+
+    const inboxResult = await submitToTradingInbox({
+      ...parsed.body,
+      source: "ai-block",
+    });
+
+    const applyResult = await applyTradingProposal(parsed.body);
+    if (!applyResult.ok) {
+      return {
+        ok: false,
+        error: applyResult.errors.join("; "),
+        details: applyResult.partial ? ["Follow-on sync reported partial completion."] : undefined,
+      };
+    }
+
+    const verify = await verifyApplyPersistence(
+      parsed.body as unknown as import("@/lib/bridge").TradingInboxPayload
+    );
+    if (!verify.ok) {
+      return {
+        ok: false,
+        error: "Apply persisted but post-write verification failed.",
+        details: [verify.detail],
+      };
+    }
+
+    if (inboxResult.ok) {
+      try {
+        await markInboxItemStatus(inboxResult.inboxItemId, inboxResult.origin, "applied");
+      } catch {
+        /* audit mark best-effort */
+      }
+    }
+
+    revalidateTradingPaths();
+    if (applyResult.tradeId) revalidatePath(`/trades/${applyResult.tradeId}`);
+    if (applyResult.stockFileId) revalidatePath(`/stock-theses/${applyResult.stockFileId}`);
+    if (applyResult.planId) revalidatePath("/planning");
+
+    return {
+      ok: true,
+      message: applyResult.message,
+      type: applyResult.type,
+      tradeId: applyResult.tradeId,
+      playbookId: applyResult.playbookId,
+      stockFileId: applyResult.stockFileId,
+      planId: applyResult.planId,
+      inboxItemId: inboxResult.ok ? inboxResult.inboxItemId : undefined,
+      alreadyApplied: applyResult.alreadyApplied,
+      verified: verify.ok,
+      verifyDetail: verify.detail,
+      fundingFollowUp: toActionSafe(applyResult.fundingFollowUp),
+    };
+  } catch (err) {
+    return formatActionError(err, "Apply failed unexpectedly.");
   }
-
-  revalidateTradingPaths();
-  if (applyResult.tradeId) revalidatePath(`/trades/${applyResult.tradeId}`);
-  if (applyResult.stockFileId) revalidatePath(`/stock-theses/${applyResult.stockFileId}`);
-  if (applyResult.planId) revalidatePath("/planning");
-
-  return {
-    ok: true,
-    message: applyResult.message,
-    type: applyResult.type,
-    tradeId: applyResult.tradeId,
-    playbookId: applyResult.playbookId,
-    stockFileId: applyResult.stockFileId,
-    planId: applyResult.planId,
-    inboxItemId: inboxResult.ok ? inboxResult.inboxItemId : undefined,
-    alreadyApplied: applyResult.alreadyApplied,
-    fundingFollowUp: applyResult.fundingFollowUp,
-  };
 }
 
 export async function importStockCaseBlockAction(
@@ -700,7 +770,29 @@ export async function saveRulesAction(
 
 export type SavePlanActionResult =
   | { ok: true; planId: string; warning?: string }
-  | { error: string };
+  | {
+      error: string;
+      geometryStall?: {
+        kind: "identical_geometry";
+        comparisonText: string;
+        actions: readonly ["CANCEL", "OVERRIDE / CREATE ANYWAY"];
+        matches: Array<{
+          existing: {
+            planId: string;
+            ticker: string;
+            entry: number;
+            stop: number;
+            target: number;
+          };
+          proposed: {
+            ticker: string;
+            entry: number;
+            stop: number;
+            target: number;
+          };
+        }>;
+      };
+    };
 
 export async function savePlanAction(formData: FormData): Promise<SavePlanActionResult> {
   await requireTradingSession();
@@ -711,6 +803,7 @@ export async function savePlanAction(formData: FormData): Promise<SavePlanAction
     ? (entryRaw as PlanTimeframe)
     : "5m";
 
+  const overrideRaw = String(formData.get("identicalGeometryOverride") ?? "").trim();
   const result = await savePlan({
     id: String(formData.get("id") ?? "").trim() || undefined,
     ticker: String(formData.get("ticker") ?? ""),
@@ -727,7 +820,23 @@ export async function savePlanAction(formData: FormData): Promise<SavePlanAction
     validUntil: String(formData.get("validUntil") ?? "").trim() || undefined,
     thesis: String(formData.get("thesis") ?? ""),
     chatNotes: String(formData.get("chatNotes") ?? ""),
+    identicalGeometryOverride:
+      overrideRaw === "1" ||
+      overrideRaw.toLowerCase() === "true" ||
+      overrideRaw.toUpperCase() === "OVERRIDE",
   });
+
+  if (result.geometryStall) {
+    return {
+      error: result.geometryStall.comparisonText,
+      geometryStall: {
+        kind: result.geometryStall.kind,
+        comparisonText: result.geometryStall.comparisonText,
+        actions: result.geometryStall.actions,
+        matches: result.geometryStall.matches,
+      },
+    };
+  }
 
   if (result.errors?.length) {
     return { error: result.errors.join(" ") };

@@ -1,5 +1,23 @@
 # MXT — Edge Learning Mission & Governance
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+If conflict or ambiguity exists, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+Verify the result.
+
+
 **Status:** SEALED PRODUCT GOVERNANCE  
 **Sealed:** Prompt #9G (product owner + reasoning system agreement)  
 **Scope:** MXT product objective and evaluation criterion  
@@ -31,6 +49,9 @@ Historical Library documents that describe Matrix/MatrixTrade identity, risk pos
 ## Primary mission
 
 MXT exists to help convert the user's ability to formulate or detect market theses into **measurable trading edge**.
+
+**North Star:** Build and evolve MXT to learn from every decision and use that learning to improve future decisions, increase positive expectancy, and ultimately generate sustainable positive returns.
+Never improve apparent performance by distorting historical truth.
 
 Its purpose is **not** merely to:
 

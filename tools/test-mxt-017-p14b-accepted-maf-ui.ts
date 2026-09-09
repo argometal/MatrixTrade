@@ -16,6 +16,7 @@ import { buildHistoricalCaseAttribution } from "../lib/historical-case-attributi
 import type { InsightsCaseRow } from "../lib/insights-case-spine-types";
 import type { MafExperiment } from "../lib/maf-types";
 import type { Trade } from "../lib/types";
+import { derivePlanCaseLifecycle } from "../lib/plan-case-lifecycle";
 
 function histRow(withMaf: boolean): InsightsCaseRow {
   const trade: Trade = {
@@ -57,6 +58,19 @@ function histRow(withMaf: boolean): InsightsCaseRow {
     realizedPnL: null,
     counterfactualR: null,
     t0Available: false,
+    lifecycle: derivePlanCaseLifecycle({
+      caseOrigin: "historical_trade",
+      planStatus: null,
+      t0Available: false,
+      hasValidityWindow: false,
+      hasReality: true,
+      hasExecutionEvidence: true,
+      hasOutcomeEvidence: true,
+      classificationComplete: false,
+      hasLearningEvidence: true,
+      hasAcceptedMaf: withMaf,
+      rrCorrectableIssue: false,
+    }),
     missingInputs: ["t0_freeze"],
     diagnosisReason: hist.summary,
     evidenceSummary: "",

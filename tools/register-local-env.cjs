@@ -41,6 +41,20 @@ function fillMissing(envMap) {
   }
 }
 
+function isRedactedPlaceholder(value) {
+  const raw = String(value || "").trim();
+  return raw === "[SENSITIVE]" || (raw.startsWith("[") && raw.endsWith("]"));
+}
+
+function isValidHttpUrl(value) {
+  try {
+    const url = new URL(String(value || "").trim());
+    return url.protocol === "http:" || url.protocol === "https:";
+  } catch {
+    return false;
+  }
+}
+
 const secretsDir = path.join(os.homedir(), ".matrixtrade");
 fillMissing(parseEnvFile(path.join(secretsDir, "secrets.env")));
 fillMissing(parseEnvFile(path.join(secretsDir, "local.env")));
@@ -57,8 +71,15 @@ const projectStore = (projectEnv.TRADES_STORE || "").trim().toLowerCase();
 const projectWantsSupabase =
   projectStore === "supabase" || projectStore === "supabase-readonly";
 const currentStore = (process.env.TRADES_STORE || "").trim().toLowerCase();
+const currentStoreRedacted = isRedactedPlaceholder(process.env.TRADES_STORE);
+const currentUrlInvalid = !isValidHttpUrl(process.env.SUPABASE_URL);
+const currentKeyRedacted = isRedactedPlaceholder(process.env.SUPABASE_SERVICE_ROLE_KEY);
 
-if (!allowJson && projectWantsSupabase && currentStore === "json") {
+if (
+  !allowJson &&
+  projectWantsSupabase &&
+  (currentStore === "json" || currentStoreRedacted || currentUrlInvalid || currentKeyRedacted)
+) {
   // Accidental shell override — restore project canonical store.
   process.env.TRADES_STORE = projectEnv.TRADES_STORE;
   if (projectEnv.MXT_READ_ONLY) {
@@ -68,7 +89,7 @@ if (!allowJson && projectWantsSupabase && currentStore === "json") {
     if (projectEnv[k]) process.env[k] = projectEnv[k];
   }
   console.warn(
-    "[mxt-env] Restored TRADES_STORE from .env.local (shell had json). " +
+    "[mxt-env] Restored canonical Supabase env from .env.local. " +
       "Set MXT_ALLOW_JSON_STORE=1 to keep JSON intentionally."
   );
 }

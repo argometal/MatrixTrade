@@ -1,5 +1,6 @@
 import { getStockThesesStore } from "./stock-theses-store";
 import {
+  normalizeHistoricalAnalysis,
   type SaveStockThesisInput,
   type StockThesis,
   type StockThesisStatus,
@@ -128,6 +129,7 @@ export async function applyStockFileInboxUpdate(
   const hasThesisUpdate =
     proposal.status !== undefined ||
     proposal.currentHypothesis !== undefined ||
+    proposal.historicalAnalysis !== undefined ||
     proposal.notes !== undefined ||
     proposal.thesis !== undefined ||
     proposal.levels !== undefined ||
@@ -197,6 +199,13 @@ export async function applyStockFileInboxUpdate(
       };
     }
 
+    let historicalAnalysis = thesis.historicalAnalysis;
+    if (proposal.historicalAnalysis !== undefined) {
+      const normalized = normalizeHistoricalAnalysis(proposal.historicalAnalysis);
+      if (!normalized.ok) return { errors: normalized.errors, thesis };
+      historicalAnalysis = normalized.value;
+    }
+
     const updated: StockThesis = {
       ...thesis,
       status: status ?? thesis.status,
@@ -205,6 +214,7 @@ export async function applyStockFileInboxUpdate(
         proposal.currentHypothesis !== undefined
           ? String(proposal.currentHypothesis).trim()
           : thesis.currentHypothesis,
+      historicalAnalysis,
       levels,
       riskRules,
       notes,

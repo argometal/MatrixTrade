@@ -1,5 +1,23 @@
 # ADR-0004 — Matrix Attribution Framework (MAF)
 
+## A-Iteration
+
+User-defined rules are primary.
+This Library MD is the source of A-Iteration Anchors for its scope.
+A-Iteration Anchors preserve the user's exact words.
+AI never rewrites or reinterprets them.
+If conflict or ambiguity exists, AI must negotiate with the user.
+Respect ontology. Do not invent.
+Only present what canonically exists in the epistemology.
+If the required epistemology does not exist, do not add it; stop and report it.
+Never change a user-defined A-Iteration rule.
+Preserve A-Iteration Anchors.
+Preserve what works.
+Change only what is necessary.
+Do not fix what does not block.
+Verify the result.
+
+
 **Status:** Accepted — **V1 foundation + Learning Outcome + Observation coded** (2026-07-21; refreshed 2026-07-22)  
 **Decision date:** 2026-07-21  
 **Parent:** [maf-matrix-attribution-framework.md](maf-matrix-attribution-framework.md)

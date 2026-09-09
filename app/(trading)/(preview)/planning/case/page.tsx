@@ -1,4 +1,6 @@
 import { CaseReviewClient } from "@/app/components/case-review/CaseReviewClient";
+import { buildInsightsCaseSpine } from "@/lib/insights-case-spine";
+import { buildFocusedCaseReport } from "@/lib/focused-case-report";
 import { buildCase } from "@/lib/thesis-case";
 import {
   evaluateCase,
@@ -49,6 +51,8 @@ export default async function PlanningCasePage({
     );
   }
 
+  const caseSpine = await buildInsightsCaseSpine().catch(() => []);
+  const focusedCaseReport = await buildFocusedCaseReport(id).catch(() => null);
   const marketReality = await loadMarketRealityForCase(id);
   const ohlcv = ohlcvEvidenceFromMarketReality({
     planId: id,
@@ -59,8 +63,10 @@ export default async function PlanningCasePage({
   return (
     <CaseReviewClient
       thesisCase={thesisCase}
+      focusedCaseReport={focusedCaseReport}
       marketReality={marketReality}
       evaluation={evaluation}
+      caseSpine={caseSpine}
     />
   );
 }

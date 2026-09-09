@@ -19,7 +19,7 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
-import { validateThesisT0RepairProposal } from "./thesis-t0-repair-validate";
+import { validateThesisT0Proposal } from "./thesis-t0-repair-validate";
 import { EXECUTION_READINESS_STATES } from "./plan-outcome-types";
 import {
   validateExternalPositionCreateProposal,
@@ -50,6 +50,7 @@ import { requireExecutionInstructionForGeometry } from "./scout-execution-instru
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
 import { getSetupName } from "./setup-types";
+import { normalizeHistoricalAnalysis } from "./stock-thesis-types";
 
 export interface BridgeConfig {
   url: string;
@@ -270,6 +271,7 @@ export type TradingProposalType =
   | "attribution"
   | "observation-update"
   | "plan-outcome"
+  | "thesis-t0"
   | "thesis-t0-repair"
   | "external-position-create"
   | "external-position-update"
@@ -315,6 +317,7 @@ export function parseTradingInboxPayload(
     type !== "attribution" &&
     type !== "observation-update" &&
     type !== "plan-outcome" &&
+    type !== "thesis-t0" &&
     type !== "thesis-t0-repair" &&
     type !== "external-position-create" &&
     type !== "external-position-update" &&
@@ -336,7 +339,7 @@ export function parseTradingInboxPayload(
     return null;
   }
   return {
-    type,
+    type: type === "thesis-t0-repair" ? "thesis-t0" : type,
     source: typeof payload.source === "string" ? payload.source : undefined,
     proposal: proposal as Record<string, unknown>,
   };
@@ -389,8 +392,9 @@ export function describeProposal(payload: TradingInboxPayload): string {
       return `Observation ${p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? ""} · update`;
     case "plan-outcome":
       return `Plan outcome ${p.planId ?? ""} · ${p.outcomeKind ?? p.status ?? "record"} · entryReached ${String(p.entryReached ?? p.entryTriggered ?? "—")}`;
+    case "thesis-t0":
     case "thesis-t0-repair":
-      return `T0 repair ${p.planId ?? ""} · ${p.repairKind ?? "—"} · ${(typeof p.note === "string" ? p.note : "").slice(0, 48)}`;
+      return `T0 ${p.planId ?? ""} · ${(typeof p.note === "string" ? p.note : "").slice(0, 48)}`;
     case "external-position-create":
       return `External Position ${p.ticker ?? ""} · ${p.shares ?? ""} shares (outside MTA)`;
     case "external-position-update":
@@ -765,6 +769,7 @@ export function validateProposalPayload(
     const hasField =
       p.status !== undefined ||
       p.currentHypothesis !== undefined ||
+      p.historicalAnalysis !== undefined ||
       p.notes !== undefined ||
       p.thesis !== undefined ||
       p.levels !== undefined ||
@@ -772,8 +777,12 @@ export function validateProposalPayload(
       p.initialScout !== undefined;
     if (!hasField) {
       errors.push(
-        "At least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout required"
+        "At least one of status, currentHypothesis, historicalAnalysis, notes, thesis, levels, riskRules, initialScout required"
       );
+    }
+    if (p.historicalAnalysis !== undefined) {
+      const historical = normalizeHistoricalAnalysis(p.historicalAnalysis);
+      if (!historical.ok) errors.push(...historical.errors);
     }
     if (p.status !== undefined) {
       const allowed = ["draft", "watching", "actionable", "invalidated", "archived"];
@@ -838,8 +847,8 @@ export function validateProposalPayload(
     if (!check.ok) errors.push(...check.errors);
   }
 
-  if (parsed.type === "thesis-t0-repair") {
-    const check = validateThesisT0RepairProposal(p);
+  if (parsed.type === "thesis-t0") {
+    const check = validateThesisT0Proposal(p);
     if (!check.ok) errors.push(check.error);
   }
 

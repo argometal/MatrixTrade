@@ -90,7 +90,7 @@ export function buildStockFileOperativePrompt(): string {
     "F. Prefer decision-update on the active PLAN; if no active plan, use scout-plan-create",
     "   (never stock-case-create for an existing ticker).",
     "G. Default is Analysis Mode (natural language). Apply Mode only after explicit Apply intent.",
-    "H. Never silently invent T0. Missing T0 → say NO PERSISTED T0. Controlled repair uses Apply type thesis-t0-repair (reconstructed|corrected) with note+evidence — never inherit another Plan's freeze via shared Stock File. Hindsight P/L alone is not evidence.",
+    "H. Never silently invent T0. Missing T0 → say NO PERSISTED T0. Controlled update uses Apply type thesis-t0 with note+evidence — never inherit another Plan's freeze via shared Stock File. Hindsight P/L alone is not evidence.",
     "",
     "WRITE PATH (unchanged)",
     "Human pastes your JSON in Control → Apply → Validate → Accept.",
@@ -158,8 +158,8 @@ export function formatAnalyzeT0Section(
   const lines = [
     "=== T0 FREEZE (decision-time evidence) ===",
     "RULE: Current Stock File / MTAE / Scout may change. Effective T0 is Plan-specific.",
-    "Missing T0 ≠ invent from live Profile. Wrong T0 ≠ leave forever — use Apply thesis-t0-repair.",
-    "recordKind: original | reconstructed | corrected. Prior values live in correctionAudit.",
+    "Missing T0 ≠ invent from live Profile. Wrong T0 ≠ leave forever — use Apply thesis-t0.",
+    "Prior values live in correctionAudit.",
     "Never inherit another Plan's freeze because stockThesisId is shared.",
   ];
 
@@ -169,7 +169,7 @@ export function formatAnalyzeT0Section(
       focusPlanId
         ? `related_plan:${focusPlanId} — no freeze found for this plan/decision.`
         : "related_plan:none",
-      "Do not silently invent T0. For legitimate repair: Apply thesis-t0-repair with repairKind=reconstructed + t0 + geometry + note + evidenceRefs."
+      "Do not silently invent T0. For legitimate update: Apply thesis-t0 with t0 + note + evidenceRefs."
     );
     return lines.join("\n");
   }
@@ -179,7 +179,6 @@ export function formatAnalyzeT0Section(
   const body: Array<string | null | undefined> = [
     `PERSISTED_T0: YES`,
     `t0_id:${freeze.id}`,
-    `record_kind:${freeze.recordKind ?? "original"}`,
     `t0_timestamp:${freeze.t0}`,
     `frozen_at:${freeze.createdAt}`,
     `updated_at:${freeze.updatedAt}`,
@@ -236,7 +235,7 @@ function formatIdentityBanner(thesis: StockThesis, focusPlan?: TradePlan): strin
     "",
     "STATE LAYERS (do not collapse)",
     "1. CURRENT MUTABLE — Stock File + latest MTAE + live Scout below",
-    "2. FROZEN T0 — separate section; effective freeze for evaluation if present (repair only via thesis-t0-repair — never silent edit / hindsight rewrite)",
+    "2. FROZEN T0 — separate section; effective freeze for evaluation if present (update only via thesis-t0 — never silent edit / hindsight rewrite)",
   ].join("\n");
 }
 

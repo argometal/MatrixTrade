@@ -28,6 +28,14 @@ const FIELD_PATH_RE =
 
 export function extractFieldPathFromErrors(errors: string[]): string {
   for (const err of errors) {
+    const trimmed = err.trim();
+    if (
+      trimmed.startsWith("at ") ||
+      trimmed.includes("node:internal/") ||
+      trimmed.startsWith("Error: NEXT_REDIRECT")
+    ) {
+      continue;
+    }
     const match = err.match(FIELD_PATH_RE);
     if (match?.[1]) return match[1];
   }

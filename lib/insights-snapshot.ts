@@ -6,7 +6,6 @@
 
 import {
   CASE_D_SUBTYPE_LABEL,
-  CASE_FAMILY_LABEL,
   NO_ENTRY_DIAGNOSIS_LABEL,
   caseFamilyLabel,
   noEntryDiagnosisLabel,
@@ -16,6 +15,7 @@ import {
   pickCasesNeedingReview,
   type InsightsCaseSpineFilters,
 } from "./insights-case-spine-view";
+import { resolveLearningOutcomeForPlan } from "./learning-outcome-resolve";
 import type {
   InsightsCaseRow,
   InsightsCaseSpineView,
@@ -37,6 +37,7 @@ import type { MafExperiment } from "./maf-types";
 import { MAF_COMPONENT_LABELS } from "./maf-types";
 import type { ObservationRecord } from "./observation-types";
 import type { TradePlan } from "./plan-types";
+import type { Trade } from "./types";
 import { wrapSnapshotText } from "./snapshot-verification";
 
 export type InsightsSnapshotBriefInput = {
@@ -185,11 +186,18 @@ function formatCountMap(map: Record<string, number>): string {
 }
 
 function findLo(
-  planId: string,
-  los: LearningOutcome[]
+  plan: TradePlan | undefined,
+  los: LearningOutcome[],
+  trades: Trade[]
 ): LearningOutcome | undefined {
-  const key = planId.toUpperCase();
-  return los.find((lo) => lo.planId?.toUpperCase() === key);
+  if (!plan) return undefined;
+  return (
+    resolveLearningOutcomeForPlan({
+      plan,
+      learningOutcomes: los,
+      trades,
+    }) ?? undefined
+  );
 }
 
 function findObs(
@@ -201,10 +209,13 @@ function findObs(
     const byId = observations.find(
       (o) => o.id.toUpperCase() === lo.observationId!.toUpperCase()
     );
-    if (byId) return byId;
+    return byId;
   }
   const key = planId.toUpperCase();
-  return observations.find((o) => o.planId?.toUpperCase() === key);
+  const matches = observations.filter(
+    (o) => o.planId?.toUpperCase() === key && !o.tradeId
+  );
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 function findMaf(
@@ -216,12 +227,13 @@ function findMaf(
     const byLo = experiments.find(
       (e) => e.id.toUpperCase() === lo.mafExperimentId!.toUpperCase()
     );
-    if (byLo) return byLo;
+    return byLo;
   }
   const key = planId.toUpperCase();
-  return experiments.find(
+  const matches = experiments.filter(
     (e) => e.planId?.toUpperCase() === key && !e.tradeId
   );
+  return matches.length === 1 ? matches[0] : undefined;
 }
 
 function findPlan(planId: string, plans: TradePlan[]): TradePlan | undefined {
@@ -253,10 +265,14 @@ function buildFocusTrace(input: {
     inFilter ?? input.allRows.find((r) => r.planId.toUpperCase() === key);
   if (!row) return null;
 
-  const lo = findLo(row.planId, input.pipelineInput.learningOutcomes);
+  const plan = findPlan(row.planId, input.pipelineInput.plans);
+  const lo = findLo(
+    plan,
+    input.pipelineInput.learningOutcomes,
+    input.pipelineInput.trades
+  );
   const obs = findObs(row.planId, lo, input.pipelineInput.observations);
   const maf = findMaf(row.planId, lo, input.pipelineInput.mafExperiments);
-  const plan = findPlan(row.planId, input.pipelineInput.plans);
 
   const drag = maf?.primaryDragComponent
     ? MAF_COMPONENT_LABELS[maf.primaryDragComponent] ?? maf.primaryDragComponent
@@ -402,191 +418,163 @@ function playbookNameFromAggregate(
 function formatCaseRow(
   r: InsightsCaseRow,
   playbookLearning: PlaybookDiagnosisAggregate[]
-): string {
+): string[] {
   const pbName = playbookNameFromAggregate(r.playbookId, playbookLearning);
-  const evalFlag = isEvaluableCase(r) ? "evaluable" : "insufficient/indet";
+  const lifecycle = r.lifecycle ?? {
+    status: isEvaluableCase(r) ? "COMPLETE" : "INCOMPLETE",
+    blockingLabels: r.t0Available ? [] : ["T0"],
+  };
   return [
-    `${r.ticker} · ${r.planId} · ${r.playbookId ?? "—"} · ${pbName}`,
-    caseFamilyLabel(r.family),
-    `dx=${diagnosisChip(r)}`,
-    `eq=${r.equationId}`,
-    `DQ=${r.decisionQuality}`,
-    `EQ=${r.executionQuality}`,
-    `Reality=${r.reality}`,
-    `T0=${r.t0Available ? "yes" : "missing"}`,
-    `LO=${r.loKind ?? "—"}`,
-    `realizedR=${fmtR(r.realizedR)}`,
-    `cfR=${fmtR(r.counterfactualR)}`,
-    evalFlag,
+    `${r.ticker} · ${r.planId} · ${lifecycle.status}`,
+    `${caseFamilyLabel(r.family)}`,
+    lifecycle.blockingLabels.length > 0
+      ? `Missing: ${lifecycle.blockingLabels.join(", ")}`
+      : `Diagnosis: ${diagnosisChip(r)}`,
+    `Outcome: ${r.outcomeLabel ?? r.loKind ?? "—"}`,
+    `Realized: ${fmtR(r.realizedR)}`,
+    `Counterfactual: ${fmtR(r.counterfactualR)}`,
     r.mafAttribution
-      ? `MAF=${r.mafAttribution.mafExperimentId}/${r.mafAttribution.primaryDragComponent ?? "—"}`
-      : "MAF=—",
-    r.stockThesisId ? `ST=${r.stockThesisId}` : "ST=—",
-    r.caseHref ? `href=${r.caseHref}` : null,
-  ]
-    .filter(Boolean)
-    .join(" | ");
+      ? `MAF: ${r.mafAttribution.mafExperimentId} · ${
+          r.mafAttribution.primaryDragComponent
+            ? MAF_COMPONENT_LABELS[r.mafAttribution.primaryDragComponent] ??
+              r.mafAttribution.primaryDragComponent
+            : "—"
+        }`
+      : "MAF: none",
+    `Decision Quality: ${r.decisionQuality}`,
+    `Reality: ${r.reality}`,
+    `Playbook: ${pbName}`,
+    r.stockThesisId ? `Stock File: ${r.stockThesisId}` : null,
+  ].filter(Boolean) as string[];
+}
+
+function formatAttentionGroups(review: Array<{ row: InsightsCaseRow; score: number }>): string[] {
+  const missingT0 = review.filter(({ row }) => row.lifecycle?.blockingLabels.includes("T0"));
+  const historical = review.filter(({ row }) => row.caseOrigin === "historical_trade");
+  const other = review.filter(
+    ({ row }) =>
+      !(row.lifecycle?.blockingLabels.includes("T0")) && row.caseOrigin !== "historical_trade"
+  );
+  const lines: string[] = [];
+  if (missingT0.length > 0) {
+    lines.push("Missing T0:");
+    lines.push(
+      "Common implication: without usable T0, MXT cannot distinguish Good Filter, Over-optimization, or some Case D no-entry paths."
+    );
+    for (const { row } of missingT0) {
+      const extras = row.lifecycle.blockingLabels.filter((label) => label !== "T0");
+      lines.push(
+        `- ${row.planId}${extras.length ? ` · also missing ${extras.join(" + ")}` : ""}`
+      );
+    }
+    lines.push("");
+  }
+  if (historical.length > 0) {
+    lines.push("Insufficient historical evidence:");
+    for (const { row } of historical) {
+      lines.push(`- ${row.caseId.replace(/^HIST:/, "")}`);
+    }
+    lines.push("");
+  }
+  if (other.length > 0) {
+    lines.push("Other review:");
+    for (const { row } of other) {
+      lines.push(`- ${row.planId} · ${diagnosisChip(row)}`);
+    }
+  }
+  return lines.length === 0 ? ["none"] : lines;
 }
 
 export function formatInsightsSnapshotBrief(model: InsightsSnapshotModel): string {
   const lines: string[] = [];
-  const { caseView, pipeline, playbookLearning, focus } = model;
+  const { caseView, pipeline, playbookLearning } = model;
   const agg = caseView.aggregate;
-  const entryParticipation = caseView.rows.filter(
-    (r) => r.participation === "entry"
-  ).length;
-  const noEntryParticipation = caseView.rows.filter(
-    (r) => r.participation === "no_entry"
-  ).length;
+  const entryParticipation = caseView.rows.filter((r) => r.participation === "entry").length;
+  const noEntryParticipation = caseView.rows.filter((r) => r.participation === "no_entry").length;
   const review = pickCasesNeedingReview(caseView.rows, 12);
 
   lines.push(`SCOPE: ${model.scopeLabel}`);
   lines.push(`GENERATED: ${model.generatedAt}`);
-  lines.push(
-    "SOURCE: buildInsightsCaseSpineView + computePipelinePerformance + aggregatePlaybookDiagnosis"
-  );
-  lines.push(
-    "PURPOSE: AI context for Insights → Pipeline (semantics + IDs) — not a screenshot transcript."
-  );
-  lines.push("");
-  lines.push("--- CANONICAL DISTINCTIONS (do not collapse) ---");
-  lines.push(
-    "Case classification ≠ MAF attribution. Accepted MAF may exist while Case remains Insufficient Evidence / Missing T0."
-  );
-  lines.push(
-    "Realized R/P&L ≠ Counterfactual / Planned R. CF R is never portfolio P/L."
-  );
-  lines.push(
-    "Missing T0 ≠ permission to reconstruct or inherit another Plan's T0 (even under shared Stock File). Controlled repair: Apply thesis-t0-repair."
-  );
-  lines.push(
-    "Known Outcome ≠ Case automatically evaluable. Plans under one Stock File stay independent Cases."
-  );
   lines.push("");
 
-  lines.push("--- 1. DECISION UNIVERSE ---");
-  lines.push(`activeFilters: ${model.scopeLabel}`);
-  lines.push(`totalCases: ${caseView.cards.totalCases.numerator}`);
-  lines.push(
-    `missingT0: ${caseView.rows.filter((r) => !r.t0Available).length}`
-  );
-  lines.push(
-    `withT0: ${caseView.rows.filter((r) => r.t0Available).length}`
-  );
-  lines.push(
-    `participation: entry=${entryParticipation} no_entry=${noEntryParticipation} (diagnosis entryUniverse=${agg.entryUniverse} noEntryUniverse=${agg.noEntryUniverse})`
-  );
-  lines.push(
-    `condition: ${agg.currentCondition.code} — ${agg.currentCondition.statement}`
-  );
+  lines.push("--- 1. UNIVERSE ---");
+  lines.push(`Cases: ${caseView.cards.totalCases.numerator}`);
+  lines.push(`Complete T0: ${caseView.rows.filter((r) => r.t0Available).length}`);
+  lines.push(`Missing T0: ${caseView.rows.filter((r) => !r.t0Available).length}`);
+  lines.push("");
+  lines.push("Participation:");
+  lines.push(`Entry: ${entryParticipation}`);
+  lines.push(`No Entry: ${noEntryParticipation}`);
+  lines.push("");
+  lines.push("Case Accounting:");
+  lines.push(`A: ${caseView.cards.familyA.numerator}`);
+  lines.push(`B: ${caseView.cards.familyB.numerator}`);
+  lines.push(`C: ${caseView.cards.familyC.numerator}`);
+  lines.push(`D: ${caseView.cards.familyD.numerator}`);
+  lines.push(`Insufficient: ${caseView.cards.indeterminate.numerator}`);
+  lines.push("");
+  lines.push("Condition:");
+  lines.push(`${agg.currentCondition.code}`);
+  lines.push(agg.currentCondition.statement);
+  lines.push("");
+  lines.push("Decision Quality:");
+  lines.push(formatCountMap(countBy(caseView.rows, (r) => r.decisionQuality)));
+  lines.push("");
+  lines.push("Reality:");
+  lines.push(formatCountMap(countBy(caseView.rows, (r) => r.reality)));
   lines.push("");
 
-  lines.push("--- 2. CASE ACCOUNTING ---");
-  lines.push(
-    `A=${caseView.cards.familyA.numerator} (${fmtPct(caseView.cards.familyA.rate)}) · B=${caseView.cards.familyB.numerator} (${fmtPct(caseView.cards.familyB.rate)}) · C=${caseView.cards.familyC.numerator} (${fmtPct(caseView.cards.familyC.rate)}) · D=${caseView.cards.familyD.numerator} (${fmtPct(caseView.cards.familyD.rate)}) · Insufficient=${caseView.cards.indeterminate.numerator} (${fmtPct(caseView.cards.indeterminate.rate)})`
-  );
-  lines.push(
-    `labels: A=${CASE_FAMILY_LABEL.A} | B=${CASE_FAMILY_LABEL.B} | C=${CASE_FAMILY_LABEL.C} | D=${CASE_FAMILY_LABEL.D} | ?=${CASE_FAMILY_LABEL.INDETERMINATE}`
-  );
-  lines.push("");
-
-  lines.push("--- 3. NO-ENTRY FILTER QUALITY ---");
-  lines.push(
-    `denominator: family B in filter = ${caseView.cards.familyB.numerator}`
-  );
-  lines.push(
-    `GoodFilter=${caseView.cards.goodFilter.numerator} (${fmtPct(caseView.cards.goodFilter.rate)}) · OverOpt=${caseView.cards.overOptimization.numerator} (${fmtPct(caseView.cards.overOptimization.rate)}) · Insufficient=${caseView.cards.noEntryIndeterminate.numerator} (${fmtPct(caseView.cards.noEntryIndeterminate.rate)})`
-  );
-  lines.push(
-    `labels: ${NO_ENTRY_DIAGNOSIS_LABEL.GOOD_FILTER} | ${NO_ENTRY_DIAGNOSIS_LABEL.OVER_OPTIMIZATION} | ${NO_ENTRY_DIAGNOSIS_LABEL.INDETERMINATE}`
-  );
-  lines.push("");
-
-  lines.push("--- 4. DECISION / EXECUTION / REALITY ---");
-  lines.push(
-    `decisionQuality: ${formatCountMap(countBy(caseView.rows, (r) => r.decisionQuality))}`
-  );
-  lines.push(
-    `executionQuality: ${formatCountMap(countBy(caseView.rows, (r) => r.executionQuality))}`
-  );
-  lines.push(
-    `realityRelationship: ${formatCountMap(countBy(caseView.rows, (r) => r.reality))}`
-  );
-  lines.push("");
-
-  lines.push("--- 5. CASES NEEDING REVIEW ---");
-  lines.push(
-    "Priority heuristic mirrors Pipeline UI (Missing T0, Over-Opt, D, DQ/EQ gaps, unlinkage). Max 12."
-  );
-  if (review.length === 0) {
-    lines.push("(none)");
+  lines.push("--- 2. CASES ---");
+  if (model.focusMissing) {
+    lines.push("BLOCKED: current Insights context references a focus case that is not present in the canonical Case universe.");
+  } else if (!model.focus) {
+    lines.push("No individual Case is selected in the current Insights context.");
   } else {
-    for (const { row, score } of review) {
-      lines.push(
-        [
-          `score=${score}`,
-          `${row.ticker} · ${row.planId}`,
-          caseFamilyLabel(row.family),
-          `dx=${diagnosisChip(row)}`,
-          `eq=${row.equationId}`,
-          `reason=${row.diagnosisReason}`,
-          `T0=${row.t0Available ? "yes" : "missing"}`,
-          `realizedR=${fmtR(row.realizedR)}`,
-          `cfR=${fmtR(row.counterfactualR)}`,
-          row.linkage
-            ? `link thesis=${row.linkage.planThesis} playbook=${row.linkage.planPlaybook} trade=${row.linkage.tradePlan}`
-            : "link=—",
-          `href=${row.caseHref}`,
-        ].join(" | ")
-      );
+    const focusRow =
+      caseView.rows.find((row) => row.planId.toUpperCase() === model.focus!.planId.toUpperCase()) ??
+      null;
+    if (!focusRow) {
+      lines.push(`Focused Case ${model.focus.planId} is outside the current filter context.`);
+    } else {
+      lines.push(...formatCaseRow(focusRow, playbookLearning));
     }
   }
   lines.push("");
 
-  lines.push("--- 6. COMPONENT ATTRIBUTION / MAF ---");
+  lines.push("--- 3. LEARNING ---");
   lines.push(
     "NOTE: accepted MAF aggregates — independent of Case family. Audit Case quality before interpreting."
   );
+  lines.push("MAF attribution:");
   for (const c of pipeline.componentDistribution) {
+    if (c.evaluationCount === 0 && c.failureCount === 0 && c.dragCount === 0) continue;
     lines.push(
-      `${c.label}: evaluated=${c.evaluationCount} weakOrFail=${c.failureCount} primaryDrag=${c.dragCount}`
+      `${c.label}: evaluated ${c.evaluationCount} · weak/fail ${c.failureCount}${c.dragCount ? ` · primary drag ${c.dragCount}` : ""}`
     );
   }
-  if (pipeline.repeatedDragComponents.length === 0) {
-    lines.push("repeatedPrimaryDrag: (none)");
-  } else {
-    lines.push(
-      `repeatedPrimaryDrag: ${pipeline.repeatedDragComponents
-        .map((c) => `${c.label}=${c.count}`)
-        .join(" · ")}`
-    );
+  if (pipeline.componentDistribution.every((c) => c.evaluationCount === 0 && c.failureCount === 0 && c.dragCount === 0)) {
+    lines.push("none");
   }
   lines.push("");
-
-  lines.push("--- 7. CASE DRILL-DOWN (filtered Case spine) ---");
-  lines.push(
-    "Each row keeps Family · Diagnosis · DQ · EQ · Reality · LO · Realized R · CF/Planned R · MAF separate."
-  );
-  if (caseView.rows.length === 0) {
-    lines.push("(none)");
+  lines.push("Repeated primary drag:");
+  if (pipeline.repeatedDragComponents.length === 0) {
+    lines.push("none");
   } else {
-    for (const r of caseView.rows) {
-      lines.push(formatCaseRow(r, playbookLearning));
+    for (const c of pipeline.repeatedDragComponents) {
+      lines.push(`${c.label}: ${c.count}`);
     }
   }
   lines.push("");
-
-  lines.push("--- 8. PLAYBOOK LEARNING ---");
+  lines.push("Playbooks:");
   if (playbookLearning.length === 0) {
-    lines.push("(none)");
+    lines.push("none");
   } else {
     for (const p of playbookLearning) {
       lines.push(
         [
           p.playbookName,
-          `(${p.playbookId ?? "—"})`,
+          p.playbookId ? `(${p.playbookId})` : "(none)",
           `cases=${p.cases}`,
-          `evaluable=${p.evaluableCases}`,
           `A=${p.familyA}`,
           `B=${p.familyB}`,
           `C=${p.familyC}`,
@@ -599,102 +587,20 @@ export function formatInsightsSnapshotBrief(model: InsightsSnapshotModel): strin
     }
   }
   lines.push("");
-
-  lines.push("--- 9. LEARNING OUTCOME / PATH ACCOUNTING ---");
-  lines.push(
-    "Ledger: LO / plan-outcome rows. Realized R never includes CF R."
-  );
+  lines.push("Path Accounting:");
   for (const bucket of PIPELINE_OUTCOME_BUCKETS) {
-    lines.push(
-      `${PIPELINE_OUTCOME_BUCKET_LABELS[bucket]}: ${pipeline.summaryCounts[bucket]}`
-    );
+    lines.push(`${PIPELINE_OUTCOME_BUCKET_LABELS[bucket]}: ${pipeline.summaryCounts[bucket]}`);
   }
+  lines.push(`Realized: ${fmtR(pipeline.realized.realizedRSum)}`);
   lines.push(
-    `realized: trades=${pipeline.realized.tradeCount} RSum=${fmtR(pipeline.realized.realizedRSum)} PnLSum=${pipeline.realized.realizedPnLSum}`
+    `Counterfactual evaluated: ${pipeline.counterfactual.scoutEvaluatedCount} Cases · ${fmtR(pipeline.counterfactual.counterfactualRSum)}`
   );
-  lines.push(
-    `counterfactual: scoutEvaluated=${pipeline.counterfactual.scoutEvaluatedCount} UPL=${pipeline.counterfactual.unexecutedPlanLossCount} cfRSum=${fmtR(pipeline.counterfactual.counterfactualRSum)} (NOT portfolio P/L)`
-  );
-  if (pipeline.rows.length === 0) {
-    lines.push("pathRows: (none)");
-  } else {
-    for (const row of pipeline.rows) {
-      lines.push(
-        [
-          `${row.ticker} · ${row.label}`,
-          `outcome=${PIPELINE_OUTCOME_BUCKET_LABELS[row.outcomeType]}`,
-          row.primaryDragComponent
-            ? `drag=${MAF_COMPONENT_LABELS[row.primaryDragComponent] ?? row.primaryDragComponent}`
-            : "drag=—",
-          `realizedR=${fmtR(row.realizedR)}`,
-          `cfR=${fmtR(row.counterfactualR)}`,
-          row.planId ? `plan=${row.planId}` : null,
-          row.tradeId ? `trade=${row.tradeId}` : null,
-        ]
-          .filter(Boolean)
-          .join(" | ")
-      );
-    }
-  }
+  lines.push("Counterfactual R is not portfolio P/L.");
   lines.push("");
 
-  lines.push("--- 10. FOCUS CASE ---");
-  if (model.focusMissing) {
-    lines.push("focusPlanId requested but not found in Case spine.");
-  } else if (!focus) {
-    lines.push("(none — set Focus plan on Pipeline, or pass focusPlanId)");
-  } else {
-    lines.push(`planId: ${focus.planId}`);
-    lines.push(`inFilteredUniverse: ${focus.inFilteredUniverse}`);
-    lines.push(`ticker: ${focus.ticker}`);
-    lines.push(`stockThesisId: ${focus.stockThesisId ?? "—"}`);
-    lines.push(
-      `playbook (Case/Plan, not Stock): ${focus.playbookName} (${focus.playbookId ?? "—"})`
-    );
-    lines.push(`family: ${focus.family}`);
-    lines.push(`caseDSubtype: ${focus.caseDSubtype ?? "—"}`);
-    lines.push(`noEntryDiagnosis: ${focus.noEntryDiagnosis ?? "—"}`);
-    lines.push(`equationId: ${focus.equationId}`);
-    lines.push(`decisionQuality: ${focus.decisionQuality}`);
-    lines.push(`executionQuality: ${focus.executionQuality}`);
-    lines.push(`realityRelationship: ${focus.reality}`);
-    lines.push(`t0Available: ${focus.t0Available}`);
-    if (focus.t0RecordKind) {
-      lines.push(`t0RecordKind: ${focus.t0RecordKind}`);
-    }
-    lines.push(`evaluable: ${focus.evaluable}`);
-    if (focus.planGeometry) {
-      lines.push(
-        `geometry@plan: entry=${focus.planGeometry.plannedEntry ?? "—"} stop=${focus.planGeometry.stopPrice ?? "—"} target=${focus.planGeometry.targetPrice ?? "—"} RR=${focus.planGeometry.plannedRR ?? "—"}`
-      );
-    }
-    lines.push(`LO: ${focus.learningOutcomeId ?? "—"} (${focus.loKind ?? "—"})`);
-    lines.push(`OBS: ${focus.observationId ?? "—"}`);
-    lines.push(`realizedR: ${fmtR(focus.realizedR)} (portfolio ledger only when filled)`);
-    lines.push(
-      `counterfactualR: ${fmtR(focus.counterfactualR)} (planned path — NOT portfolio P/L)`
-    );
-    lines.push(
-      `MAF: ${focus.mafExperimentId ?? "—"} status=${focus.mafStatus ?? "—"} source=${focus.mafSource ?? "—"} drag=${focus.mafPrimaryDrag ?? "—"}`
-    );
-    lines.push(
-      `suggestedImprovement: ${focus.suggestedImprovement ?? "(empty)"}`
-    );
-    if (focus.linkage) {
-      lines.push(
-        `linkage: tradeId=${focus.linkage.tradeId ?? "—"} thesis=${focus.linkage.planThesis} playbook=${focus.linkage.planPlaybook} tradePlan=${focus.linkage.tradePlan}`
-      );
-    }
-    lines.push(`diagnosisReason: ${focus.diagnosisReason}`);
-    lines.push(`caseHref: ${focus.caseHref}`);
-  }
-  lines.push("");
-
-  lines.push("--- 11. LABEL KEY ---");
-  lines.push(`D: ${CASE_FAMILY_LABEL.D}`);
-  lines.push(`Over-Opt: ${NO_ENTRY_DIAGNOSIS_LABEL.OVER_OPTIMIZATION}`);
-
-  return wrapSnapshotText("Insights Pipeline Snapshot", lines.join("\n"));
+  lines.push("--- 4. ATTENTION ---");
+  lines.push(...formatAttentionGroups(review));
+  return wrapSnapshotText("Insights Snapshot", lines.join("\n"));
 }
 
 /** Convenience: model + format. */

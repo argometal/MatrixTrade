@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
-import { acceptAiBlockAction } from "@/app/actions";
+import { acceptAiBlockAction, validateAiBlockAction } from "@/app/control-actions";
 import { copyText } from "@/app/components/ai-bridge/copy-text";
 import { ProposalSketchCard } from "@/app/components/matrix-connect/ProposalSketchCard";
 import { FundingFollowUpPanel } from "@/app/components/control-panel/FundingFollowUpPanel";
@@ -17,7 +17,7 @@ import {
 } from "@/lib/apply-failure-snapshot";
 import { consumeControlApplyDraft, clearControlApplyDraft } from "@/lib/control-apply-draft";
 import { buildProposalSketch } from "@/lib/proposal-sketch";
-import { validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
+import type { TradingInboxPayload } from "@/lib/bridge";
 import type { FundingFollowUpResult } from "@/lib/scout-funding-follow-up";
 
 type UpdatePhase = "paste" | "success";
@@ -30,6 +30,8 @@ type ApplyOutcome = {
   stockFileId?: string;
   planId?: string;
   playbookId?: string;
+  verified?: boolean;
+  verifyDetail?: string;
   fundingFollowUp?: FundingFollowUpResult;
 };
 
@@ -77,11 +79,7 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
   }, [consumePendingApplyJson]);
 
   const sketch = useMemo(() => (preview ? buildProposalSketch(preview) : null), [preview]);
-  const validation = useMemo(
-    () => (preview ? validateProposalPayload(preview) : { ok: false as const, errors: ["Validate first"] }),
-    [preview]
-  );
-  const applyReady = Boolean(preview && validation.ok && isApplyImplemented(preview.type));
+  const applyReady = Boolean(preview && isApplyImplemented(preview.type));
   const isBusy = pending || accepting;
   const canSnapFailure = Boolean(lastFailureSnapshot && lastFailedPayload !== null);
 
@@ -145,39 +143,63 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
     if (isBusy) return;
     setApplyStatus("validating");
     const submitted = applyInput;
-    const result = parseAiBlock(submitted);
-    if (!result.ok) {
-      // Keep editor; still enable Snap Failure (incl. invalid JSON).
-      setPreview(null);
-      recordFailure(
-        {
-          submittedJson: submitted,
-          kind: "parse",
-          errorMessage: result.error,
-          details: result.details,
-        },
-        { clearEditor: false }
-      );
-      return;
-    }
-    setPreview(result.payload);
-    setApplyStatus("idle");
-    const payloadCheck = validateProposalPayload(result.payload);
-    if (!payloadCheck.ok) {
-      recordFailure(
-        {
-          submittedJson: submitted,
-          kind: "validation",
-          errorMessage: "Validation failed",
-          details: payloadCheck.errors,
-          blockType: result.payload.type,
-        },
-        { clearEditor: false }
-      );
-      return;
-    }
-    clearFailureState();
-    setApplyError(null);
+    startTransition(async () => {
+      try {
+        const formData = new FormData();
+        formData.set("aiBlock", submitted);
+        const serverResult = await validateAiBlockAction(formData);
+        if (!serverResult.ok) {
+          setPreview(null);
+          recordFailure(
+            {
+              submittedJson: submitted,
+              kind: "validation",
+              errorMessage: serverResult.error,
+              details: serverResult.details,
+            },
+            { clearEditor: false }
+          );
+          return;
+        }
+
+        const result = parseAiBlock(submitted);
+        if (!result.ok) {
+          setPreview(null);
+          recordFailure(
+            {
+              submittedJson: submitted,
+              kind: "parse",
+              errorMessage: result.error,
+              details: result.details,
+            },
+            { clearEditor: false }
+          );
+          return;
+        }
+
+        setPreview(result.payload);
+        setApplyStatus("idle");
+        clearFailureState();
+        setApplyError(null);
+      } catch (err) {
+        setPreview(null);
+        recordFailure(
+          {
+            submittedJson: submitted,
+            kind: "unexpected",
+            errorMessage:
+              err instanceof Error
+                ? err.message
+                : "Server-side Validate failed unexpectedly.",
+            technicalNote:
+              err instanceof Error && err.stack
+                ? err.stack.split("\n").slice(0, 6).join("\n")
+                : undefined,
+          },
+          { clearEditor: false }
+        );
+      }
+    });
   }
 
   function handleAccept() {
@@ -199,18 +221,6 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
 
     const payload = parseResult.payload;
     setPreview(payload);
-
-    const payloadCheck = validateProposalPayload(payload);
-    if (!payloadCheck.ok) {
-      recordFailure({
-        submittedJson: submitted,
-        kind: "validation",
-        errorMessage: "Validation failed",
-        details: payloadCheck.errors,
-        blockType: payload.type,
-      });
-      return;
-    }
 
     if (!isApplyImplemented(payload.type)) {
       recordFailure({
@@ -252,6 +262,8 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
           stockFileId: result.stockFileId,
           planId: result.planId,
           playbookId: result.playbookId,
+          verified: result.verified,
+          verifyDetail: result.verifyDetail,
           fundingFollowUp: result.fundingFollowUp,
         });
         setPhase("success");
@@ -309,6 +321,11 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
             {outcome.alreadyApplied ? (
               <p className="mt-2 text-xs text-amber-200/80">
                 This exact block was applied before. No duplicate write was made.
+              </p>
+            ) : null}
+            {outcome.verifyDetail ? (
+              <p className="mt-2 text-xs text-zinc-300">
+                Verify: {outcome.verifyDetail}
               </p>
             ) : null}
           </div>
@@ -428,17 +445,6 @@ export function ControlPanelUpdate({ onBack }: { onBack: () => void }) {
                 {snapCopied ? "Failure snapshot copied" : "Snap Failure"}
               </button>
             ) : null}
-          </div>
-        ) : null}
-
-        {preview && !validation.ok ? (
-          <div className="rounded-xl border border-amber-500/30 bg-amber-950/40 px-3 py-2 text-xs text-amber-200">
-            <p className="font-medium">Fix before Accept:</p>
-            <ul className="mt-1 list-inside list-disc">
-              {validation.errors.map((err) => (
-                <li key={err}>{err}</li>
-              ))}
-            </ul>
           </div>
         ) : null}
 

@@ -11,6 +11,7 @@ import type { InsightsCaseRow } from "../lib/insights-case-spine-types";
 import type { MafExperiment } from "../lib/maf-types";
 import { buildHistoricalCaseAttribution } from "../lib/historical-case-attribution";
 import type { Trade } from "../lib/types";
+import { derivePlanCaseLifecycle } from "../lib/plan-case-lifecycle";
 
 function histRowH001(
   overrides: Partial<InsightsCaseRow> = {}
@@ -76,6 +77,21 @@ function histRowH001(
     historicalAttribution: hist,
     mafAttribution: null,
     ...overrides,
+    lifecycle:
+      overrides.lifecycle ??
+      derivePlanCaseLifecycle({
+        caseOrigin: "historical_trade",
+        planStatus: null,
+        t0Available: false,
+        hasValidityWindow: false,
+        hasReality: true,
+        hasExecutionEvidence: true,
+        hasOutcomeEvidence: true,
+        classificationComplete: false,
+        hasLearningEvidence: true,
+        hasAcceptedMaf: false,
+        rrCorrectableIssue: false,
+      }),
   };
 }
 
@@ -102,6 +118,19 @@ function modernPlanRow(): InsightsCaseRow {
     realizedPnL: null,
     counterfactualR: null,
     t0Available: false,
+    lifecycle: derivePlanCaseLifecycle({
+      caseOrigin: "modern",
+      planStatus: "expired",
+      t0Available: false,
+      hasValidityWindow: true,
+      hasReality: false,
+      hasExecutionEvidence: false,
+      hasOutcomeEvidence: false,
+      classificationComplete: true,
+      hasLearningEvidence: false,
+      hasAcceptedMaf: false,
+      rrCorrectableIssue: false,
+    }),
     missingInputs: ["t0_freeze"],
     diagnosisReason: "test",
     evidenceSummary: "",

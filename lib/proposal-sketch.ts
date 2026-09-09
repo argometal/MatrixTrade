@@ -1,4 +1,4 @@
-import { describeProposal, validateProposalPayload, type TradingInboxPayload } from "@/lib/bridge";
+import type { TradingInboxPayload } from "@/lib/bridge";
 import { validateOptionalInitialScoutContract } from "@/lib/scout-contract";
 
 export type ProposalSketchField = {
@@ -46,6 +46,8 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Update observation";
     case "plan-outcome":
       return "Record plan outcome";
+    case "thesis-t0":
+      return "Update T0";
     case "analysis":
       return "Add analysis";
     case "decision-update":
@@ -68,6 +70,38 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "Update playbook";
     default:
       return "Proposal";
+  }
+}
+
+function describeProposalHeadline(payload: TradingInboxPayload): string {
+  const p = payload.proposal as Record<string, unknown>;
+  switch (payload.type) {
+    case "decision-update":
+      return `Decision ${p.planId ?? "—"} · verdict ${p.verdict ?? "—"} · confidence ${p.decisionConfidence ?? "—"}`;
+    case "plan-outcome":
+      return `Plan outcome ${p.planId ?? "—"} · ${p.outcomeKind ?? p.status ?? "record"} · entryReached ${String(p.entryReached ?? p.entryTriggered ?? "—")}`;
+    case "thesis-t0":
+      return `T0 ${p.planId ?? "—"} · update`;
+    case "observation-update":
+      return `Observation ${p.observationId ?? p.tradeId ?? p.planId ?? p.id ?? "—"} · update`;
+    case "attribution":
+      return `MAF attribution ${p.tradeId ?? p.planId ?? p.experimentId ?? "—"}`;
+    case "trade-proposal":
+      return `New trade ${p.id ?? "—"} ${p.ticker ?? "—"}`;
+    case "trade-close":
+      return `Close ${p.id ?? "—"} at exit ${p.exit ?? "—"}`;
+    case "trade-update":
+      return `Update trade ${p.id ?? "—"}`;
+    case "file-update":
+      return p.initialScout ? `Backfill scout on ${p.id ?? "—"}` : `Update Stock File ${p.id ?? "—"}`;
+    case "stock-case-create":
+      return `New Stock Profile ${p.ticker ?? "—"}`;
+    case "stock-case-delete":
+      return `Delete Stock Profile ${p.id ?? "—"}`;
+    case "scout-assessment":
+      return `Scout ${p.ticker ?? "—"} ${p.stockFileId ?? p.stockThesisId ?? "—"} · verdict ${p.verdict ?? "—"}`;
+    default:
+      return payload.type;
   }
 }
 
@@ -283,8 +317,8 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
   }
 
   return {
-    headline: describeProposal(payload),
-    summary: describeProposal(payload),
+    headline: describeProposalHeadline(payload),
+    summary: describeProposalHeadline(payload),
     action: actionLabel(payload.type),
     fields,
     expectation,
