@@ -138,7 +138,7 @@ async function main() {
     !checks.plan009 ||
     !checks.notLoginWall ||
     !contract.acceptedTypes.includes("thesis-t0") ||
-    contract.schemaVersion !== "2026-09-08.mxt-032-direct-t0" ||
+    contract.schemaVersion !== "2026-09-08.mxt-035-plan-delete" ||
     MATRIX_MECHANICS_REVISION < 45;
 
   if (fail) {

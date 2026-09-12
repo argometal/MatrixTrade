@@ -294,6 +294,7 @@ export const MXT_ONTOLOGY_UI_MAP: readonly MxtOntologyUiRow[] = [
 export const MXT_INTERNAL_OPS_NOT_UI = [
   "stock-case-create",
   "stock-case-delete",
+  "plan-delete",
   "stock-case-update",
   "file-update",
   "file-update.initialScout",

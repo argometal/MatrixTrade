@@ -4,6 +4,8 @@
  * Not a general Plan lifecycle workflow.
  * Allowed only when outcomeKind=duplicate_creation and no legitimate
  * trade/MAF/accounting evidence is attached.
+ *
+ * Apply type: plan-delete (planId + reason). Human Accept supplies confirmation.
  */
 
 import { getPlanById } from "./plans";
@@ -27,6 +29,21 @@ export type ContaminatedPlanDeleteResult =
       deletedObservationIds: string[];
     }
   | { ok: false; errors: string[] };
+
+/** Schema-first Validate for Apply type plan-delete. */
+export function validatePlanDeleteProposal(
+  proposal: Record<string, unknown>
+): { ok: true; planId: string; reason: string } | { ok: false; errors: string[] } {
+  const errors: string[] = [];
+  const planId = String(proposal.planId ?? "").trim().toUpperCase();
+  if (!planId) errors.push("proposal.planId required");
+  const reason = String(proposal.reason ?? "").trim();
+  if (reason.length < 8) {
+    errors.push("proposal.reason required (≥8 characters)");
+  }
+  if (errors.length) return { ok: false, errors };
+  return { ok: true, planId, reason };
+}
 
 async function integrityErrorsForDelete(planId: string): Promise<string[]> {
   const errors: string[] = [];
@@ -173,4 +190,20 @@ export async function deleteContaminatedPlan(input: {
     deletedLearningOutcomeIds,
     deletedObservationIds: [],
   };
+}
+
+/**
+ * Apply Accept path — human Accept is the confirmation gate.
+ * Schema only carries planId + reason.
+ */
+export async function deletePlanFromProposal(
+  proposal: Record<string, unknown>
+): Promise<ContaminatedPlanDeleteResult> {
+  const validation = validatePlanDeleteProposal(proposal);
+  if (!validation.ok) return { ok: false, errors: validation.errors };
+  return deleteContaminatedPlan({
+    planId: validation.planId,
+    confirmation: CONTAMINATED_PLAN_DELETE_CONFIRMATION,
+    reason: validation.reason,
+  });
 }

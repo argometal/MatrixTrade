@@ -19,6 +19,7 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
+import { validatePlanDeleteProposal } from "./contaminated-plan-delete";
 import { validateThesisT0Proposal } from "./thesis-t0-repair-validate";
 import { EXECUTION_READINESS_STATES } from "./plan-outcome-types";
 import {
@@ -271,6 +272,7 @@ export type TradingProposalType =
   | "attribution"
   | "observation-update"
   | "plan-outcome"
+  | "plan-delete"
   | "thesis-t0"
   | "thesis-t0-repair"
   | "external-position-create"
@@ -317,6 +319,7 @@ export function parseTradingInboxPayload(
     type !== "attribution" &&
     type !== "observation-update" &&
     type !== "plan-outcome" &&
+    type !== "plan-delete" &&
     type !== "thesis-t0" &&
     type !== "thesis-t0-repair" &&
     type !== "external-position-create" &&
@@ -532,6 +535,11 @@ export function validateProposalPayload(
     if (p.confirmDelete !== true) {
       errors.push("proposal.confirmDelete must be true");
     }
+  }
+
+  if (parsed.type === "plan-delete") {
+    const check = validatePlanDeleteProposal(p);
+    if (!check.ok) errors.push(...check.errors);
   }
 
   if (parsed.type === "evidence-add") {

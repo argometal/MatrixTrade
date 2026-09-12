@@ -24,6 +24,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - technical-assessment: MTAE technical JSON only — stockProfileId, ticker, timeframeRoles{strategic_tf,opportunity_tf,refinement_tf,execution_tf}, perTimeframe[] (optional participation{volumeBehavior,wickAnalysis,candleSignals,movementCharacter{primary?|state+directionalEfficiency+rangeProgression,evidence,confidence},historicalReactionZones,largeParticipantFootprint}), integrated{} (optional participationSynthesis, optional momentumAssessment{expansionPotential,currentState,capitalEfficiencyConcern,rationale,scoutImplication,confidence}), technicalSummary{} (trend, zones, probableTarget vs extendedTarget, structuralInvalidation, contradictions, confidence). FORBIDDEN in technicalSummary: maximumEntry, recommendedEntry, minimumRR, shares, scoutVerdict, whalesAreBuying. Optional patchStockFile (default true).
 - technical-calibration: human procedure correction — assessmentId, stockProfileId, ticker, errorType, fieldPath, aiValue, humanValue, reason; optional magnitude, confidenceAdjustment
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason. Deletes linked evidence and scout plans. Irreversible — human Apply only.
+- plan-delete: remove a contaminated Scout Plan — planId + reason (≥8) required. Routes through contaminated-Plan safety (duplicate_creation only; refuses Trade/MAF/accounting links). Irreversible — human Apply only. Not general historical editing.
 
 Trade layer (use only when scouting approves):
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
@@ -80,6 +81,7 @@ All Apply-ready block types:
 - technical-assessment: MTAE technical-only multi-TF JSON — stockProfileId, ticker, timeframeRoles, perTimeframe[] (+ optional participation / movementCharacter expansion fields), integrated{} (+ optional participationSynthesis, momentumAssessment), technicalSummary{} (no Entry Solver / RR / Scout verdict / whalesAreBuying)
 - technical-calibration: MTAE human procedure correction — assessmentId, errorType, fieldPath, aiValue, humanValue, reason
 - stock-case-delete: remove Stock Profile — id required; confirmDelete: true required; optional reason (duplicate cleanup)
+- plan-delete: contaminated Plan only — planId + reason (≥8); refuses Trade/MAF/accounting dependencies; human Accept required
 - trade-proposal: new trade — id, ticker, entry, stop, shares required; optional target, thesis, setupId, status
 - trade-close: close trade — id, exit required; optional confirmExternalClose (true)
 - trade-review: post-close review — id, qualityEntry, qualityExit, qualityMgmt (1-5); optional mistakes, lesson, actionItem
@@ -230,6 +232,11 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
     type: "plan-outcome",
     label: "plan-outcome — Scout terminal outcome (no Trade)",
     hint: "UPL or missed_opportunity — human-confirmed event order; server derives R — never invent fills",
+  },
+  {
+    type: "plan-delete",
+    label: "plan-delete — contaminated Plan DELETE",
+    hint: "planId + reason — duplicate_creation only; refuses Trade/MAF/accounting links",
   },
   {
     type: "thesis-t0",
@@ -729,6 +736,14 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
       id: "ST-MSFT-002",
       confirmDelete: true,
       reason: "Duplicate profile from repeated import — keeping ST-MSFT-001",
+    },
+  },
+  "plan-delete": {
+    type: "plan-delete",
+    source: "ai-block",
+    proposal: {
+      planId: "PLAN-011",
+      reason: "Confirmed contaminated duplicate Plan.",
     },
   },
   "trade-proposal": {

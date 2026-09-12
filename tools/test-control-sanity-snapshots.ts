@@ -37,7 +37,7 @@ function item(id: string, label: string, body: string): SnapshotMenuItem {
   assert.ok(brief.includes("traceability only"));
   assert.ok(snap.includes("PROMPT ID PROTOCOL"));
   assert.ok(snap.includes(`mechanics_revision:${MATRIX_MECHANICS_REVISION}`));
-  assert.ok(MATRIX_MECHANICS_REVISION >= 48);
+  assert.ok(MATRIX_MECHANICS_REVISION >= 49);
   assert.ok(brief.includes("PLAN EVALUATION DISCIPLINE"));
   assert.ok(brief.includes("FALSIFY the Plan"));
   assert.ok(brief.includes("SHOP · PLAN-005"));

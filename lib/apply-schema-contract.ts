@@ -86,7 +86,7 @@ export type ApplySchemaContract = {
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-09-08.mxt-032-direct-t0",
+    schemaVersion: "2026-09-08.mxt-035-plan-delete",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, open Control → Apply and copy the visible row Apply schema contract.",
@@ -96,6 +96,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "A validator error on one field does not validate the rest of the object.",
       "stock-case-create REQUIRES initialScout.plannedEntry + stopPrice + targetPrice.",
       "scout-plan-create REQUIRES plannedEntry + stopPrice + targetPrice.",
+      "plan-delete required: planId + reason (≥8). Contaminated Plan only (outcomeKind=duplicate_creation). Refuses Trade/MAF/accounting dependencies. Not general history editing.",
       "riskRules.invalidation must be an observable event string, not a bare price.",
       "Do not put Scout capital fields into technical-assessment.",
       "Do not put Entry Solver / R:R / shares into MTAE.",
@@ -145,6 +146,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "targetPrice",
         "optional identicalGeometryOverride after geometry STALL",
       ],
+      "plan-delete": ["planId", "reason (≥8)"],
       "file-update": ["id", "at least one updatable field"],
       "decision-update": ["planId", "decision mode OR tactical fields (including operationalAssessment)"],
       "technical-assessment": [
@@ -353,6 +355,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "trade-review": AI_BLOCK_SAMPLES["trade-review"],
       "observation-update": AI_BLOCK_SAMPLES["observation-update"],
       "plan-outcome": AI_BLOCK_SAMPLES["plan-outcome"],
+      "plan-delete": AI_BLOCK_SAMPLES["plan-delete"],
       "thesis-t0": AI_BLOCK_SAMPLES["thesis-t0"],
       "external-position-create": AI_BLOCK_SAMPLES["external-position-create"],
       "external-position-update": AI_BLOCK_SAMPLES["external-position-update"],
@@ -381,8 +384,14 @@ export function buildApplySchemaContract(): ApplySchemaContract {
 export function buildDataCorrectabilityContractText(): string {
   return [
     "=== DATA CORRECTABILITY (MXT 029) — authoritative Apply types ===",
-    "Freshness check: schemaVersion MUST be 2026-09-08.mxt-032-direct-t0.",
+    "Freshness check: schemaVersion MUST be 2026-09-08.mxt-035-plan-delete.",
     "If that marker is missing, discard this paste — it is STALE vs implementation.",
+    "",
+    "plan-delete (acceptedTypes MUST include this string):",
+    "  · Contaminated Scout Plan DELETE only — not general historical editing.",
+    "  · Required: planId, reason (≥8 chars).",
+    "  · Server refuses Plans that are not outcomeKind=duplicate_creation or that have Trade/MAF/accounting/Observation links.",
+    "  · Human Accept is required. Does not invent lineage, Learning Observations, or audit narratives.",
     "",
     "thesis-t0 (acceptedTypes MUST include this string):",
     "  · Use when T0 is Missing or persisted freeze is wrong.",

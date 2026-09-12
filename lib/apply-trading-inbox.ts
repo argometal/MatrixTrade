@@ -1,6 +1,7 @@
 import { appendMarketEvidenceFromProposal } from "./market-evidence";
 import { createStockCaseFromProposal } from "./stock-case-create";
 import { deleteStockCaseFromProposal } from "./stock-case-delete";
+import { deletePlanFromProposal } from "./contaminated-plan-delete";
 import { getAppliedImportStore } from "./applied-import-store";
 import { computeImportFingerprint } from "./import-fingerprint";
 import { readNoteBody } from "./obsidian";
@@ -157,6 +158,8 @@ async function applyTradingProposalInner(
       return applyStockCaseCreate(parsed);
     case "stock-case-delete":
       return applyStockCaseDelete(parsed);
+    case "plan-delete":
+      return applyPlanDelete(parsed);
     case "scout-assessment":
       return applyScoutAssessment(parsed);
     case "decision-update":
@@ -232,6 +235,23 @@ async function applyStockCaseDelete(
     message: `Deleted Stock Profile ${result.deletedId}`,
     type: "stock-case-delete",
     stockFileId: result.deletedId,
+  };
+}
+
+async function applyPlanDelete(
+  parsed: TradingInboxPayload
+): Promise<ApplyTradingProposalResult> {
+  const result = await deletePlanFromProposal(parsed.proposal);
+  if (!result.ok) return { ok: false, errors: result.errors };
+  const loNote =
+    result.deletedLearningOutcomeIds.length > 0
+      ? ` · LO ${result.deletedLearningOutcomeIds.join(", ")}`
+      : "";
+  return {
+    ok: true,
+    message: `Deleted contaminated Plan ${result.planId}${loNote}`,
+    type: "plan-delete",
+    planId: result.planId,
   };
 }
 

@@ -237,7 +237,7 @@ export function buildMatrixMechanicsBrief(
     "",
     "DATA CORRECTABILITY (MXT 032)",
     "Historical truth is protected from hindsight; recorded errors remain repairable.",
-    "Apply schema freshness: Control → Apply → Apply schema contract must show schemaVersion 2026-09-08.mxt-032-direct-t0 (and acceptedTypes must list thesis-t0). If missing → STALE paste/build.",
+    "Apply schema freshness: Control → Apply → Apply schema contract must show schemaVersion 2026-09-08.mxt-035-plan-delete (and acceptedTypes must list thesis-t0 and plan-delete). If missing → STALE paste/build.",
     "T0: Apply type thesis-t0 whether T0 was missing or wrong. Supply t0 when creating a missing freeze. Requires note + evidence. Never invent silently. Never share freezes across Plans.",
     "Evaluation/hindsight reconstruction ≠ automatic T0 mutation; explicit audited thesis-t0 is the only T0 body write/update path.",
     "Plan outcome: wrong persisted UPL/Miss → re-Apply plan-outcome with repairKind=corrected + note; prior outcome in correctionAudit; LO/OBS re-sync.",

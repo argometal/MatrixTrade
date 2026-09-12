@@ -60,6 +60,8 @@ function actionLabel(type: TradingInboxPayload["type"]): string {
       return "New stock profile";
     case "stock-case-delete":
       return "Delete stock profile";
+    case "plan-delete":
+      return "Delete contaminated plan";
     case "evidence-add":
       return "Add evidence";
     case "layered-entry-update":
@@ -98,6 +100,8 @@ function describeProposalHeadline(payload: TradingInboxPayload): string {
       return `New Stock Profile ${p.ticker ?? "—"}`;
     case "stock-case-delete":
       return `Delete Stock Profile ${p.id ?? "—"}`;
+    case "plan-delete":
+      return `Delete Plan ${p.planId ?? "—"}`;
     case "scout-assessment":
       return `Scout ${p.ticker ?? "—"} ${p.stockFileId ?? p.stockThesisId ?? "—"} · verdict ${p.verdict ?? "—"}`;
     default:
@@ -214,6 +218,16 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
         tone: p.confirmDelete === true ? "risk" : "risk",
       });
       if (p.reason) fields.push({ label: "Reason", value: String(p.reason) });
+      break;
+    }
+    case "plan-delete": {
+      fields.push({
+        label: "Plan",
+        value: String(p.planId ?? "—").toUpperCase(),
+        tone: "accent",
+      });
+      if (p.reason) fields.push({ label: "Reason", value: String(p.reason), tone: "risk" });
+      expectation = "risk";
       break;
     }
     case "evidence-add": {

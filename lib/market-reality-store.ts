@@ -88,7 +88,7 @@ async function upsertSupabase(row: MarketRealityCaseWindow): Promise<void> {
 }
 
 async function readAll(): Promise<MarketRealityCaseWindow[]> {
-  if (useSupabaseStorage()) return readAllFromSupabase();
+  if (isSupabaseMarketRealityStorage()) return readAllFromSupabase();
   try {
     const raw = await fs.readFile(windowsPath(), "utf-8");
     const parsed = JSON.parse(raw) as MarketRealityCaseWindow[];
@@ -101,7 +101,7 @@ async function readAll(): Promise<MarketRealityCaseWindow[]> {
 }
 
 async function writeAll(rows: MarketRealityCaseWindow[]): Promise<void> {
-  if (useSupabaseStorage()) {
+  if (isSupabaseMarketRealityStorage()) {
     const existing = await readAllFromSupabase();
     const merged = new Map(existing.map((row) => [row.id, row] as const));
     for (const row of rows) merged.set(row.id, row);

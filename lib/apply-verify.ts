@@ -32,6 +32,8 @@ export async function verifyApplyPersistence(
       return verifyStockCaseCreatePersistence(parsed);
     case "stock-case-delete":
       return verifyStockCaseDeletePersistence(parsed);
+    case "plan-delete":
+      return verifyPlanDeletePersistence(parsed);
     case "evidence-add":
       return verifyEvidenceAddPersistence(parsed);
     case "decision-update":
@@ -92,6 +94,17 @@ async function verifyStockCaseDeletePersistence(
     return { ok: false, detail: `Stock Profile ${id} still exists after delete.` };
   }
   return { ok: true, detail: `Stock Profile ${id} removed.` };
+}
+
+async function verifyPlanDeletePersistence(
+  parsed: TradingInboxPayload
+): Promise<ApplyVerifyResult> {
+  const planId = String(parsed.proposal.planId ?? "").trim().toUpperCase();
+  const remaining = await getPlanById(planId);
+  if (remaining) {
+    return { ok: false, detail: `Plan ${planId} still exists after delete.` };
+  }
+  return { ok: true, detail: `Plan ${planId} removed.` };
 }
 
 async function verifyDecisionUpdatePersistence(
