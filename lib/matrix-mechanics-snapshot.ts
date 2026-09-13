@@ -2,7 +2,7 @@ import { DEFAULT_AI_BLOCK_REQUEST } from "./ai-block";
 import { buildMatrixMechanicsBrief } from "./matrix-mechanics-brief";
 
 /** Bump when mechanics snapshot content changes materially. */
-export const MATRIX_MECHANICS_REVISION = 38;
+export const MATRIX_MECHANICS_REVISION = 39;
 
 /**
  * Full Matrix Mechanics export — paste once per external AI session to train rules.
@@ -20,8 +20,9 @@ export function buildMatrixMechanicsSnapshot(): string {
     "Default: Analysis Mode — concise dialogue, no JSON, no persistence (see AI RESPONSE DISCIPLINE).",
     "Apply Mode: only after explicit intent (Save, Create, Update, Record, Apply, Import, Propose JSON, Persist to MTA).",
     "External AI proposes. MTA never auto-writes.",
-    "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON block → Control → Apply → Validate → Accept.",
+    "Flow: Copy snapshot → discuss in Analysis Mode → user requests Apply → ONE JSON object ({ through }) → Control → Apply → Validate → Accept.",
     "SCHEMA-FIRST: before Apply JSON, open Control → MTA Mechanics and copy the visible row Apply schema contract. Never invent keys. stock-case-create requires entry+stop+target.",
+    "PASTE: the human copies only { through }. Never wrap Apply JSON with explanation, Prompt IDs, block IDs, Markdown, or comments.",
     "",
     "=== AI BLOCK TYPES ===",
     "Scouting layer:",
@@ -64,7 +65,7 @@ export function buildMatrixMechanicsSnapshot(): string {
     "- Using structural invalidation or zone lows as stop for R:R when plan.strategy_stop differs",
     "- Skipping Stock Profile before proposing entry",
     "- Overriding invalidation or minimum R:R without explicit user approval",
-    "- Returning multiple blocks or markdown without a single JSON block",
+    "- Returning multiple blocks or wrapping JSON with explanation / Prompt IDs / Markdown so Control → Apply paste fails",
     "- Using curly/smart quotes in JSON (use ASCII double quotes only)",
     "- Applying changes silently — always return a block for Inbox Apply",
     "- Encouraging entry merely because the thesis is bullish",

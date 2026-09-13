@@ -80,6 +80,7 @@ export function formatExecutionInstructionGuidance(): string {
     "AI explanation layer only — not a calculation source; never invent prices, shares, risk, or allocations.",
     "REQUIRED on scout-plan-create and on decision-update that changes execution geometry (plannedEntry, stopPrice, targetPrice, layeredEntry).",
     "Omit unavailable facts. Do not summarize Plan Map cards — write how to execute (PM / desk tone).",
+    "Layered: write share quantities in this sentence (e.g. Buy 1 share at $315. Buy 2 shares at $310. Buy 2 shares at $305.). allocationPercent stays on limits[] — do not send plannedQuantity.",
     "Matrix displays this string under the Plan Map header as-is; it does not template-generate it.",
     "Apply rejects actionable proposals missing executionInstruction (schema Validate).",
   ].join("\n");

@@ -34,7 +34,7 @@ No QR. No AI Session tokens. No direct API from ChatGPT.
 
 ## AI Block format
 
-Plain JSON or a single fenced block:
+One JSON object. Copy `{` through `}` into Control → Apply. No wrapping explanation, Prompt IDs, or comments.
 
 ```json
 {

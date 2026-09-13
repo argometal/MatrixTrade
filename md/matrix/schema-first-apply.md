@@ -12,6 +12,8 @@ AI must not invent Apply JSON. Semantic guesses that look reasonable but fail im
 4. **One validator error ≠ full validation** — re-check the whole object against the contract.
 5. **Separate analysis from serialization** — conceptual ticket first, then exact keys.
 6. **Layer ownership** — MTAE / Stock File / Scout / Trade stay separate.
+7. **Paste payload** — when Apply JSON is requested, deliver one JSON object. The human copies only `{` through `}`. No explanation, Prompt IDs, block IDs, extra Markdown, or comments in that paste. The parser rejects surrounding text — do not wrap the object.
+8. **Layered `executionInstruction`** — AI writes share quantities in the sentence (`Buy 1 share at $315. Buy 2 shares at $310. Buy 2 shares at $305.`). `allocationPercent` on `limits[]` is structural. Do not send `plannedQuantity`.
 
 ## Creation hard gate
 

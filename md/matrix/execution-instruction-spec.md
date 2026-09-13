@@ -64,12 +64,12 @@ Omit any block whose facts are unavailable:
 
 ## Optional information
 
-- Exact shares — only if Matrix-derived or human-supplied (never invent)  
-- Allocation % and meaning (risk vs position)  
-- Authorized / max planned risk $  
-- Partial-fill / add rules  
-- Scaling / hold rules  
-- OA or playbook constraints already on the plan  
+- Exact shares — **write them in `executionInstruction`** (AI-authored operational counts). Do **not** put `plannedQuantity` on `limits[]` in Apply JSON; Matrix derives persisted quantities.
+- `allocationPercent` on each limit — structural distribution (must sum to 100%). Do not replace % with shares in JSON.
+- Authorized / max planned risk $
+- Partial-fill / add rules
+- Scaling / hold rules
+- OA or playbook constraints already on the plan
 - Special operational notes  
 
 ---
@@ -85,6 +85,12 @@ Exact entry, stop, target; risk if known; hold rule; no-chase if applicable.
 Sequence: first size/price → adds if reached → completion.  
 Shared stop or per-layer stops as modeled.  
 Unfilled layers remain inactive / unfilled.
+
+Write share quantities in this sentence. Keep `allocationPercent` on `layeredEntry.limits` (structural). Never send `plannedQuantity` in the Apply JSON.
+
+Example:
+
+> Buy 1 share at $315. Buy 2 shares at $310. Buy 2 shares at $305.
 
 ### Allocation
 
@@ -138,7 +144,7 @@ From plan notes only when operational.
 
 **Layered**
 
-> Buy the first 30% at $310. Add 40% at $305 if reached and complete the position at $300. Use the common stop at $294 for the full position. Hold until the primary target unless the thesis changes. Any layer not reached remains unfilled. Do not chase.
+> Buy 1 share at $315. Buy 2 shares at $310. Buy 2 shares at $305. Use the common stop at $294 for the full position. Hold until the primary target at $380. Any layer not reached remains unfilled. Do not chase.
 
 ---
 
@@ -146,7 +152,7 @@ From plan notes only when operational.
 
 - `Enter at 310 with stop at 294 and primary target at 380.` — thin template dump when richer ops facts exist  
 - `Buy ~10 shares somewhere near 310` — invents size/price  
-- Hardcoded share ladder when quantities were never calculated  
+- Putting `plannedQuantity` on `limits[]` in Apply JSON — Matrix owns persisted quantities; shares belong in `executionInstruction`  
 - Long thesis essay with no orders/stops  
 
 ---

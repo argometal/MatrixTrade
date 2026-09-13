@@ -190,7 +190,7 @@ export function buildAiBridgeHandoffText(
     userMessage.trim() || "(no message — add your request)",
     "",
     "=== INSTRUCTIONS FOR AI ===",
-    "Return exactly ONE AI Block as plain JSON or a single ```json fenced block.",
+    "Return exactly ONE Apply JSON object — copyable from { through }. No explanation, Prompt IDs, Markdown fences, or comments in the paste payload.",
     "Infer the internal type from the user's intent.",
     "Do not auto-apply — the human will Import → Inbox → Apply in MTA.",
     "",
