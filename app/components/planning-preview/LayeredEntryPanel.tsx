@@ -139,7 +139,7 @@ export function LayeredEntryPanel({
                 <td className="py-2 pr-3 tabular-nums text-zinc-500">
                   {sharesAvailability.available &&
                   limit.derived?.plannedQuantity !== undefined &&
-                  limit.derived.plannedQuantity > 0
+                  Number.isFinite(limit.derived.plannedQuantity)
                     ? limit.derived.plannedQuantity
                     : "n/a"}
                 </td>

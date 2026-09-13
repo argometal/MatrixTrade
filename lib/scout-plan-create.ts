@@ -1,4 +1,4 @@
-import { authorizeLayeredEntry, parseLayeredEntryInput } from "./layered-entry";
+import { authorizeLayeredEntry, parseLayeredEntryInput, loadConfiguredDefaultRiskBudget } from "./layered-entry";
 import { computePlannedRR } from "./plan-risk";
 import type { PlanTimeframe, SavePlanInput, TradePlan } from "./plan-types";
 import { PLAN_TIMEFRAMES } from "./plan-types";
@@ -142,9 +142,11 @@ export async function applyScoutPlanCreate(
   }
   const layeredInput = parseLayeredEntryInput(proposal.layeredEntry);
   if (layeredInput) {
+    const defaultRiskBudget = await loadConfiguredDefaultRiskBudget();
     const authorized = authorizeLayeredEntry(layeredInput, {
       primaryTargetPrice: layeredInput.primaryTargetPrice ?? plan.targetPrice,
       planStopPrice: layeredInput.commonStopPrice ?? plan.stopPrice,
+      defaultRiskBudget,
     });
     plan = {
       ...plan,

@@ -125,14 +125,16 @@ function buildGraphicNodes(
 
   for (const layer of model.layers) {
     const role = layer.role ?? `Layer ${layer.index + 1}`;
-    const quantityLabel =
-      layer.shares !== undefined
-        ? `${layer.shares} sh.`
-        : layer.sharesUnavailable
-          ? "shares n/a"
-          : layer.allocationPercent !== undefined
-            ? `${layer.allocationPercent}%`
-            : undefined;
+    const quantityParts: string[] = [];
+    if (layer.allocationPercent !== undefined) {
+      quantityParts.push(`${layer.allocationPercent}%`);
+    }
+    if (layer.shares !== undefined) {
+      quantityParts.push(`${layer.shares} sh.`);
+    } else if (layer.sharesUnavailable) {
+      quantityParts.push("shares n/a");
+    }
+    const quantityLabel = quantityParts.length > 0 ? quantityParts.join(" · ") : undefined;
     nodes.push({
       kind: "entry",
       label: role,

@@ -181,6 +181,7 @@ export function buildPlanMapModel(view: PlanLevelsView): ScoutPlanMapModel {
   const mode: ScoutPlanMapModel["mode"] = isLayered ? "layered" : "single_entry";
   const operationalParagraph = resolvePlanMapExecutionInstruction({
     executionInstruction: view.executionInstruction,
+    layeredEntry: layered,
   });
 
   return {

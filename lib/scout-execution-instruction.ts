@@ -10,6 +10,7 @@
  */
 
 import type { TradePlan } from "./plan-types";
+import type { LayeredEntryPlan } from "./layered-entry-types";
 
 /** Max length for a concise PM-style operational instruction. */
 export const EXECUTION_INSTRUCTION_MAX_CHARS = 1200;
@@ -41,11 +42,45 @@ export function normalizeExecutionInstruction(
   return text;
 }
 
-/** Resolve Plan Map sentence from persisted AI text only. */
-export function resolvePlanMapExecutionInstruction(
-  plan: Pick<TradePlan, "executionInstruction"> | undefined
+function formatBoundQuantity(qty: number): string {
+  if (!Number.isFinite(qty)) return "{qty}";
+  if (Number.isInteger(qty)) return String(qty);
+  const rounded = Math.round(qty * 10000) / 10000;
+  return String(rounded);
+}
+
+/**
+ * Bind `{qty}` slots from Matrix `plannedQuantity` (layer order).
+ * Does not invent prices, allocations, or share math.
+ * Unmatched leftover `{qty}` stays as the slot (never estimated).
+ */
+export function bindExecutionInstructionQuantities(
+  text: string | undefined,
+  layeredEntry?: LayeredEntryPlan
 ): string | undefined {
-  return normalizeExecutionInstruction(plan?.executionInstruction);
+  const normalized = normalizeExecutionInstruction(text);
+  if (!normalized) return undefined;
+  if (!/\{qty\}/i.test(normalized)) return normalized;
+  const limits = layeredEntry?.limits ?? [];
+  let index = 0;
+  return normalized.replace(/\{qty\}/gi, () => {
+    const limit = limits[index++];
+    const qty = limit?.derived?.plannedQuantity;
+    if (qty === undefined || !Number.isFinite(qty)) return "{qty}";
+    return formatBoundQuantity(qty);
+  });
+}
+
+/** Resolve Plan Map sentence from persisted AI text, binding Matrix qty slots. */
+export function resolvePlanMapExecutionInstruction(
+  plan:
+    | Pick<TradePlan, "executionInstruction" | "layeredEntry">
+    | undefined
+): string | undefined {
+  return bindExecutionInstructionQuantities(
+    plan?.executionInstruction,
+    plan?.layeredEntry
+  );
 }
 
 /** True when the proposal creates or mutates execution geometry. */
@@ -80,15 +115,19 @@ export function formatExecutionInstructionGuidance(): string {
     "AI explanation layer only — not a calculation source; never invent prices, shares, risk, or allocations.",
     "REQUIRED on scout-plan-create and on decision-update that changes execution geometry (plannedEntry, stopPrice, targetPrice, layeredEntry).",
     "Omit unavailable facts. Do not summarize Plan Map cards — write how to execute (PM / desk tone).",
-    "Matrix displays this string under the Plan Map header as-is; it does not template-generate it.",
+    "Layered: write Buy {qty} shares ({allocationPercent}%) at ${price} per layer. Matrix binds {qty} from plannedQuantity — never compute shares.",
+    "Matrix displays this string under the Plan Map header (with {qty} bound from persisted sizing); it does not template-generate it.",
     "Apply rejects actionable proposals missing executionInstruction (schema Validate).",
   ].join("\n");
 }
 
 export function formatExecutionInstructionSection(
-  plan: Pick<TradePlan, "executionInstruction">
+  plan: Pick<TradePlan, "executionInstruction" | "layeredEntry">
 ): string | undefined {
-  const text = resolvePlanMapExecutionInstruction(plan);
+  const text = bindExecutionInstructionQuantities(
+    plan.executionInstruction,
+    plan.layeredEntry
+  );
   if (!text) return undefined;
   return ["=== EXECUTION INSTRUCTION (current) ===", text].join("\n");
 }

@@ -364,7 +364,11 @@ export async function recordScoutDecision(
   const plan = await getPlanById(planId);
   if (!plan) return { errors: ["Plan not found."] };
 
-  const result = appendDecision(plan, input, probeInput, layeredEntryInput);
+  const { loadConfiguredDefaultRiskBudget } = await import("./layered-entry");
+  const defaultRiskBudget = await loadConfiguredDefaultRiskBudget();
+  const result = appendDecision(plan, input, probeInput, layeredEntryInput, {
+    defaultRiskBudget,
+  });
   if (result.errors?.length) return { errors: result.errors };
 
   const withLifecycle: TradePlan = {

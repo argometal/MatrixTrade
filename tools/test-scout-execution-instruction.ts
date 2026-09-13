@@ -8,6 +8,7 @@ import path from "node:path";
 import { buildPlanLevelsView } from "../lib/plan-levels-board";
 import { planRowToPlan, planToRow } from "../lib/plans-store/mapping";
 import {
+  bindExecutionInstructionQuantities,
   normalizeExecutionInstruction,
   resolvePlanMapExecutionInstruction,
 } from "../lib/scout-execution-instruction";
@@ -193,6 +194,52 @@ function basePlan(overrides: Partial<TradePlan> = {}): TradePlan {
   );
   assert.doesNotMatch(modelSrc, /formatPlanMapOperationalParagraph/);
   assert.match(modelSrc, /resolvePlanMapExecutionInstruction/);
+}
+
+// {qty} binds from plannedQuantity at projection — persisted AI text is not rewritten
+{
+  const layered = {
+    executionMethod: "layered_limits" as const,
+    noChase: true as const,
+    status: "planned" as const,
+    sizingMode: "risk_percent" as const,
+    stopModel: "common" as const,
+    commonStopPrice: 294,
+    primaryTargetPrice: 380,
+    authorizedRiskAmount: 100,
+    limits: [
+      { price: 315, allocationPercent: 20, derived: { plannedQuantity: 0, riskPerShare: 21, rewardPerShare: 65, rr: 3.1, riskSharePercent: 20, plannedCapital: 0, plannedRiskAmount: 0 } },
+      { price: 310, allocationPercent: 50, derived: { plannedQuantity: 3, riskPerShare: 16, rewardPerShare: 70, rr: 4.4, riskSharePercent: 50, plannedCapital: 930, plannedRiskAmount: 48 } },
+      { price: 305, allocationPercent: 30, derived: { plannedQuantity: 2, riskPerShare: 11, rewardPerShare: 75, rr: 6.8, riskSharePercent: 30, plannedCapital: 610, plannedRiskAmount: 22 } },
+    ],
+  };
+  const authored =
+    "Buy {qty} shares (20%) at $315. Buy {qty} shares (50%) at $310. Buy {qty} shares (30%) at $305. Use the common stop at $294.";
+  assert.equal(
+    bindExecutionInstructionQuantities(authored, layered),
+    "Buy 0 shares (20%) at $315. Buy 3 shares (50%) at $310. Buy 2 shares (30%) at $305. Use the common stop at $294."
+  );
+  const plan = basePlan({
+    executionInstruction: authored,
+    layeredEntry: layered,
+  });
+  assert.equal(plan.executionInstruction, authored);
+  const model = buildPlanMapModel(buildPlanLevelsView(thesis, plan));
+  assert.equal(
+    model.operationalParagraph,
+    "Buy 0 shares (20%) at $315. Buy 3 shares (50%) at $310. Buy 2 shares (30%) at $305. Use the common stop at $294."
+  );
+  const withoutSlots =
+    "Buy the first 30% at $310. Add 40% at $305 if reached.";
+  assert.equal(
+    bindExecutionInstructionQuantities(withoutSlots, layered),
+    withoutSlots
+  );
+  const leftover = bindExecutionInstructionQuantities(
+    "Buy {qty} shares at $315 then {qty} more.",
+    { ...layered, limits: [layered.limits[0]] }
+  );
+  assert.equal(leftover, "Buy 0 shares at $315 then {qty} more.");
 }
 
 console.log("test-scout-execution-instruction: ok");

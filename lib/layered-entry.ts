@@ -402,13 +402,19 @@ export function authorizeLayeredEntry(
     return applyModifiedKellyAuthorization(base, input, ctx);
   }
 
-  // Only persist authorized risk when explicitly supplied.
-  // Do not invent DEFAULT_RISK_BUDGET for ordinary layered plans — shares stay unavailable.
-  // modified_kelly / risk_weighted may fall back to default budget when needed.
+  // Explicit plan-level authorizedRiskAmount always wins.
+  // Otherwise Apply passes rules.defaultRiskBudget via ctx (never a silent USD 100).
+  // Without ctx.defaultRiskBudget, ordinary layered plans stay unsized (legacy).
   if (input.authorizedRiskAmount !== undefined) {
     base.authorizedRiskAmount = input.authorizedRiskAmount;
+  } else if (
+    ctx?.defaultRiskBudget !== undefined &&
+    Number.isFinite(ctx.defaultRiskBudget) &&
+    ctx.defaultRiskBudget > 0
+  ) {
+    base.authorizedRiskAmount = ctx.defaultRiskBudget;
   } else if (input.executionModel === "risk_weighted") {
-    base.authorizedRiskAmount = ctx?.defaultRiskBudget ?? DEFAULT_RISK_BUDGET_USD;
+    base.authorizedRiskAmount = DEFAULT_RISK_BUDGET_USD;
   }
 
   if (
@@ -676,17 +682,14 @@ export function getPersistedLayerDisplayValues(plan: {
   });
   const primaryTarget = entry.primaryTargetPrice ?? plan.targetPrice;
   return entry.limits.map((limit, index) => {
-    const shares =
-      availability.available &&
-      limit.derived?.plannedQuantity !== undefined &&
-      limit.derived.plannedQuantity > 0
-        ? limit.derived.plannedQuantity
-        : undefined;
+    const qty = limit.derived?.plannedQuantity;
+    const hasCanonicalQty =
+      availability.available && qty !== undefined && Number.isFinite(qty);
     return {
       index,
       price: limit.price,
       allocationPercent: limit.allocationPercent,
-      shares,
+      shares: hasCanonicalQty ? qty : undefined,
       riskAllocated: availability.available ? limit.derived?.plannedRiskAmount : undefined,
       stopPrice:
         (entry.stopModel ?? "common") === "per_layer"
@@ -694,7 +697,7 @@ export function getPersistedLayerDisplayValues(plan: {
           : entry.commonStopPrice ?? plan.stopPrice,
       primaryTargetPrice: primaryTarget,
       role: limit.role,
-      sharesUnavailable: !availability.available || shares === undefined,
+      sharesUnavailable: !hasCanonicalQty,
       missingFields: availability.available ? undefined : availability.missingFields,
     };
   });
@@ -726,3 +729,11 @@ export {
   recomputeLayeredEntryPlan,
   validateLayeredRiskPlan,
 } from "./layered-entry-risk";
+
+/** Configured 1R budget from System rules — not a hardcoded trading constant. */
+export async function loadConfiguredDefaultRiskBudget(): Promise<number | undefined> {
+  const { getRules } = await import("./storage");
+  const value = (await getRules()).defaultRiskBudget;
+  if (value !== undefined && Number.isFinite(value) && value > 0) return value;
+  return undefined;
+}

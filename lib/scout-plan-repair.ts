@@ -7,6 +7,7 @@ import {
   parseLayeredEntryInput,
   recomputeLayeredEntryPlan,
   validateLayeredEntry,
+  loadConfiguredDefaultRiskBudget,
 } from "./layered-entry";
 import {
   createInitialScoutPlan,
@@ -226,9 +227,11 @@ export async function updatePlanTacticsFromProposal(
       if (structureErrors.length) {
         errors.push(...structureErrors);
       } else {
+        const defaultRiskBudget = await loadConfiguredDefaultRiskBudget();
         const authorized = authorizeLayeredEntry(layered, {
           primaryTargetPrice: layered.primaryTargetPrice ?? updated.targetPrice ?? plan.targetPrice,
           planStopPrice: layered.commonStopPrice ?? updated.stopPrice ?? plan.stopPrice,
+          defaultRiskBudget,
         });
         // When risk authorization present, reject plans that fail hard risk validation
         if (authorized.authorizedRiskAmount !== undefined && authorized.primaryTargetPrice !== undefined) {
