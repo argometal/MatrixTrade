@@ -23,6 +23,7 @@ const ROUTES: Array<{ match: (pathname: string) => boolean; id: V2PageId }> = [
   { match: (p) => p.startsWith("/argus/v2/deliver"), id: { code: "A12", label: "Export" } },
   { match: (p) => p.startsWith("/argus/v2/diagnostics"), id: { code: "A13", label: "Diagnostics" } },
   { match: (p) => p.startsWith("/argus/v2/help"), id: { code: "A14", label: "Help" } },
+  { match: (p) => p.startsWith("/argus/v2/drafts/topic001"), id: { code: "A16", label: "topic001" } },
   { match: (p) => p.startsWith("/argus/search"), id: { code: "A15", label: "Search" } },
 ];
 

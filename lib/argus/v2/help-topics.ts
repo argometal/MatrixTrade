@@ -631,7 +631,34 @@ const SECTIONS: HelpSection[] = [
         title: "Reorder",
         body: "Drag ⋮⋮ to reorder within search results, or move cards onto board columns (Active / Quiet / Orphans / Archived).",
       },
+      {
+        title: "Density draft (topic001)",
+        body: "Evaluating a compact Topic chrome proposal (not live yet). Open /argus/v2/drafts/topic001 — After vs Before — then approve before substituting A06.",
+      },
     ],
+  },
+  {
+    id: "topic001-draft",
+    title: "Draft · topic001 Topic chrome",
+    group: "browse",
+    keywords: ["topic001", "draft", "density", "chrome", "compact", "toolbar"],
+    intro:
+      "Draft-only Topic UI simplification. Access: /argus/v2/drafts/topic001. Not wired into live A06 until approved.",
+    items: [
+      {
+        title: "Slice A — Topic detail",
+        body: "Tabs under title; one-line metrics; Patterns as inline chips; Deliver/Link/Create in ···. Drops large metric pills, vertical Patterns block, and default long description.",
+      },
+      {
+        title: "Slice B — Topics browse",
+        body: "Summary Pills → segmented status row on a compact toolbar with Search, Filters, Grid/List/Manage, +Topic.",
+      },
+      {
+        title: "Out of scope",
+        body: "Chronicle/Runbooks internals, loaders, ontology, graph, Slice C naming — later.",
+      },
+    ],
+    tip: "Compare After vs Before on the draft page. Approve density → then substitute into production Topics.",
   },
   {
     id: "topic-chronicle",
