@@ -187,6 +187,10 @@ async function main() {
   assert.match(board, /Shares unconfigured/);
   assert.match(board, /data-scout-plan-map-operational/);
   assert.match(board, /model\.operationalParagraph/);
+  // Active scout / preferred row: dark fill + high-contrast text (not saturated sky wash)
+  assert.match(board, /preferred: \{[\s\S]*?bg: "bg-zinc-900\/85"/);
+  assert.match(board, /preferred: \{[\s\S]*?text: "text-zinc-100"/);
+  assert.doesNotMatch(board, /bg: "bg-sky-950\/35"/);
   assert.doesNotMatch(board, /PlanMapLevelRow/);
   assert.doesNotMatch(board, /shares:\\s*10|MANUAL_SHARES_PLACEHOLDER/);
   assert.match(side, /view\\.planId|view\.planId/);

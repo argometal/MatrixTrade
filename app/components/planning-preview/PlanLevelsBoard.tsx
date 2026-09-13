@@ -26,20 +26,20 @@ const TONE_STYLES: Record<
   },
   entry: {
     border: "border-violet-500/45",
-    bg: "bg-violet-950/35",
-    text: "text-violet-200",
+    bg: "bg-zinc-900/85",
+    text: "text-zinc-100",
     dot: "bg-violet-400",
   },
   preferred: {
-    border: "border-sky-500/50",
-    bg: "bg-sky-950/35",
-    text: "text-sky-200",
+    border: "border-sky-400/45",
+    bg: "bg-zinc-900/85",
+    text: "text-zinc-100",
     dot: "bg-sky-400",
   },
   deep: {
-    border: "border-cyan-500/45",
-    bg: "bg-cyan-950/30",
-    text: "text-cyan-200",
+    border: "border-cyan-400/45",
+    bg: "bg-zinc-900/85",
+    text: "text-zinc-100",
     dot: "bg-cyan-400",
   },
   stop: {
