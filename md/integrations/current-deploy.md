@@ -22,7 +22,7 @@ Production: https://matrix-trade-theta.vercel.app
 
 Pinned revision: `rescue-12d-ui`
 
-Ship commit: (pending — build-green on `cursor/mxt-deploy-rescue-ui-a1e2`)
+Ship commit: `5e2a6ab5` (main ← rescue UI)
 
 Includes:
 - Rescue tip from `mxt/12d-real-data-ontology` — Control Apply + schema + Start Here + plan-delete / thesis-t0
