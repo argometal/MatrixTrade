@@ -22,7 +22,7 @@ Production: https://matrix-trade-theta.vercel.app
 
 Pinned revision: `main0815p`
 
-Ship commit: `763f068` (Production — verify https://matrix-trade-theta.vercel.app/api/build)
+Ship commit: `2984b977` (Production — verify https://matrix-trade-theta.vercel.app/api/build)
 
 Includes:
 - **15-21 / #369:** `layered-entry-update` create-or-update OLE on existing Scout Plan + FILL EVIDENCE: INSUFFICIENT default 30/40/30
