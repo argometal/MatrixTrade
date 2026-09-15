@@ -9,8 +9,11 @@
  *
  * Never creates a Scout Plan, Trade, fill accounting, MAF, or Observation.
  * Human Accept remains required (Apply mutation).
+ *
+ * Canonical shape: proposal fields are FLAT (same names as LayeredEntryPlan).
+ * Do NOT nest under proposal.layeredEntry on this block.
  */
-import type { LayeredEntryStatus } from "./layered-entry-types";
+import type { LayeredEntryStatus, LayerRole } from "./layered-entry-types";
 
 /** Fill / lifecycle keys (mode B). */
 export const LAYERED_ENTRY_UPDATE_FILL_KEYS = [
@@ -47,6 +50,24 @@ export const LAYERED_ENTRY_UPDATE_ALLOWED_KEYS = Array.from(
   ])
 ) as readonly string[];
 
+/**
+ * Canonical limits[] object keys accepted on configure/initialize.
+ * Required per limit: price, allocationPercent. Others optional.
+ * Do NOT send filled / fillPrice / filledQuantity / fillRecordedAt on initialize.
+ */
+export const LAYERED_ENTRY_UPDATE_LIMIT_KEYS = [
+  "price",
+  "allocationPercent",
+  "role",
+  "stopPrice",
+  "rationale",
+  "structuralBasis",
+  "confidence",
+  "uncertaintyNote",
+  "riskWeightR",
+  "id",
+] as const;
+
 /** Matches LayeredEntryStatus — fill/lifecycle path. */
 export const LAYERED_ENTRY_UPDATE_STATUS = [
   "planned",
@@ -59,6 +80,39 @@ export const LAYERED_ENTRY_UPDATE_STATUS = [
 
 /** Only planned (or omit → planned) is valid when initializing/configuring the ladder. */
 export const LAYERED_ENTRY_UPDATE_CONFIGURE_STATUS = ["planned"] as const;
+
+export const LAYERED_ENTRY_UPDATE_EXECUTION_METHODS = [
+  "single_limit",
+  "layered_limits",
+  "market",
+] as const;
+
+export const LAYERED_ENTRY_UPDATE_STOP_MODELS = ["common", "per_layer"] as const;
+
+export const LAYERED_ENTRY_UPDATE_SIZING_MODES = [
+  "position_percent",
+  "risk_percent",
+] as const;
+
+export const LAYERED_ENTRY_UPDATE_EXECUTION_MODELS = [
+  "standard_layered",
+  "risk_weighted",
+  "modified_kelly",
+] as const;
+
+export const LAYERED_ENTRY_UPDATE_ROLES = [
+  "starter",
+  "preferred",
+  "preferred_pullback",
+  "deep_pullback",
+  "confirmation",
+  "reclaim_confirmation",
+  "custom",
+  "base",
+  "kelly_extension",
+] as const satisfies readonly LayerRole[];
+
+export const LAYERED_ENTRY_UPDATE_CONFIDENCES = ["low", "medium", "high"] as const;
 
 export type LayeredEntryUpdateStatus = (typeof LAYERED_ENTRY_UPDATE_STATUS)[number];
 
@@ -79,10 +133,11 @@ export const INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS = {
     "Do not label this as statistically optimized layering.",
     "Family B: starter remains <=30%; middle gets modest preference; deep layer keeps meaningful participation.",
     "Do not fabricate fill probabilities, chase above starter, or widen the ladder outside the technical zone.",
+    "Distinguish EVIDENCE-SUPPORTED OPTIMIZED LAYERING from UNCERTAINTY-DISTRIBUTED LAYERING.",
   ],
 } as const;
 
-/** AVGO-style target semantics example — initialize OLE on an existing Plan. */
+/** AVGO-style target semantics example — initialize OLE on an existing Plan (no fills). */
 export const LAYERED_ENTRY_UPDATE_INIT_EXAMPLE = {
   type: "layered-entry-update",
   source: "ai-block",
@@ -202,6 +257,11 @@ function hasFabricatedFillProgression(proposal: Record<string, unknown>): string
           `proposal.limits[${i}] must not include fillPrice/filledQuantity on configure`
         );
       }
+      if (lim.fillRecordedAt !== undefined) {
+        errors.push(
+          `proposal.limits[${i}].fillRecordedAt must not be set on configure`
+        );
+      }
     }
   }
   const statusRaw = proposal.status;
@@ -236,7 +296,6 @@ export function validateLayeredEntryUpdateProposal(
 
   if (configure) {
     errors.push(...hasFabricatedFillProgression(proposal));
-    // Structural validation of limits is done by parseLayeredEntryInput + validateLayeredEntry downstream.
   } else {
     const hasIndex = proposal.filledThroughIndex !== undefined;
     const statusRaw = proposal.status;
@@ -245,7 +304,6 @@ export function validateLayeredEntryUpdateProposal(
       statusRaw !== null &&
       String(statusRaw).trim() !== "";
 
-    // Planning keys without limits → incomplete configure attempt
     const planningWithoutLimits = (
       LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS as readonly string[]
     ).filter(
@@ -287,39 +345,60 @@ export function buildLayeredEntryUpdateContractText(): string {
   return [
     "=== LAYERED-ENTRY-UPDATE ===",
     "Create-or-update LayeredEntry on an EXISTING Scout Plan (planId required).",
-    "Does NOT create a new Scout Plan. Does NOT create Trade / fills / accounting / MAF / Observation / realized P/L.",
+    "Does NOT create a new Scout Plan. Does NOT create Trade / fills / accounting / capital reservation / MAF / Observation / realized P/L.",
     "Human Apply → Validate → Accept only. Auditable mutation.",
     "",
-    "TWO MODES:",
+    "SEMANTICS:",
+    "A) planId exists + layeredEntry exists + configure payload (limits[]) → replace/reauthorize (update).",
+    "B) planId exists + layeredEntry missing + configure payload → INITIALIZE layeredEntry (status planned).",
+    "C) planId unknown → reject.",
+    "D) Never create a new Scout Plan implicitly.",
+    "E) Fill mode (filledThroughIndex|status without limits[]) requires an existing layeredEntry.",
     "",
-    "1) INITIALIZE / UPDATE ladder (configure) — when planId exists:",
-    "   - No layeredEntry yet → initialize from valid payload (status planned).",
-    "   - layeredEntry exists → replace/reauthorize from payload (idempotent when identical).",
-    "   - planId missing → reject.",
-    "   Required: planId + limits[] (allocationPercent sum 100).",
-    "   Canonical proposal keys (flat on proposal — same names as LayeredEntryPlan):",
-    `   ${LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS.join(", ")}`,
-    "   executionMethod optional (defaults layered_limits). status must be planned or omitted.",
-    "   Do NOT send filledThroughIndex, filled flags, fillPrice, fillPercent, or partial|full|missed status — that fabricates execution.",
-    "   FILL EVIDENCE: INSUFFICIENT → prefer uncertainty-distributed weights (default 30/40/30 starter/preferred/deep_pullback), not false-precision concentration.",
-    "   Distinguish evidence-supported optimized layering from uncertainty-distributed layering — never label the latter as statistically optimized.",
+    "SHAPE: proposal fields are FLAT (canonical LayeredEntryPlan names).",
+    "Do NOT nest under proposal.layeredEntry on this block (that nesting is for decision-update / scout-plan-create only).",
     "",
-    "Canonical initialize example:",
+    "CONFIGURE / INITIALIZE (no fills have occurred):",
+    "  Required: planId + limits[] (each limit needs price + allocationPercent; sum allocationPercent = 100).",
+    `  Allowed proposal keys: ${LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS.join(", ")}`,
+    `  Allowed limits[] keys: ${LAYERED_ENTRY_UPDATE_LIMIT_KEYS.join(", ")}`,
+    "  executionMethod optional (defaults layered_limits).",
+    "  status must be planned or omitted (server authorizes as planned).",
+    "  FORBIDDEN on initialize: filledThroughIndex, filled, fillPrice, filledQuantity, fillRecordedAt, fillPercent, averageEntry, status partial|full|missed.",
+    "",
+    "ENUMS:",
+    `  status: ${LAYERED_ENTRY_UPDATE_STATUS.join(" | ")}`,
+    `  configure status: ${LAYERED_ENTRY_UPDATE_CONFIGURE_STATUS.join(" | ")}`,
+    `  executionMethod: ${LAYERED_ENTRY_UPDATE_EXECUTION_METHODS.join(" | ")}`,
+    `  stopModel: ${LAYERED_ENTRY_UPDATE_STOP_MODELS.join(" | ")}`,
+    `  sizingMode: ${LAYERED_ENTRY_UPDATE_SIZING_MODES.join(" | ")}`,
+    `  executionModel: ${LAYERED_ENTRY_UPDATE_EXECUTION_MODELS.join(" | ")}`,
+    `  limits[].role: ${LAYERED_ENTRY_UPDATE_ROLES.join(" | ")}`,
+    `  limits[].confidence: ${LAYERED_ENTRY_UPDATE_CONFIDENCES.join(" | ")}`,
+    "",
+    "FILL / LIFECYCLE (existing layeredEntry only):",
+    `  Allowed keys: ${LAYERED_ENTRY_UPDATE_FILL_KEYS.join(", ")}`,
+    "  Required: planId + filledThroughIndex OR status",
+    "  filledThroughIndex: integer >= -1 (0-based inclusive; -1 = none / missed)",
+    "",
+    "FILL EVIDENCE: INSUFFICIENT (methodology — uncertainty-distributed OLE):",
+    "  When the defensible zone is known but relative layer expectancy is NOT evidenced,",
+    "  use default weights 30% starter / 40% preferred / 30% deep_pullback.",
+    "  This is UNCERTAINTY-DISTRIBUTED LAYERING — NOT statistically optimized.",
+    "  Do not invent fill probabilities, concentrate risk without evidence, chase above starter,",
+    "  widen outside the technical zone, or change the tactical stop to manufacture R.",
+    "  AVGO 320–325 / stop 315 / target 370 currently belongs in this category.",
+    "",
+    "Canonical INITIALIZE example (PLAN-015 AVGO — no fills):",
     JSON.stringify(LAYERED_ENTRY_UPDATE_INIT_EXAMPLE, null, 2),
     "",
-    "2) FILL / LIFECYCLE — existing layeredEntry only:",
-    "   Required: planId + filledThroughIndex OR status",
-    `   Allowed fill keys: ${LAYERED_ENTRY_UPDATE_FILL_KEYS.join(", ")}`,
-    "   filledThroughIndex: integer >= -1 (0-based inclusive; -1 = none / missed)",
-    `   status enum: ${LAYERED_ENTRY_UPDATE_STATUS.join(" | ")}`,
-    "",
-    "Fill-outcome example:",
+    "Fill-outcome example (only after real fills):",
     JSON.stringify(LAYERED_ENTRY_UPDATE_FILL_EXAMPLE, null, 2),
     "",
-    "Also still valid: decision-update.layeredEntry or scout-plan-create.layeredEntry for configure.",
+    "Also valid configure paths: decision-update.layeredEntry / scout-plan-create.layeredEntry.",
     "Prefer layered-entry-update initialize when the Scout Plan already exists and must not be duplicated.",
     "",
-    "Insufficient-evidence OLE default (methodology — not a hard schema enum):",
+    "Insufficient-evidence default weights object:",
     JSON.stringify(INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS, null, 2),
   ].join("\n");
 }
