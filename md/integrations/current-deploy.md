@@ -20,14 +20,13 @@ Verify the result.
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `rescue-12d-ui`
+Pinned revision: `main0815p`
 
-Ship commit: `d5aa448` (Production live — verify https://matrix-trade-theta.vercel.app/api/build)
+Ship commit: `763f068` (Production — verify https://matrix-trade-theta.vercel.app/api/build)
 
 Includes:
-- Rescue tip from `mxt/12d-real-data-ontology` — Control Apply + schema + Start Here + plan-delete / thesis-t0
-- Build fix: client-safe `plan-delete-validate` (keeps Node `fs` out of client bundle)
-- Build fix: plan-delete sketch expectation `down` (was invalid `risk`)
+- **15-21 / #369:** `layered-entry-update` create-or-update OLE on existing Scout Plan + FILL EVIDENCE: INSUFFICIENT default 30/40/30
+- Prior `rescue-12d-ui` / #367–#368: Control Apply + schema + Start Here + plan-delete / thesis-t0
 - Prior `main0815o` / #359: Event Note Add ↔ Tags tab dual-write
 - Prior `main0815n` / #356–#358: Home Tags manager + Pattern counts
 - Prior `main0815m` / #354–#355: Runbook check → Use as tag…
@@ -44,7 +43,7 @@ IA handoffs: [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) · [`.
 Sync:
 ```bash
 git fetch origin --tags
-git checkout cursor/mxt-deploy-rescue-ui-a1e2
+git checkout cursor/deploy-main0815p-b0a5
 # after merge to main:
 git checkout main
 git reset --hard origin/main
