@@ -17,6 +17,9 @@ import { getMafExperiments } from "./maf-store";
 import { getObservationByPlanId } from "./observation-store";
 import { assertMxtPersistenceWriteAllowed } from "./mxt-readonly";
 import { isDuplicateCreationPlan } from "./duplicate-observation";
+import { validatePlanDeleteProposal } from "./plan-delete-validate";
+
+export { validatePlanDeleteProposal } from "./plan-delete-validate";
 
 export const CONTAMINATED_PLAN_DELETE_CONFIRMATION =
   "DELETE_CONTAMINATED_PLAN" as const;
@@ -29,21 +32,6 @@ export type ContaminatedPlanDeleteResult =
       deletedObservationIds: string[];
     }
   | { ok: false; errors: string[] };
-
-/** Schema-first Validate for Apply type plan-delete. */
-export function validatePlanDeleteProposal(
-  proposal: Record<string, unknown>
-): { ok: true; planId: string; reason: string } | { ok: false; errors: string[] } {
-  const errors: string[] = [];
-  const planId = String(proposal.planId ?? "").trim().toUpperCase();
-  if (!planId) errors.push("proposal.planId required");
-  const reason = String(proposal.reason ?? "").trim();
-  if (reason.length < 8) {
-    errors.push("proposal.reason required (≥8 characters)");
-  }
-  if (errors.length) return { ok: false, errors };
-  return { ok: true, planId, reason };
-}
 
 async function integrityErrorsForDelete(planId: string): Promise<string[]> {
   const errors: string[] = [];

@@ -19,7 +19,7 @@ import {
 import { validateAttributionProposal } from "./maf-validate";
 import { validateObservationUpdateProposal } from "./observation-validate";
 import { validatePlanOutcomeProposal } from "./plan-outcome-validate";
-import { validatePlanDeleteProposal } from "./contaminated-plan-delete";
+import { validatePlanDeleteProposal } from "./plan-delete-validate";
 import { validateThesisT0Proposal } from "./thesis-t0-repair-validate";
 import { EXECUTION_READINESS_STATES } from "./plan-outcome-types";
 import {

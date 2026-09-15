@@ -227,7 +227,7 @@ export function buildProposalSketch(payload: TradingInboxPayload): ProposalSketc
         tone: "accent",
       });
       if (p.reason) fields.push({ label: "Reason", value: String(p.reason), tone: "risk" });
-      expectation = "risk";
+      expectation = "down";
       break;
     }
     case "evidence-add": {
