@@ -138,8 +138,8 @@ async function main() {
     !checks.plan009 ||
     !checks.notLoginWall ||
     !contract.acceptedTypes.includes("thesis-t0") ||
-    contract.schemaVersion !== "2026-09-08.mxt-035-plan-delete" ||
-    MATRIX_MECHANICS_REVISION < 45;
+    contract.schemaVersion !== "2026-09-15.mxt-15-21-ole-init" ||
+    MATRIX_MECHANICS_REVISION < 50;
 
   if (fail) {
     console.error("SMOKE FAIL");

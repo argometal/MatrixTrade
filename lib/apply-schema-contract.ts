@@ -24,13 +24,23 @@ import {
 import {
   INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS,
   LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
+  LAYERED_ENTRY_UPDATE_CONFIDENCES,
   LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS,
+  LAYERED_ENTRY_UPDATE_EXECUTION_METHODS,
+  LAYERED_ENTRY_UPDATE_EXECUTION_MODELS,
   LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
   LAYERED_ENTRY_UPDATE_FILL_KEYS,
   LAYERED_ENTRY_UPDATE_INIT_EXAMPLE,
+  LAYERED_ENTRY_UPDATE_LIMIT_KEYS,
+  LAYERED_ENTRY_UPDATE_ROLES,
+  LAYERED_ENTRY_UPDATE_SIZING_MODES,
   LAYERED_ENTRY_UPDATE_STATUS,
+  LAYERED_ENTRY_UPDATE_STOP_MODELS,
   buildLayeredEntryUpdateContractText,
 } from "./layered-entry-update-schema";
+
+/** Authoritative Apply schema freshness marker — Control → Apply copy row. */
+export const APPLY_SCHEMA_VERSION = "2026-09-15.mxt-15-21-ole-init";
 
 export {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
@@ -95,8 +105,19 @@ export type ApplySchemaContract = {
     allowedProposalKeys: readonly string[];
     configureKeys: readonly string[];
     fillKeys: readonly string[];
+    limitKeys: readonly string[];
     required: string[];
     statusEnum: readonly string[];
+    enums: {
+      status: readonly string[];
+      configureStatus: readonly string[];
+      executionMethod: readonly string[];
+      stopModel: readonly string[];
+      sizingMode: readonly string[];
+      executionModel: readonly string[];
+      role: readonly string[];
+      confidence: readonly string[];
+    };
     notes: string[];
     initExample: typeof LAYERED_ENTRY_UPDATE_INIT_EXAMPLE;
     fillExample: typeof LAYERED_ENTRY_UPDATE_FILL_EXAMPLE;
@@ -107,7 +128,7 @@ export type ApplySchemaContract = {
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-09-15.mxt-15-21-ole-init",
+    schemaVersion: APPLY_SCHEMA_VERSION,
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, open Control → Apply and copy the visible row Apply schema contract.",
@@ -350,6 +371,18 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "standby",
       ],
       "layered-entry-update.status": [...LAYERED_ENTRY_UPDATE_STATUS],
+      "layered-entry-update.executionMethod": [
+        ...LAYERED_ENTRY_UPDATE_EXECUTION_METHODS,
+      ],
+      "layered-entry-update.stopModel": [...LAYERED_ENTRY_UPDATE_STOP_MODELS],
+      "layered-entry-update.sizingMode": [...LAYERED_ENTRY_UPDATE_SIZING_MODES],
+      "layered-entry-update.executionModel": [
+        ...LAYERED_ENTRY_UPDATE_EXECUTION_MODELS,
+      ],
+      "layered-entry-update.limits.role": [...LAYERED_ENTRY_UPDATE_ROLES],
+      "layered-entry-update.limits.confidence": [
+        ...LAYERED_ENTRY_UPDATE_CONFIDENCES,
+      ],
     },
     layerOwnership: APPLY_LAYER_OWNERSHIP,
     stockCaseCreate: {
@@ -378,18 +411,31 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       allowedProposalKeys: LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
       configureKeys: LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS,
       fillKeys: LAYERED_ENTRY_UPDATE_FILL_KEYS,
+      limitKeys: LAYERED_ENTRY_UPDATE_LIMIT_KEYS,
       required: [
         "planId",
         "configure: limits[] | fill: filledThroughIndex OR status",
       ],
       statusEnum: LAYERED_ENTRY_UPDATE_STATUS,
+      enums: {
+        status: LAYERED_ENTRY_UPDATE_STATUS,
+        configureStatus: ["planned"],
+        executionMethod: LAYERED_ENTRY_UPDATE_EXECUTION_METHODS,
+        stopModel: LAYERED_ENTRY_UPDATE_STOP_MODELS,
+        sizingMode: LAYERED_ENTRY_UPDATE_SIZING_MODES,
+        executionModel: LAYERED_ENTRY_UPDATE_EXECUTION_MODELS,
+        role: LAYERED_ENTRY_UPDATE_ROLES,
+        confidence: LAYERED_ENTRY_UPDATE_CONFIDENCES,
+      },
       notes: [
         "Create-or-update LayeredEntry on an EXISTING Scout Plan — never creates a new Plan.",
         "Initialize when layeredEntry is missing; replace/reauthorize when present (configure mode).",
         "Fill mode requires an existing layeredEntry; filledThroughIndex is 0-based integer >= -1.",
         "Configure status must be planned (or omitted). Do not fabricate fills/partial/full on initialize.",
         "Canonical fields are flat on proposal (same names as LayeredEntryPlan) — not nested under layeredEntry.",
+        "limits[] required keys: price, allocationPercent (sum 100). Optional: role, stopPrice, rationale, confidence, …",
         "FILL EVIDENCE: INSUFFICIENT → default uncertainty weights 30/40/30; not statistically optimized.",
+        "Distinguish EVIDENCE-SUPPORTED OPTIMIZED LAYERING vs UNCERTAINTY-DISTRIBUTED LAYERING.",
         "Does not create Trade, reservation, accounting, MAF, Observation, or realized P/L.",
         "scout-plan-create.layeredEntry and decision-update.layeredEntry remain valid configure paths.",
       ],
@@ -438,8 +484,14 @@ export function buildApplySchemaContract(): ApplySchemaContract {
 export function buildDataCorrectabilityContractText(): string {
   return [
     "=== DATA CORRECTABILITY (MXT 029) — authoritative Apply types ===",
-    "Freshness check: schemaVersion MUST be 2026-09-08.mxt-035-plan-delete.",
+    `Freshness check: schemaVersion MUST be ${APPLY_SCHEMA_VERSION}.`,
     "If that marker is missing, discard this paste — it is STALE vs implementation.",
+    "",
+    "layered-entry-update (acceptedTypes MUST include this string):",
+    "  · Create-or-update LayeredEntry on an EXISTING Scout Plan (initialize when missing).",
+    "  · Configure: planId + limits[] (flat keys). Fill: planId + filledThroughIndex|status.",
+    "  · Does NOT create Plan/Trade/fills/accounting/reservation/MAF/Observation.",
+    "  · FILL EVIDENCE: INSUFFICIENT → default uncertainty 30/40/30 — not statistical optimization.",
     "",
     "plan-delete (acceptedTypes MUST include this string):",
     "  · Contaminated Scout Plan DELETE only — not general historical editing.",

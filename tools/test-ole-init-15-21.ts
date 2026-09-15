@@ -5,9 +5,11 @@
 import assert from "node:assert/strict";
 import { AI_BLOCK_SAMPLES } from "../lib/ai-block";
 import {
+  APPLY_SCHEMA_VERSION,
   buildApplySchemaContract,
   buildApplySchemaContractText,
 } from "../lib/apply-schema-contract";
+import { applyTradingProposal } from "../lib/apply-trading-inbox";
 import { parseTradingInboxPayload, validateProposalPayload } from "../lib/bridge";
 import {
   applyLayeredEntryConfigure,
@@ -18,7 +20,9 @@ import {
 } from "../lib/layered-entry";
 import {
   INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS,
+  LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
   LAYERED_ENTRY_UPDATE_INIT_EXAMPLE,
+  LAYERED_ENTRY_UPDATE_LIMIT_KEYS,
   validateLayeredEntryUpdateProposal,
 } from "../lib/layered-entry-update-schema";
 import { getPlanById, getPlans, recordLayeredEntryFromProposal } from "../lib/plans";
@@ -120,13 +124,25 @@ function mustPassValidate(label: string, proposal: Record<string, unknown>) {
 }
 
 async function main() {
-  // --- 10. Apply schema contract documents initialization ---
+  // --- 10. Apply schema contract documents initialization (copyable UI text) ---
   {
     const contract = buildApplySchemaContract();
+    assert.equal(contract.schemaVersion, APPLY_SCHEMA_VERSION);
+    assert.equal(contract.schemaVersion, "2026-09-15.mxt-15-21-ole-init");
     assert.ok(contract.layeredEntryUpdate);
     assert.ok(
       contract.layeredEntryUpdate.notes.some((n) =>
         n.toLowerCase().includes("create-or-update")
+      )
+    );
+    assert.ok(contract.layeredEntryUpdate.limitKeys.includes("price"));
+    assert.deepEqual(
+      [...contract.layeredEntryUpdate.allowedProposalKeys].sort(),
+      [...LAYERED_ENTRY_UPDATE_ALLOWED_KEYS].sort()
+    );
+    assert.ok(
+      LAYERED_ENTRY_UPDATE_LIMIT_KEYS.every((k) =>
+        contract.layeredEntryUpdate.limitKeys.includes(k)
       )
     );
     assert.equal(
@@ -140,15 +156,28 @@ async function main() {
       [30, 40, 30]
     );
     const text = buildApplySchemaContractText();
+    assert.match(text, /schemaVersion: 2026-09-15\.mxt-15-21-ole-init/);
+    assert.doesNotMatch(
+      text,
+      /Freshness check: schemaVersion MUST be 2026-09-08\.mxt-035-plan-delete/
+    );
     assert.match(text, /LAYERED-ENTRY-UPDATE/);
-    assert.match(text, /INITIALIZE \/ UPDATE/);
+    assert.match(text, /INITIALIZE/);
     assert.match(text, /FILL EVIDENCE: INSUFFICIENT/);
+    assert.match(text, /Allowed proposal keys:/);
+    assert.match(text, /Allowed limits\[\] keys:/);
+    assert.match(text, /UNCERTAINTY-DISTRIBUTED LAYERING/);
+    assert.match(text, /"planId": "PLAN-015"/);
     assert.match(text, /allocationPercent": 30/);
+    assert.match(text, /allocationPercent": 40/);
     assert.ok(contract.requiredFields["layered-entry-update"]);
     const layeredExample = contract.examples["layered-entry-update"] as
       | { proposal?: { planId?: string } }
       | undefined;
     assert.equal(layeredExample?.proposal?.planId, "PLAN-015");
+
+    // Contract alone must contain enough JSON for ChatGPT to emit PLAN-015 init.
+    assert.ok(text.includes(JSON.stringify(LAYERED_ENTRY_UPDATE_INIT_EXAMPLE, null, 2)));
   }
 
   // --- 6. Valid 30/40/30 validates ---
@@ -217,6 +246,51 @@ async function main() {
   // Fill-only still validates
   mustPassValidate("fill index", { planId: "PLAN-015", filledThroughIndex: 0 });
   mustPassValidate("status missed", { planId: "PLAN-015", status: "missed" });
+
+  // --- Exact user flow: Validate → Accept on PLAN-015 with no layeredEntry ---
+  {
+    resetStores([basePlan()]);
+    const block = {
+      type: "layered-entry-update",
+      source: "ai-block",
+      proposal: { ...initPayload },
+    };
+    const parsed = parseTradingInboxPayload(block);
+    assert.ok(parsed);
+    const validated = validateProposalPayload(parsed!);
+    assert.equal(
+      validated.ok,
+      true,
+      validated.ok ? "" : (validated as { errors: string[] }).errors.join("; ")
+    );
+
+    const accepted = await applyTradingProposal(block);
+    assert.equal(accepted.ok, true, accepted.ok ? "" : accepted.errors?.join("; "));
+    assert.equal(accepted.planId, "PLAN-015");
+
+    const plans = await getPlans();
+    assert.equal(plans.length, 1);
+    assert.equal(plans[0]!.id, "PLAN-015");
+    assert.ok(plans[0]!.layeredEntry);
+    assert.equal(plans[0]!.layeredEntry!.status, "planned");
+    assert.ok(!plans[0]!.layeredEntry!.limits.some((l) => l.filled));
+    assert.equal(plans[0]!.linkedTradeId, undefined);
+
+    // Second update (fill) against same OLE remains functional
+    const fillBlock = {
+      type: "layered-entry-update",
+      source: "ai-block",
+      proposal: { planId: "PLAN-015", filledThroughIndex: 0 },
+    };
+    const fillValidated = validateProposalPayload(parseTradingInboxPayload(fillBlock)!);
+    assert.equal(fillValidated.ok, true);
+    const fillAccepted = await applyTradingProposal(fillBlock);
+    assert.equal(fillAccepted.ok, true, fillAccepted.ok ? "" : fillAccepted.errors?.join("; "));
+    const afterFill = await getPlanById("PLAN-015");
+    assert.equal(afterFill!.layeredEntry!.status, "partial");
+    assert.equal(afterFill!.layeredEntry!.limits[0]!.filled, true);
+    assert.equal((await getPlans()).length, 1);
+  }
 
   // --- 1. Existing Scout + no layeredEntry → initializes ---
   {
