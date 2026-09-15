@@ -145,10 +145,10 @@ async function main() {
     assert.match(text, /FILL EVIDENCE: INSUFFICIENT/);
     assert.match(text, /allocationPercent": 30/);
     assert.ok(contract.requiredFields["layered-entry-update"]);
-    assert.equal(
-      contract.examples["layered-entry-update"]?.proposal?.planId,
-      "PLAN-015"
-    );
+    const layeredExample = contract.examples["layered-entry-update"] as
+      | { proposal?: { planId?: string } }
+      | undefined;
+    assert.equal(layeredExample?.proposal?.planId, "PLAN-015");
   }
 
   // --- 6. Valid 30/40/30 validates ---
