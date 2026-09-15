@@ -21,6 +21,16 @@ import {
   STOCK_CASE_RISK_ALLOWED_KEYS,
   STOCK_CASE_SCOUT_ALLOWED_KEYS,
 } from "./stock-case-schema";
+import {
+  INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS,
+  LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
+  LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS,
+  LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
+  LAYERED_ENTRY_UPDATE_FILL_KEYS,
+  LAYERED_ENTRY_UPDATE_INIT_EXAMPLE,
+  LAYERED_ENTRY_UPDATE_STATUS,
+  buildLayeredEntryUpdateContractText,
+} from "./layered-entry-update-schema";
 
 export {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
@@ -81,12 +91,23 @@ export type ApplySchemaContract = {
     required: string[];
     notes: string[];
   };
+  layeredEntryUpdate: {
+    allowedProposalKeys: readonly string[];
+    configureKeys: readonly string[];
+    fillKeys: readonly string[];
+    required: string[];
+    statusEnum: readonly string[];
+    notes: string[];
+    initExample: typeof LAYERED_ENTRY_UPDATE_INIT_EXAMPLE;
+    fillExample: typeof LAYERED_ENTRY_UPDATE_FILL_EXAMPLE;
+    insufficientEvidenceDefault: typeof INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS;
+  };
   examples: Partial<Record<AiBlockType, Record<string, unknown>>>;
 };
 
 export function buildApplySchemaContract(): ApplySchemaContract {
   return {
-    schemaVersion: "2026-09-08.mxt-035-plan-delete",
+    schemaVersion: "2026-09-15.mxt-15-21-ole-init",
     product: "MTA",
     rules: [
       "SCHEMA-FIRST: before any Apply JSON, open Control → Apply and copy the visible row Apply schema contract.",
@@ -96,6 +117,8 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "A validator error on one field does not validate the rest of the object.",
       "stock-case-create REQUIRES initialScout.plannedEntry + stopPrice + targetPrice.",
       "scout-plan-create REQUIRES plannedEntry + stopPrice + targetPrice.",
+      "layered-entry-update: create-or-update LayeredEntry on an EXISTING Scout Plan. Configure: planId + limits[] (flat canonical fields). Fill: planId + filledThroughIndex|status. Never creates a new Plan/Trade/MAF/Observation. Do not fabricate fills on initialize.",
+      "OLE FILL EVIDENCE: INSUFFICIENT → uncertainty-distributed default 30/40/30 (starter/preferred/deep_pullback); do not claim statistical optimization or extreme single-price concentration without evidence.",
       "plan-delete required: planId + reason (≥8). Contaminated Plan only (outcomeKind=duplicate_creation). Refuses Trade/MAF/accounting dependencies. Not general history editing.",
       "riskRules.invalidation must be an observable event string, not a bare price.",
       "Do not put Scout capital fields into technical-assessment.",
@@ -149,6 +172,12 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "plan-delete": ["planId", "reason (≥8)"],
       "file-update": ["id", "at least one updatable field"],
       "decision-update": ["planId", "decision mode OR tactical fields (including operationalAssessment)"],
+      "layered-entry-update": [
+        "planId",
+        "configure: limits[] (+ stopModel, sizingMode, authorizedRiskAmount, commonStopPrice, primaryTargetPrice, status=planned)",
+        "OR fill: filledThroughIndex OR status",
+        `allowed keys: ${LAYERED_ENTRY_UPDATE_ALLOWED_KEYS.join(", ")}`,
+      ],
       "technical-assessment": [
         "stockProfileId",
         "ticker",
@@ -320,6 +349,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "require_momentum_improvement",
         "standby",
       ],
+      "layered-entry-update.status": [...LAYERED_ENTRY_UPDATE_STATUS],
     },
     layerOwnership: APPLY_LAYER_OWNERSHIP,
     stockCaseCreate: {
@@ -344,11 +374,35 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "invalidation example: Weekly close below 130 — not 130 alone",
       ],
     },
+    layeredEntryUpdate: {
+      allowedProposalKeys: LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
+      configureKeys: LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS,
+      fillKeys: LAYERED_ENTRY_UPDATE_FILL_KEYS,
+      required: [
+        "planId",
+        "configure: limits[] | fill: filledThroughIndex OR status",
+      ],
+      statusEnum: LAYERED_ENTRY_UPDATE_STATUS,
+      notes: [
+        "Create-or-update LayeredEntry on an EXISTING Scout Plan — never creates a new Plan.",
+        "Initialize when layeredEntry is missing; replace/reauthorize when present (configure mode).",
+        "Fill mode requires an existing layeredEntry; filledThroughIndex is 0-based integer >= -1.",
+        "Configure status must be planned (or omitted). Do not fabricate fills/partial/full on initialize.",
+        "Canonical fields are flat on proposal (same names as LayeredEntryPlan) — not nested under layeredEntry.",
+        "FILL EVIDENCE: INSUFFICIENT → default uncertainty weights 30/40/30; not statistically optimized.",
+        "Does not create Trade, reservation, accounting, MAF, Observation, or realized P/L.",
+        "scout-plan-create.layeredEntry and decision-update.layeredEntry remain valid configure paths.",
+      ],
+      initExample: LAYERED_ENTRY_UPDATE_INIT_EXAMPLE,
+      fillExample: LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
+      insufficientEvidenceDefault: INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS,
+    },
     examples: {
       "stock-case-create": AI_BLOCK_SAMPLES["stock-case-create"],
       "scout-plan-create": AI_BLOCK_SAMPLES["scout-plan-create"],
       "technical-assessment": AI_BLOCK_SAMPLES["technical-assessment"],
       "decision-update": AI_BLOCK_SAMPLES["decision-update"],
+      "layered-entry-update": LAYERED_ENTRY_UPDATE_INIT_EXAMPLE,
       "file-update": AI_BLOCK_SAMPLES["file-update"],
       "evidence-add": AI_BLOCK_SAMPLES["evidence-add"],
       "trade-update": buildLegacyTradeUpdateExample("H002"),
@@ -444,6 +498,8 @@ export function buildApplySchemaContractText(): string {
     `allowed initialScout keys: ${contract.stockCaseCreate.allowedInitialScoutKeys.join(", ")}`,
     `required: ${contract.stockCaseCreate.required.join(", ")}`,
     ...contract.stockCaseCreate.notes.map((n) => `- ${n}`),
+    "",
+    buildLayeredEntryUpdateContractText(),
     "",
     "REQUIRED FIELDS (summary)",
     ...Object.entries(contract.requiredFields).map(

@@ -240,6 +240,43 @@ async function verifyLayeredEntryUpdatePersistence(
   if (!reloaded?.layeredEntry) {
     return { ok: false, detail: `Layered entry not found on ${planId} after apply.` };
   }
+
+  if (Array.isArray(p.limits) && p.limits.length > 0) {
+    const expected = p.limits.length;
+    if (reloaded.layeredEntry.limits.length !== expected) {
+      return {
+        ok: false,
+        detail: `Layered entry limit count mismatch on ${planId} (expected ${expected}, got ${reloaded.layeredEntry.limits.length}).`,
+      };
+    }
+    for (let i = 0; i < expected; i++) {
+      const want = p.limits[i] as Record<string, unknown>;
+      const got = reloaded.layeredEntry.limits[i];
+      if (Number(want.price) !== got.price) {
+        return {
+          ok: false,
+          detail: `Layered entry limits[${i}].price mismatch on ${planId}.`,
+        };
+      }
+      if (Number(want.allocationPercent) !== got.allocationPercent) {
+        return {
+          ok: false,
+          detail: `Layered entry limits[${i}].allocationPercent mismatch on ${planId}.`,
+        };
+      }
+    }
+    if (reloaded.layeredEntry.status !== "planned") {
+      return {
+        ok: false,
+        detail: `Layered entry configure must persist status planned on ${planId}.`,
+      };
+    }
+    return {
+      ok: true,
+      detail: `Layered entry initialized/updated on ${planId} · ${reloaded.layeredEntry.limits.length} limits · planned.`,
+    };
+  }
+
   if (p.status !== undefined && reloaded.layeredEntry.status !== String(p.status)) {
     return { ok: false, detail: `Layered entry status mismatch on ${planId}.` };
   }

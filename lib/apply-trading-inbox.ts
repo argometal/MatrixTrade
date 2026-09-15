@@ -364,9 +364,10 @@ async function applyLayeredEntryUpdate(
   const result = await recordLayeredEntryFromProposal(parsed.proposal);
   if (result.errors?.length) return { ok: false, errors: result.errors };
   const plan = result.plan!;
+  const mode = result.mode === "configure" ? "initialized/updated" : "fill recorded";
   return {
     ok: true,
-    message: `Layered entry updated on ${plan.id} · ${plan.layeredEntry?.status} · fill ${plan.layeredEntry?.fillPercent ?? 0}%`,
+    message: `Layered entry ${mode} on ${plan.id} · ${plan.layeredEntry?.status} · fill ${plan.layeredEntry?.fillPercent ?? 0}%`,
     type: "layered-entry-update",
     planId: plan.id,
     stockFileId: plan.stockThesisId,

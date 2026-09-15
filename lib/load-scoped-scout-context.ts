@@ -27,7 +27,7 @@ Allowed types:
 - evidence-add: stockProfileId, ticker, timeframe, category, value, confidence required
 - file-update: id (stock profile), at least one of status, currentHypothesis, notes, thesis
 - decision-update: planId, verdict (go|wait|probe|no), decisionConfidence, challenges[] required; optional thesisQuality, opportunityQuality, confirmationCost (supplied prices only), locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry{executionMethod,limits[{price,allocationPercent}]} when verdict=go; executionInstruction REQUIRED when geometry (plannedEntry|stopPrice|targetPrice|layeredEntry) is present — never invent numbers; see md/matrix/execution-instruction-spec.md
-- layered-entry-update: planId, filledThroughIndex (0-based) or status (missed|partial|full|active) — record fill outcome without changing thesis
+- layered-entry-update: planId + limits[] to initialize/update layeredEntry on an existing Scout (status planned; no fabricated fills), OR filledThroughIndex (0-based) / status (missed|partial|full|active) to record fill — never creates a new Plan
 - scout-assessment: stockProfileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[]
 
 Forbidden: trade-proposal, trade-close, playbook changes, other tickers.

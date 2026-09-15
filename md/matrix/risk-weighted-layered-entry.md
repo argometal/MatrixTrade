@@ -64,6 +64,8 @@ This extends the capital-split `layered-entry` experiment: `allocationPercent` s
 
 **Decision:** Ship as Playbook experiment. Scout Plans continue using existing `layeredEntry.limits[].allocationPercent` (capital %). During this experiment, practitioners document risk weights in playbook notes and size shares manually per the sizing formula below. A future engine extension (`riskAllocationR` on limits) is optional and gated on 20–30 trade sample.
 
+**Insufficient fill evidence (15-21):** When the zone is defensible but relative layer expectancy is not evidenced, prefer uncertainty-distributed **30/40/30** (starter / preferred / deep_pullback) labeled `FILL EVIDENCE: INSUFFICIENT` — not extreme concentration that pretends one exact price is statistically optimal. See [execution-experiments-layered-entry.md](execution-experiments-layered-entry.md).
+
 **Pairing:** Use with `structural-pullback-entry` (zone selection) or `asymmetric-support-entry` (strategy). Execution variable = risk-weighted layers vs equal capital split.
 
 ---

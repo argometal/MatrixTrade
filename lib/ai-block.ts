@@ -17,7 +17,7 @@ PRIORITY — Scouting (validate thesis; do not rubber-stamp):
 - evidence-add: MarketEvidence row — stockProfileId, ticker, timeframe, category, value, confidence (0-100) required; optional note
 - decision-update: scout decision on PLAN — planId required; decision mode: verdict (go|wait|probe|no), decisionConfidence (0-100), challenges[] (min 1); tactical mode: at least one of plannedEntry, executableEntry, originalEntry, participationBlocker, reviseIf, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, familyBAssessment, operationalAssessment, executionReadiness, executionInstruction (verdict optional); when plannedEntry|stopPrice|targetPrice|layeredEntry present, executionInstruction is REQUIRED (AI Plan Map sentence — never invent prices/shares/risk); layeredEntry may include stopModel, sizingMode, authorizedRiskAmount, primaryTargetPrice, commonStopPrice, limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]; operationalAssessment may include thesisState, operationalState, waitHorizon, nextAction, freshness, currentExecutableRR, reviewRequired, reasonCodes[], nextReviewAt; Matrix recomputes R/risk derived fields server-side — do not forge rr; optional thesisQuality, opportunityQuality (0-100), confirmationCost{...}, locationEvidence, confirmationEvidence, singleEntryOnly, reasoning, planningRisk{}, executionRisk{}, probe{} when verdict=probe, layeredEntry when verdict=go
   · P10: executableEntry aliases plannedEntry (live); originalEntry immutable once set; participationBlocker + reviseIf[] capture why waiting / what forces revalidation
-- layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active)
+- layered-entry-update: create-or-update LayeredEntry on EXISTING PLAN — planId required. Configure/init: limits[{price,allocationPercent,role?}] + stopModel, sizingMode, authorizedRiskAmount, commonStopPrice, primaryTargetPrice, status planned (never fabricate fills). Fill: filledThroughIndex (0-based, -1=none) or status (missed|partial|full|active). Does NOT create a new Plan/Trade.
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[] (min 1), challengesToThesis[] (min 1) required; optional conditionsToAdvance[], minimumRRMet, invalidationClear — appends to profile notes (decision-update is canonical for PLAN decisions)
 - file-update: update Stock File — id required; at least one of status (draft|watching|actionable|invalidated|archived), currentHypothesis, notes, thesis, levels{}, riskRules{}, initialScout{}; initialScout backfills a missing Scout Plan only when no linked active plan exists (plannedEntry, stopPrice, targetPrice required)
 - scout-plan-create: NEW Scout Plan window on an EXISTING Stock File — stockFileId (or stockThesisId), ticker, plannedEntry, stopPrice, targetPrice required; REQUIRED executionInstruction (AI Plan Map sentence — see md/matrix/execution-instruction-spec.md); optional layeredEntry{stopModel,sizingMode,authorizedRiskAmount,primaryTargetPrice,commonStopPrice,limits[{price,allocationPercent,role?,stopPrice?,rationale?,confidence?}]} (persist structured layers — never leave layers only in notes/reasoning), optional verdict+decisionConfidence+challenges, playbookId/playbookIds, status (watching|ready|active), thesis, notes, reasoning. Identical entry/stop/target vs any existing Plan STALLs (shows comparison; CANCEL or identicalGeometryOverride:true). Server allocates a NEW PLAN-<n> (min 3-digit pad; PLAN-1000+ allowed). Do NOT supply id/planId. Do NOT use stock-case-create for same ticker. Do NOT reuse an old planId.
@@ -74,7 +74,7 @@ All Apply-ready block types:
 - stock-case-create: NEW Stock Profile — ticker, currentHypothesis, levels{}, riskRules, REQUIRED initialScout{plannedEntry,stopPrice,targetPrice}
 - evidence-add: MarketEvidence — stockProfileId, ticker, timeframe, category, value, confidence required
 - decision-update: scout decision or tactical correction — planId required; decision mode needs verdict, decisionConfidence, challenges[]; tactical mode needs at least one of plannedEntry, stopPrice, targetPrice, minimumRR, thesis, notes, validUntil, status, layeredEntry, executionInstruction; geometry changes REQUIRE executionInstruction
-- layered-entry-update: record fill outcome on PLAN — planId, filledThroughIndex or status (missed|partial|full|active)
+- layered-entry-update: create-or-update LayeredEntry on EXISTING PLAN — planId + limits[] to initialize/update (status planned) OR filledThroughIndex/status for fill; never creates a new Plan/Trade
 - scout-assessment: validate Stock File — stockFileId, ticker, verdict (go|wait|no|probe), reasons[], challengesToThesis[] required
 - file-update: Stock File — id required; at least one of status, currentHypothesis, notes, thesis, levels, riskRules, initialScout (backfill missing Scout Plan only)
 - scout-plan-create: NEW PLAN on existing Stock File — stockFileId, ticker, plannedEntry, stopPrice, targetPrice, REQUIRED executionInstruction; optional layeredEntry; optional verdict+challenges; identical geometry STALLs unless identicalGeometryOverride:true; allocates NEW PLAN-xxx (same-ticker new window)
@@ -175,7 +175,7 @@ export const AI_BLOCK_SAMPLE_OPTIONS: AiBlockSampleOption[] = [
   },
   {
     type: "layered-entry-update",
-    label: "layered-entry-update — record fill on PLAN",
+    label: "layered-entry-update — init/update OLE or record fill on PLAN",
     hint: "filledThroughIndex or status (missed) — no thesis change",
   },
   {
@@ -353,8 +353,18 @@ const SAMPLE_BLOCKS: Record<AiBlockType, Record<string, unknown>> = {
     type: "layered-entry-update",
     source: "ai-block",
     proposal: {
-      planId: "PLAN-002",
-      filledThroughIndex: 1,
+      planId: "PLAN-015",
+      authorizedRiskAmount: 100,
+      sizingMode: "risk_percent",
+      stopModel: "common",
+      commonStopPrice: 315,
+      primaryTargetPrice: 370,
+      status: "planned",
+      limits: [
+        { price: 325, allocationPercent: 30, role: "starter" },
+        { price: 323, allocationPercent: 40, role: "preferred" },
+        { price: 320, allocationPercent: 30, role: "deep_pullback" },
+      ],
     },
   },
   "scout-plan-create": {

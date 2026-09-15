@@ -44,6 +44,13 @@ export type LayeredEntryUpdateInput = {
   status?: LayeredEntryStatus;
 };
 
+/** Configure/initialize payload for layered-entry-update create-or-update. */
+export type LayeredEntryConfigureUpdateInput = {
+  layered: LayeredEntryInput;
+  /** Only "planned" (or omit) is accepted — never fabricate fill lifecycle. */
+  status?: "planned";
+};
+
 export interface LayeredEntryScenario {
   label: string;
   limitsFilled: number;
@@ -598,12 +605,58 @@ export function validateLayeredEntryTransition(
   return null;
 }
 
+/**
+ * Initialize or replace layeredEntry on an existing Scout Plan (no new Plan).
+ * Does not invent fills — authorized ladder starts as planned.
+ */
+export function applyLayeredEntryConfigure(
+  plan: TradePlan,
+  input: LayeredEntryConfigureUpdateInput
+): { plan?: TradePlan; errors?: string[] } {
+  const layeredErrors = validateLayeredEntry(input.layered);
+  if (layeredErrors.length) return { errors: layeredErrors };
+
+  for (const [i, limit] of input.layered.limits.entries()) {
+    if (limit.filled === true) {
+      return {
+        errors: [
+          `layeredEntry.limits[${i}].filled must not be set when initializing/configuring — do not fabricate fills`,
+        ],
+      };
+    }
+  }
+
+  const now = new Date().toISOString();
+  const authorized = authorizeLayeredEntry(input.layered, {
+    primaryTargetPrice: input.layered.primaryTargetPrice ?? plan.targetPrice,
+    planStopPrice: input.layered.commonStopPrice ?? plan.stopPrice,
+  });
+
+  const entry: LayeredEntryPlan = {
+    ...authorized,
+    status: "planned",
+  };
+
+  return {
+    plan: {
+      ...plan,
+      layeredEntry: entry,
+      executionMethod: entry.executionMethod,
+      updatedAt: now,
+    },
+  };
+}
+
 export function applyLayeredEntryUpdate(
   plan: TradePlan,
   input: LayeredEntryUpdateInput
 ): { plan?: TradePlan; errors?: string[] } {
   if (!plan.layeredEntry) {
-    return { errors: ["No layered entry on this scout."] };
+    return {
+      errors: [
+        "No layered entry on this scout. Initialize with layered-entry-update limits[] (configure mode) or decision-update.layeredEntry — do not create a duplicate Scout Plan.",
+      ],
+    };
   }
 
   const now = new Date().toISOString();

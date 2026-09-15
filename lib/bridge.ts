@@ -47,6 +47,10 @@ import {
 } from "./scout-operational-state";
 import { validateScoutPlanCreateProposal } from "./scout-plan-create-validate";
 import { parseLayeredEntryInput, validateLayeredEntry } from "./layered-entry";
+import {
+  isLayeredEntryConfigureProposal,
+  validateLayeredEntryUpdateProposal,
+} from "./layered-entry-update-schema";
 import { requireExecutionInstructionForGeometry } from "./scout-execution-instruction";
 import type { Experiment, ExperimentRules, MistakeType, Trade } from "./types";
 import type { Setup } from "./setup-types";
@@ -362,7 +366,9 @@ export function describeProposal(payload: TradingInboxPayload): string {
     case "decision-update":
       return `Decision ${p.planId} · verdict ${p.verdict} · confidence ${p.decisionConfidence}`;
     case "layered-entry-update":
-      return `Layered entry ${p.planId} · fill ${p.filledThroughIndex ?? p.status ?? "update"}`;
+      return p.limits
+        ? `Layered entry ${p.planId} · initialize/update ladder`
+        : `Layered entry ${p.planId} · fill ${p.filledThroughIndex ?? p.status ?? "update"}`;
     case "file-update":
       return p.initialScout
         ? `Backfill scout on ${p.id}`
@@ -754,20 +760,23 @@ export function validateProposalPayload(
   }
 
   if (parsed.type === "layered-entry-update") {
-    if (!p.planId) errors.push("proposal.planId required");
-    const hasUpdate =
-      p.filledThroughIndex !== undefined ||
-      (p.status &&
-        ["missed", "partial", "full", "active", "planned", "cancelled"].includes(
-          String(p.status)
-        ));
-    if (!hasUpdate) {
-      errors.push("proposal.filledThroughIndex or proposal.status required");
-    }
-    if (p.filledThroughIndex !== undefined) {
-      const idx = Number(p.filledThroughIndex);
-      if (!Number.isFinite(idx) || idx < -1) {
-        errors.push("proposal.filledThroughIndex must be >= -1");
+    const layeredUpdate = validateLayeredEntryUpdateProposal(p);
+    if (!layeredUpdate.ok) {
+      errors.push(...layeredUpdate.errors);
+    } else if (isLayeredEntryConfigureProposal(p)) {
+      const layered = parseLayeredEntryInput({
+        executionMethod: p.executionMethod ?? "layered_limits",
+        ...p,
+        planId: undefined,
+        status: undefined,
+        filledThroughIndex: undefined,
+      });
+      if (!layered) {
+        errors.push(
+          "proposal.limits[] must form a valid layeredEntry (price + allocationPercent per limit)"
+        );
+      } else {
+        errors.push(...validateLayeredEntry(layered));
       }
     }
   }

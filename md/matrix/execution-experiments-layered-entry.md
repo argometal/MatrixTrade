@@ -115,13 +115,63 @@ Judge after a **statistically meaningful sample** — not one trade.
 
 ---
 
+## FILL EVIDENCE: INSUFFICIENT (uncertainty-distributed OLE)
+
+Technical evidence defines the **defensible battle/entry zone**, structural hierarchy, target, and tactical stop.
+
+OLE then distributes **authorized risk** inside that zone.
+
+When fill evidence does **not** distinguish relative layer expectancy:
+
+| Rule | Detail |
+|------|--------|
+| Label | `FILL EVIDENCE: INSUFFICIENT` |
+| Default 3-layer weights | **30% starter · 40% preferred/middle · 30% deep_pullback** |
+| Meaning | Uncertainty management — **not** a claim that 30/40/30 is statistically optimal |
+| Family B | Starter remains ≤30%; middle gets only modest preference; deep layer keeps meaningful participation |
+| Override | Allowed when real evidence supports unequal concentration — preserve the reason |
+
+**Do not:** fabricate fill probabilities or historical reaction stats; claim an exact price is statistically optimal; assign extreme concentration (e.g. 70% at one price) without evidence; lower entries merely to manufacture R:R; expand the ladder outside the technical zone; chase above the starter; change the tactical stop to manufacture R; auto-consume the full risk budget when integer sizing cannot.
+
+**Distinguish:**
+
+- **A)** Evidence-supported optimized layering  
+- **B)** Uncertainty-distributed layering  
+
+Never label **B** as statistically optimized.
+
+AVGO example (zone 320–325, stop 315, target 370, 1R=$100):
+
+| Layer | Price | Risk % | Role |
+|-------|-------|--------|------|
+| 1 | 325 | 30% | starter |
+| 2 | 323 | 40% | preferred |
+| 3 | 320 | 30% | deep_pullback |
+
+---
+
+## Initialize OLE on an existing Scout Plan
+
+`layered-entry-update` is **create-or-update** for `layeredEntry` on an **existing** `planId`:
+
+- Missing `layeredEntry` + valid configure payload → **initialize** (`status: planned`)
+- Existing `layeredEntry` + configure payload → **replace/reauthorize**
+- Existing `layeredEntry` + `filledThroughIndex`/`status` → **fill lifecycle** (unchanged)
+- Unknown `planId` → reject
+- Never creates a new Scout Plan, Trade, fill, reservation, accounting, MAF, Observation, or realized P/L
+
+Canonical configure fields are **flat on proposal** (same names as `LayeredEntryPlan`).
+
+---
+
 ## Code
 
 | Artifact | Location |
 |----------|----------|
 | Playbooks | `expectancy-asymmetry`, `layered-entry` in `data/playbooks.json` |
-| Logic | `lib/layered-entry.ts` — parse, validate, fill metrics, transitions |
-| Inbox | `decision-update` + `layeredEntry{}` on go; `layered-entry-update` for fill outcome |
+| Logic | `lib/layered-entry.ts` — parse, validate, authorize, fill metrics, transitions |
+| Schema | `lib/layered-entry-update-schema.ts` — Apply create-or-update contract |
+| Inbox | `scout-plan-create` / `decision-update.layeredEntry` configure; `layered-entry-update` initialize **or** fill |
 
 ---
 
@@ -130,3 +180,4 @@ Judge after a **statistically meaningful sample** — not one trade.
 - [asymmetric-entry-confirmation-cost.md](asymmetric-entry-confirmation-cost.md)
 - [monday-nflx-experiment.md](monday-nflx-experiment.md)
 - [scout-execution-model.md](scout-execution-model.md) — probe note superseded for entry optimization
+- [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md)

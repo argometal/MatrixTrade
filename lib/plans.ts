@@ -17,10 +17,15 @@ import {
 } from "./scout-probe";
 import type { ProbeInput } from "./scout-probe-types";
 import {
+  applyLayeredEntryConfigure,
   applyLayeredEntryUpdate,
   type LayeredEntryInput,
   type LayeredEntryUpdateInput,
 } from "./layered-entry";
+import {
+  isLayeredEntryConfigureProposal,
+  validateLayeredEntryUpdateProposal,
+} from "./layered-entry-update-schema";
 import { canLinkThesisToPlan, getStockThesisById } from "./stock-theses";
 import {
   isCanonicalPlanId,
@@ -475,14 +480,51 @@ function parseLayeredEntryUpdateInput(
   return input;
 }
 
+/**
+ * layered-entry-update Apply path: create-or-update LayeredEntry on an existing Plan.
+ * Configure mode (limits[]) initializes or replaces; fill mode records execution progress.
+ * Never creates a new Plan / Trade / MAF / Observation.
+ */
 export async function recordLayeredEntryFromProposal(
   proposal: Record<string, unknown>
-): Promise<{ plan?: TradePlan; errors?: string[] }> {
+): Promise<{ plan?: TradePlan; errors?: string[]; mode?: "configure" | "fill" }> {
+  const schema = validateLayeredEntryUpdateProposal(proposal);
+  if (!schema.ok) return { errors: schema.errors };
+
   const planId = String(proposal.planId ?? "").trim().toUpperCase();
   if (!planId) return { errors: ["proposal.planId required"] };
 
   const plan = await getPlanById(planId);
   if (!plan) return { errors: ["Plan not found."] };
+
+  if (schema.mode === "configure" || isLayeredEntryConfigureProposal(proposal)) {
+    // Flat proposal fields map to LayeredEntryInput (canonical names).
+    const { planId: _planId, status: _status, ...layeredRaw } = proposal;
+    const layered = parseLayeredEntryInput({
+      executionMethod: layeredRaw.executionMethod ?? "layered_limits",
+      ...layeredRaw,
+    });
+    if (!layered) {
+      return {
+        errors: [
+          "proposal.limits[] must form a valid layeredEntry (price + allocationPercent per limit)",
+        ],
+      };
+    }
+    const result = applyLayeredEntryConfigure(plan, {
+      layered,
+      status: "planned",
+    });
+    if (result.errors?.length) return { errors: result.errors };
+
+    const updated: TradePlan = {
+      ...result.plan!,
+      scoutLifecycle: deriveLifecycleFromPlan(result.plan!),
+      updatedAt: new Date().toISOString(),
+    };
+    await getPlansStore().upsert(updated);
+    return { plan: updated, mode: "configure" };
+  }
 
   const input = parseLayeredEntryUpdateInput(proposal);
   const result = applyLayeredEntryUpdate(plan, input);
@@ -494,7 +536,7 @@ export async function recordLayeredEntryFromProposal(
     updatedAt: new Date().toISOString(),
   };
   await getPlansStore().upsert(updated);
-  return { plan: updated };
+  return { plan: updated, mode: "fill" };
 }
 
 export async function transitionProbe(
