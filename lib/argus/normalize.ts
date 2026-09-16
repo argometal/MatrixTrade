@@ -99,7 +99,18 @@ export function normalizeRunbook(runbook: Runbook): Runbook {
       text: item.text ?? "",
       done: !!item.done,
       doneAt: item.doneAt ?? "",
-      type: item.type === "section" ? "section" : item.type === "sep" ? "sep" : "item",
+      type:
+        item.type === "section"
+          ? "section"
+          : item.type === "sep"
+            ? "sep"
+            : item.type === "link"
+              ? "link"
+              : "item",
+      linkedRunbookId:
+        item.type === "link" && typeof item.linkedRunbookId === "string"
+          ? item.linkedRunbookId
+          : undefined,
       subtasks: Array.isArray(item.subtasks)
         ? item.subtasks.map((subtask) => ({
             id: subtask.id,

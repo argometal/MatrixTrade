@@ -33,6 +33,10 @@ export function isRunbookSection(item: RunbookItem): boolean {
   return item.type === "section";
 }
 
+export function isRunbookLink(item: RunbookItem): boolean {
+  return item.type === "link" && !!item.linkedRunbookId;
+}
+
 export function normalizeRunbookSubtasks(subtasks: RunbookSubtask[] | undefined): RunbookSubtask[] {
   if (!Array.isArray(subtasks)) return [];
   return subtasks
@@ -129,6 +133,7 @@ export function runbookItemsToText(items: RunbookItem[]): string {
     .map((item) => {
       if (item.type === "sep") return "";
       if (item.type === "section") return `# ${item.text}`;
+      if (item.type === "link") return `→ ${item.text || item.linkedRunbookId || "runbook"}`;
       return item.text;
     })
     .join("\n");

@@ -13,7 +13,13 @@ import {
 } from "@/lib/argus/runbook-ai-bulk";
 import { formatArgusError } from "@/lib/argus/persistence/errors";
 
-export function RunbookAiBulkPanel({ runbookId }: { runbookId: string }) {
+export function RunbookAiBulkPanel({
+  runbookId,
+  organizationLibraryDestructive = false,
+}: {
+  runbookId: string;
+  organizationLibraryDestructive?: boolean;
+}) {
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pasteValue, setPasteValue] = useState("");
@@ -51,7 +57,7 @@ export function RunbookAiBulkPanel({ runbookId }: { runbookId: string }) {
           setMessage(`Appended ${cardCount} card${cardCount === 1 ? "" : "s"}.`);
         } else {
           if (!window.confirm("Replace all cards? This resets checkmarks.")) return;
-          await rebuildRunbookFromTextAction(runbookId, text);
+          await rebuildRunbookFromTextAction(runbookId, text, organizationLibraryDestructive);
           setMessage(`Rebuilt with ${cardCount} card${cardCount === 1 ? "" : "s"}.`);
         }
         setPreview(null);
@@ -126,14 +132,16 @@ export function RunbookAiBulkPanel({ runbookId }: { runbookId: string }) {
                 >
                   Append all ({cardCount})
                 </button>
-                <button
-                  type="button"
-                  onClick={() => handleApply("replace")}
-                  disabled={pending}
-                  className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-200 hover:bg-amber-500/20 disabled:opacity-40"
-                >
-                  Replace all ({cardCount})
-                </button>
+                {organizationLibraryDestructive ? (
+                  <button
+                    type="button"
+                    onClick={() => handleApply("replace")}
+                    disabled={pending}
+                    className="rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-200 hover:bg-amber-500/20 disabled:opacity-40"
+                  >
+                    Replace all ({cardCount})
+                  </button>
+                ) : null}
               </>
             ) : null}
           </div>

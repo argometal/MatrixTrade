@@ -26,6 +26,7 @@ import {
   getRunbookProgress,
   upsertRunbookProgress,
   copyRunbook,
+  softDeleteRunbook,
   getInboxItem,
   linkInboxToEntities,
   saveInboxEvidenceLinks,
@@ -83,6 +84,19 @@ import {
   runbookTransferIds,
 } from "@/lib/argus/runbook-helpers";
 import { buildDocumentNotes } from "@/lib/argus/reference-types";
+
+/** Full-template destructive edits (091601) — organization library only. */
+function assertOrganizationLibraryDestructive(
+  organizationLibraryDestructive: boolean | undefined,
+  verb: string
+): void {
+  if (!organizationLibraryDestructive) {
+    throw new ArgusPersistenceError(
+      "validation",
+      `${verb} is only allowed from the organization Runbooks library.`
+    );
+  }
+}
 import {
   assertJournalKindTransition,
   canConvertNoteToLog,
@@ -2259,8 +2273,15 @@ export async function toggleRunbookSubtaskAction(
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
-export async function removeDoneRunbookItemsAction(runbookId: string): Promise<void> {
+export async function removeDoneRunbookItemsAction(
+  runbookId: string,
+  organizationLibraryDestructive?: boolean
+): Promise<void> {
   await requireArgusSession();
+  assertOrganizationLibraryDestructive(
+    organizationLibraryDestructive,
+    "Removing accomplished checks from the full template"
+  );
   const runbook = await getRunbook(runbookId);
   if (!runbook) {
     throw new ArgusPersistenceError("validation", "Runbook not found.");
@@ -2557,8 +2578,13 @@ export async function appendRunbookCardsFromTextAction(runbookId: string, text: 
   await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
 }
 
-export async function rebuildRunbookFromTextAction(runbookId: string, text: string): Promise<void> {
+export async function rebuildRunbookFromTextAction(
+  runbookId: string,
+  text: string,
+  organizationLibraryDestructive?: boolean
+): Promise<void> {
   await requireArgusSession();
+  assertOrganizationLibraryDestructive(organizationLibraryDestructive, "Rebuild (replace all checks)");
   const runbook = await getRunbook(runbookId);
   if (!runbook) {
     throw new ArgusPersistenceError("validation", "Runbook not found.");
@@ -2692,6 +2718,49 @@ export async function copyRunbookItemsToRunbookAction(
   await revalidateRunbookSurfaces(targetRunbookId, target.linkedEntityIds);
 }
 
+/** Soft-delete entire runbook — organization library only (091601). */
+export async function softDeleteRunbookAction(
+  runbookId: string,
+  organizationLibraryDestructive?: boolean
+): Promise<void> {
+  await requireArgusSession();
+  assertOrganizationLibraryDestructive(organizationLibraryDestructive, "Delete runbook");
+  const runbook = await getRunbook(runbookId);
+  if (!runbook) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+  await softDeleteRunbook(runbookId);
+  await revalidateRunbookSurfaces(runbookId, runbook.linkedEntityIds);
+}
+
+/** Append a row that opens another runbook (navigation link). */
+export async function addRunbookLinkItemAction(
+  runbookId: string,
+  linkedRunbookId: string,
+  label?: string
+): Promise<void> {
+  await requireArgusSession();
+  if (runbookId === linkedRunbookId) {
+    throw new ArgusPersistenceError("validation", "Cannot link a runbook to itself.");
+  }
+  const [source, target] = await Promise.all([getRunbook(runbookId), getRunbook(linkedRunbookId)]);
+  if (!source || !target) {
+    throw new ArgusPersistenceError("validation", "Runbook not found.");
+  }
+  const text = (label ?? target.title).trim() || target.title;
+  const linkItem = {
+    id: newRunbookItemId("lnk_"),
+    text,
+    done: false,
+    doneAt: "",
+    type: "link" as const,
+    linkedRunbookId,
+    subtasks: [] as RunbookItem["subtasks"],
+  };
+  await updateRunbook(runbookId, { items: [...source.items, linkItem] });
+  await revalidateRunbookSurfaces(runbookId, source.linkedEntityIds);
+}
+
 /** Delete a check, or a section and everything it owns until the next section. */
 export async function deleteRunbookItemsAction(runbookId: string, itemId: string): Promise<void> {
   await requireArgusSession();
@@ -2794,9 +2863,14 @@ function normalizeImportedRunbookItems(raw: unknown): RunbookItem[] {
 
 export async function importRunbookJsonAction(
   json: string,
-  targetRunbookId?: string
+  targetRunbookId?: string,
+  organizationLibraryDestructive?: boolean
 ): Promise<{ id: string; href: string; title: string }> {
   await requireArgusSession();
+
+  if (targetRunbookId) {
+    assertOrganizationLibraryDestructive(organizationLibraryDestructive, "Import (replace runbook)");
+  }
 
   let data: Record<string, unknown>;
   try {

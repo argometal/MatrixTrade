@@ -65,7 +65,11 @@ export function V2EntityRunbooksTab({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const urlRunbookId = searchParams.get("runbook") ?? "";
+  const fromRunbookId = searchParams.get("fromRunbook") ?? "";
   const returnToRaw = searchParams.get("returnTo");
+  const isProjectLevel = level === "project";
+  const customizeStorageKey = `argus-v2-runbooks-customize:project:${entityId}`;
+  const [projectCustomize, setProjectCustomize] = useState(false);
   const returnToProjectHref =
     level === "organization" && returnToRaw && returnToRaw.startsWith("/argus/")
       ? returnToRaw
@@ -93,6 +97,24 @@ export function V2EntityRunbooksTab({
       /* ignore */
     }
   }, [viewStorageKey]);
+
+  useEffect(() => {
+    if (!isProjectLevel) return;
+    try {
+      setProjectCustomize(localStorage.getItem(customizeStorageKey) === "1");
+    } catch {
+      /* ignore */
+    }
+  }, [customizeStorageKey, isProjectLevel]);
+
+  function setProjectCustomizePersist(next: boolean) {
+    setProjectCustomize(next);
+    try {
+      localStorage.setItem(customizeStorageKey, next ? "1" : "0");
+    } catch {
+      /* quota */
+    }
+  }
 
   function setViewPersist(next: "grid" | "list" | "board") {
     setView(next);
@@ -203,7 +225,7 @@ export function V2EntityRunbooksTab({
     return () => document.removeEventListener("mousedown", onDoc);
   }, [cardMenuId]);
 
-  function openRunbook(id: string) {
+  function openRunbook(id: string, opts?: { fromRunbookId?: string }) {
     setSelectedId(id);
     setScreen("runbook");
     setShowCreate(false);
@@ -211,6 +233,8 @@ export function V2EntityRunbooksTab({
     replaceParams((params) => {
       params.set("tab", "Runbooks");
       params.set("runbook", id);
+      if (opts?.fromRunbookId) params.set("fromRunbook", opts.fromRunbookId);
+      else params.delete("fromRunbook");
     });
   }
 
@@ -219,7 +243,16 @@ export function V2EntityRunbooksTab({
     setSelectedId("");
     replaceParams((params) => {
       params.delete("runbook");
+      params.delete("fromRunbook");
     });
+  }
+
+  function backFromLinkedRunbook() {
+    if (!fromRunbookId) {
+      backToHome();
+      return;
+    }
+    openRunbook(fromRunbookId);
   }
 
   function toggleSelect(id: string) {
@@ -254,17 +287,23 @@ export function V2EntityRunbooksTab({
     return `/argus/v2/organizations/${organizationId}?${params.toString()}`;
   }, [isLibrary, organizationId, selectedId, pathname, searchParams]);
 
+  const projectTemplateEdit = isProjectLevel && projectCustomize;
+  const panelExecuteMode = !isLibrary && !projectTemplateEdit;
+
   if (screen === "runbook" && displayRunbook) {
     return (
       <V2RunbookWorkPanel
         runbook={displayRunbook}
-        onBack={backToHome}
-        backLabel="All runbooks"
+        onBack={fromRunbookId ? backFromLinkedRunbook : backToHome}
+        backLabel={fromRunbookId ? "Back to previous runbook" : "All runbooks"}
         scopeEntityId={entityId}
         closed={progressForSelected?.closed ?? false}
-        executeMode={!isLibrary}
+        executeMode={panelExecuteMode}
+        organizationLibraryDestructive={isLibrary}
+        sharedTemplateEditNotice={projectTemplateEdit}
         peerLists={peerLists}
-        editOnOrganizationHref={editOnOrganizationHref}
+        editOnOrganizationHref={projectTemplateEdit ? null : editOnOrganizationHref}
+        onOpenLinkedRunbook={(childId) => openRunbook(childId, { fromRunbookId: selectedId })}
         returnToProjectHref={returnToProjectHref}
         returnToProjectLabel={
           organizationName ? `Back to project` : "Back to project"
@@ -291,10 +330,27 @@ export function V2EntityRunbooksTab({
           <p className="mt-1 text-xs text-zinc-500">
             {isLibrary
               ? "Organization library — create checklists, then link them to projects, topics, or events. Copy or move lists between organizations."
-              : "Checklists linked here. Progress (checks / closed) is saved only for this level. Edit the shared template on the organization. Matching tags suggest runbooks — assign stays explicit."}
+              : isProjectLevel
+                ? projectCustomize
+                  ? "Customize mode — checklist structure edits the shared template (all linked projects/topics/events). Progress stays on this project. Turn off Customize to run checks only."
+                  : "Run mode — checks and closed state are saved for this project. Turn on Customize for full editing (same tools as organization)."
+                : "Checklists linked here. Progress (checks / closed) is saved only for this level. Edit the shared template on the organization. Matching tags suggest runbooks — assign stays explicit."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          {isProjectLevel ? (
+            <button
+              type="button"
+              onClick={() => setProjectCustomizePersist(!projectCustomize)}
+              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold ${
+                projectCustomize
+                  ? "border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20"
+                  : "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-lime-500/30 hover:text-lime-300"
+              }`}
+            >
+              {projectCustomize ? "Customize on" : "Customize off"}
+            </button>
+          ) : null}
           {linkedRunbooks.length > 0 ? (
             <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/60 p-0.5">
               {(

@@ -131,8 +131,8 @@ export interface InboxItem {
   deletedAt?: string;
 }
 
-/** item = check; section = named category header; sep = blank divider (legacy). */
-export type RunbookItemType = "item" | "section" | "sep";
+/** item = check; section = header; sep = divider; link = open another runbook (091601). */
+export type RunbookItemType = "item" | "section" | "sep" | "link";
 
 /** Optional nested check under a checklist item (legacy; prefer flat checks). */
 export interface RunbookSubtask {
@@ -151,6 +151,8 @@ export interface RunbookItem {
   doneAt: string;
   type: RunbookItemType;
   subtasks?: RunbookSubtask[];
+  /** When type is link — target runbook id. */
+  linkedRunbookId?: string;
 }
 
 /**

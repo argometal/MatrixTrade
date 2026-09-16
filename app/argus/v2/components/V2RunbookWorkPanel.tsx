@@ -14,6 +14,7 @@ import {
 import { useRouter } from "next/navigation";
 import type { Runbook, RunbookItem } from "@/lib/argus/types";
 import {
+  addRunbookLinkItemAction,
   addRunbookSectionAction,
   appendBinderTagToEntitiesAction,
   appendRunbookCardsFromTextAction,
@@ -33,6 +34,7 @@ import {
   setRunbookScopeClosedAction,
   setRunbookSectionChecksAction,
   setRunbookSectionChecksScopedAction,
+  softDeleteRunbookAction,
   toggleRunbookItemAction,
   uncheckAllRunbookItemsAction,
   uncheckAllRunbookItemsScopedAction,
@@ -42,6 +44,7 @@ import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
 import {
   isRunbookCheck,
+  isRunbookLink,
   promoteRunbookCheckTextToTag,
   runbookClassificationTags,
   runbookHasNestedSubtasks,
@@ -324,8 +327,11 @@ export function V2RunbookWorkPanel({
   scopeEntityId,
   closed = false,
   executeMode = false,
+  organizationLibraryDestructive = false,
+  sharedTemplateEditNotice = false,
   peerLists = [],
   editOnOrganizationHref,
+  onOpenLinkedRunbook,
   returnToProjectHref,
   returnToProjectLabel = "Back to project",
   tagVocabulary = [],
@@ -336,10 +342,16 @@ export function V2RunbookWorkPanel({
   scopeEntityId?: string;
   closed?: boolean;
   executeMode?: boolean;
+  /** Allows rebuild / import replace / delete runbook / remove accomplished from template. */
+  organizationLibraryDestructive?: boolean;
+  /** Project customize — edits shared template for all assignees. */
+  sharedTemplateEditNotice?: boolean;
   /** Other runbooks available for Copy/Move to list. */
   peerLists?: RunbookPeerList[];
   /** Project execute mode → open template edit on the organization library. */
   editOnOrganizationHref?: string | null;
+  /** Navigate to a linked child runbook (same tab). */
+  onOpenLinkedRunbook?: (runbookId: string) => void;
   /** Organization edit opened from a project → return link. */
   returnToProjectHref?: string | null;
   returnToProjectLabel?: string;
@@ -390,8 +402,10 @@ export function V2RunbookWorkPanel({
   );
 
   const hasVisibleCards = useMemo(() => {
-    if (showDone) return displayItems.some(isRunbookCheck);
-    return displayItems.some((item) => isRunbookCheck(item) && !item.done);
+    if (showDone) return displayItems.some((item) => isRunbookCheck(item) || isRunbookLink(item));
+    return displayItems.some(
+      (item) => isRunbookLink(item) || (isRunbookCheck(item) && !item.done)
+    );
   }, [displayItems, showDone]);
 
   function run(action: () => Promise<void>, successMessage?: string) {
@@ -518,9 +532,13 @@ export function V2RunbookWorkPanel({
   }
 
   function handleBuildFromText() {
+    if (!organizationLibraryDestructive) {
+      setError("VALIDATION: Rebuild is only allowed from the organization Runbooks library.");
+      return;
+    }
     if (!window.confirm("Build replaces all checks and resets progress. Continue?")) return;
     run(async () => {
-      await rebuildRunbookFromTextAction(runbook.id, bulkText);
+      await rebuildRunbookFromTextAction(runbook.id, bulkText, organizationLibraryDestructive);
       setStatus("Built from bulk input.");
     });
   }
@@ -542,10 +560,49 @@ export function V2RunbookWorkPanel({
   }
 
   function handleRemoveDone() {
+    if (!organizationLibraryDestructive) {
+      setError("VALIDATION: Removing accomplished from the full template is organization-library only.");
+      return;
+    }
     if (!window.confirm("Remove all accomplished checks from the template? This cannot be undone.")) {
       return;
     }
-    run(() => removeDoneRunbookItemsAction(runbook.id), "Removed accomplished checks from template.");
+    run(
+      () => removeDoneRunbookItemsAction(runbook.id, organizationLibraryDestructive),
+      "Removed accomplished checks from template."
+    );
+  }
+
+  function handleAddRunbookLink() {
+    if (peers.length === 0) {
+      setError("VALIDATION: Link another runbook here first (assign or create a second list).");
+      return;
+    }
+    const pick = window.prompt(
+      `Link to runbook — enter exact title:\n${peers.map((p) => `• ${p.title}`).join("\n")}`
+    );
+    if (!pick?.trim()) return;
+    const target = peers.find((p) => p.title.toLowerCase() === pick.trim().toLowerCase());
+    if (!target) {
+      setError("VALIDATION: No runbook matched that title.");
+      return;
+    }
+    run(() => addRunbookLinkItemAction(runbook.id, target.id, target.title), "Added link row.");
+  }
+
+  function handleDeleteEntireRunbook() {
+    if (!organizationLibraryDestructive) return;
+    const typed = window.prompt(
+      `Delete entire runbook “${runbook.title}”?\n\nType DELETE to confirm. This removes the checklist for all linked entities.`
+    );
+    if (typed?.trim().toUpperCase() !== "DELETE") {
+      setStatus("Delete cancelled.");
+      return;
+    }
+    run(async () => {
+      await softDeleteRunbookAction(runbook.id, organizationLibraryDestructive);
+      onBack?.();
+    }, "Runbook deleted.");
   }
 
   function handleCheckAll() {
@@ -636,6 +693,10 @@ export function V2RunbookWorkPanel({
 
     try {
       const text = await file.text();
+      if (!organizationLibraryDestructive) {
+        setError("VALIDATION: Import replace is only allowed from the organization Runbooks library.");
+        return;
+      }
       if (!window.confirm("Import will replace this runbook's title and checks. Continue?")) {
         setStatus("Import cancelled.");
         return;
@@ -643,7 +704,7 @@ export function V2RunbookWorkPanel({
       setError(null);
       startTransition(async () => {
         try {
-          await importRunbookJsonAction(text, runbook.id);
+          await importRunbookJsonAction(text, runbook.id, organizationLibraryDestructive);
           setStatus(`Imported: ${file.name}`);
           router.refresh();
         } catch (err) {
@@ -828,6 +889,13 @@ export function V2RunbookWorkPanel({
         </div>
       ) : null}
 
+      {sharedTemplateEditNotice ? (
+        <p className="runbook-no-print rounded-xl border border-amber-500/30 bg-amber-950/25 px-3 py-2 text-xs text-amber-100">
+          Customize mode edits the <strong>shared template</strong> — other projects and topics using this runbook
+          see the same checklist text. Check progress on this project stays separate.
+        </p>
+      ) : null}
+
       {canEdit ? (
         <div className="runbook-no-print rounded-2xl border border-zinc-800/80 bg-zinc-900/50 px-4 py-3">
           <span className="mb-3 block text-xs font-medium uppercase tracking-wide text-zinc-500">Bulk input</span>
@@ -846,9 +914,16 @@ export function V2RunbookWorkPanel({
               />
             </div>
             <div className="flex flex-wrap gap-2">
-              <button type="button" disabled={isPending} onClick={handleBuildFromText} className={toolbarButtonClass("primary")}>
-                Build
-              </button>
+              {organizationLibraryDestructive ? (
+                <button
+                  type="button"
+                  disabled={isPending}
+                  onClick={handleBuildFromText}
+                  className={toolbarButtonClass("primary")}
+                >
+                  Build
+                </button>
+              ) : null}
               <button type="button" disabled={isPending} onClick={handleAppendFromBulk} className={toolbarButtonClass()}>
                 Append
               </button>
@@ -857,6 +932,9 @@ export function V2RunbookWorkPanel({
               </button>
               <button type="button" disabled={isPending} onClick={handleAddSection} className={toolbarButtonClass()}>
                 Add section
+              </button>
+              <button type="button" disabled={isPending} onClick={handleAddRunbookLink} className={toolbarButtonClass()}>
+                Link to runbook
               </button>
               <span className="text-[10px] text-zinc-600">
                 Or ··· on a check → Turn into section (owns items below).
@@ -897,9 +975,14 @@ export function V2RunbookWorkPanel({
             {closed ? "Reopen" : "Mark closed"}
           </button>
         ) : null}
-        {canEdit ? (
+        {canEdit && organizationLibraryDestructive ? (
           <button type="button" disabled={isPending} onClick={handleRemoveDone} className={toolbarButtonClass("danger")}>
             Remove accomplished
+          </button>
+        ) : null}
+        {organizationLibraryDestructive ? (
+          <button type="button" disabled={isPending} onClick={handleDeleteEntireRunbook} className={toolbarButtonClass("danger")}>
+            Delete runbook…
           </button>
         ) : null}
         {editOnOrganizationHref ? (
@@ -915,7 +998,7 @@ export function V2RunbookWorkPanel({
           </span>
         ) : null}
         <span className="mx-1 hidden h-4 w-px bg-zinc-800 sm:inline" />
-        {canEdit ? (
+        {canEdit && organizationLibraryDestructive ? (
           <>
             <button type="button" disabled={isPending} onClick={handleImportClick} className={toolbarButtonClass()}>
               Import JSON
@@ -936,7 +1019,10 @@ export function V2RunbookWorkPanel({
 
       {canEdit ? (
         <div className="runbook-no-print">
-          <RunbookAiBulkPanel runbookId={runbook.id} />
+          <RunbookAiBulkPanel
+            runbookId={runbook.id}
+            organizationLibraryDestructive={organizationLibraryDestructive}
+          />
         </div>
       ) : null}
 
@@ -980,6 +1066,73 @@ export function V2RunbookWorkPanel({
             const hideDone = !showDone && item.type === "item" && item.done;
             const hiddenOnScreen = collapsedAway || hideDone;
             const isDropTarget = dropIndex === itemIndex && draggingId && draggingId !== item.id;
+
+            if (item.type === "link" && isRunbookLink(item)) {
+              if (collapsedAway) return null;
+              const targetTitle =
+                peerLists.find((p) => p.id === item.linkedRunbookId)?.title ?? item.text;
+              return (
+                <div
+                  key={item.id}
+                  className={`group flex items-center gap-2 border-b border-zinc-900/80 py-2.5 ${
+                    isDropTarget ? "border-t-2 border-t-lime-400/70" : ""
+                  }`}
+                  onDragOver={(event) => onDragOverRow(event, itemIndex)}
+                  onDrop={(event) => onDropRow(event, itemIndex)}
+                >
+                  {canEdit ? (
+                    <button
+                      type="button"
+                      draggable
+                      onDragStart={(event) => onDragStart(event, item.id)}
+                      onDragEnd={onDragEnd}
+                      className="runbook-no-print cursor-grab touch-none px-1 text-zinc-600 hover:text-zinc-300 active:cursor-grabbing"
+                      aria-label="Drag link"
+                    >
+                      ⠿
+                    </button>
+                  ) : null}
+                  <span className="text-lg leading-none text-sky-400" aria-hidden>
+                    ↗
+                  </span>
+                  <div className="min-w-0 flex-1">
+                    {canEdit ? (
+                      <InlineRename
+                        value={item.text || targetTitle}
+                        disabled={isPending}
+                        onSave={(text) => handleRenameItem(item.id, text)}
+                        className="text-sm font-medium text-sky-200"
+                      />
+                    ) : (
+                      <p className="text-sm font-medium text-sky-200">{item.text || targetTitle}</p>
+                    )}
+                    <p className="text-[10px] text-zinc-500">Opens runbook: {targetTitle}</p>
+                  </div>
+                  <button
+                    type="button"
+                    disabled={isPending || !onOpenLinkedRunbook}
+                    onClick={() => onOpenLinkedRunbook?.(item.linkedRunbookId!)}
+                    className={toolbarButtonClass("primary")}
+                  >
+                    Open
+                  </button>
+                  {canEdit ? (
+                    <RowActionMenu
+                      open={menuId === item.id}
+                      onToggle={() => setMenuId((current) => (current === item.id ? null : item.id))}
+                      disabled={isPending}
+                      isSection={false}
+                      peerLists={peers}
+                      onTurnIntoSection={() => handleSetType(item.id, "section")}
+                      onTurnIntoCheck={() => handleSetType(item.id, "item")}
+                      onCopyToList={(targetId) => handleCopyToList(item.id, targetId)}
+                      onMoveToList={(targetId) => handleMoveToList(item.id, targetId)}
+                      onDelete={() => handleDeleteRow(item.id)}
+                    />
+                  ) : null}
+                </div>
+              );
+            }
 
             if (item.type === "sep") {
               if (collapsedAway) return null;
