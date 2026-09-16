@@ -15,6 +15,7 @@
 
     "seed:supabase": "tsx tools/seed-supabase.ts",
     "validate:supabase": "tsx tools/validate-supabase-trades.ts",
+    "probe:supabase-matrix-schema": "tsx tools/probe-supabase-matrix-schema.ts",
     "verify:supabase-rls": "tsx tools/verify-supabase-rls.ts",
     "migrate:learning-outcomes-to-supabase": "tsx tools/migrate-learning-outcomes-to-supabase.ts",
     "diagnose:learning-outcomes": "tsx tools/diagnose-learning-outcomes.ts",

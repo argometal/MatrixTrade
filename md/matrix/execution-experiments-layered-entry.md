@@ -182,3 +182,4 @@ Canonical configure fields are **flat on proposal** (same names as `LayeredEntry
 - [monday-nflx-experiment.md](monday-nflx-experiment.md)
 - [scout-execution-model.md](scout-execution-model.md) — probe note superseded for entry optimization
 - [risk-weighted-layered-entry.md](risk-weighted-layered-entry.md)
+- [ole-staged-orders-capital-reservation-assessment.md](ole-staged-orders-capital-reservation-assessment.md) — domain inspection (no implementation)
