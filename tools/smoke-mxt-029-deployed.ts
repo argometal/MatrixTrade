@@ -138,7 +138,7 @@ async function main() {
     !checks.plan009 ||
     !checks.notLoginWall ||
     !contract.acceptedTypes.includes("thesis-t0") ||
-    contract.schemaVersion !== "2026-09-15.mxt-15-21-ole-init" ||
+    contract.schemaVersion !== "2026-09-16.mxt-15-35-ole-methodology" ||
     MATRIX_MECHANICS_REVISION < 50;
 
   if (fail) {

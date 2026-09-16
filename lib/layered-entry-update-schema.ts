@@ -117,25 +117,92 @@ export const LAYERED_ENTRY_UPDATE_CONFIDENCES = ["low", "medium", "high"] as con
 export type LayeredEntryUpdateStatus = (typeof LAYERED_ENTRY_UPDATE_STATUS)[number];
 
 /**
- * Default uncertainty-management risk weights when FILL EVIDENCE: INSUFFICIENT.
- * Not a statistical claim that 30/40/30 is optimal — overridable when evidence supports otherwise.
+ * PLAN-015 exemplar weights under FILL EVIDENCE: INSUFFICIENT — illustrative only, NOT a global OLE default.
  */
-export const INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS = {
-  label: "FILL EVIDENCE: INSUFFICIENT",
+export const INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR = {
+  label: "FILL EVIDENCE: INSUFFICIENT (PLAN-015 exemplar — not a universal distribution)",
+  exemplarPlanId: "PLAN-015",
   layerCount: 3,
   weights: [
-    { role: "starter", allocationPercent: 30 },
-    { role: "preferred", allocationPercent: 40 },
-    { role: "deep_pullback", allocationPercent: 30 },
+    { price: 325, role: "starter", allocationPercent: 30 },
+    { price: 323, role: "preferred", allocationPercent: 40 },
+    { price: 320, role: "deep_pullback", allocationPercent: 30 },
   ],
   notes: [
-    "Uncertainty-management default when the defensible zone is known but relative layer expectancy is not.",
-    "Do not label this as statistically optimized layering.",
-    "Family B: starter remains <=30%; middle gets modest preference; deep layer keeps meaningful participation.",
-    "Do not fabricate fill probabilities, chase above starter, or widen the ladder outside the technical zone.",
-    "Distinguish EVIDENCE-SUPPORTED OPTIMIZED LAYERING from UNCERTAINTY-DISTRIBUTED LAYERING.",
+    "These percentages apply to the PLAN-015 insufficient-evidence case only.",
+    "When evidence is insufficient, distribute authorized risk reasonably across defensible layers — no fixed mandatory split.",
+    "Do not label uncertainty-distributed layering as statistically optimized.",
+    "Do not fabricate fill probabilities, chase above starter, or widen outside the technical zone.",
+    "Distinguish EVIDENCE-SUPPORTED OLE from UNCERTAINTY-DISTRIBUTED OLE.",
   ],
 } as const;
+
+/** @deprecated Use INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR — kept for import stability during 15-35. */
+export const INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS = INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR;
+
+/** Generic methodology narrative — percentages are illustrative, not product rules. */
+export const OLE_EVIDENCE_SUPPORTED_METHODOLOGY = [
+  "=== EVIDENCE-SUPPORTED OLE (methodology example — illustrative) ===",
+  "Use when technical/historical evidence genuinely differentiates layers inside one defensible zone.",
+  "Generic pattern (fictional levels — adapt to the Plan's zone):",
+  "  · Starter $218 — prior breakout retest; evidence: high touch count but worst R if stop is $210.",
+  "    Risk weight LOWER (e.g. 20% of authorized risk) — participation likely, expectancy modest.",
+  "  · Preferred $212 — volume shelf + prior swing cluster; evidence: best historical reaction in this playbook family.",
+  "    Risk weight HIGHER (e.g. 55%) — evidence ranks this as the primary battle entry.",
+  "  · Deep $206 — structural support edge; evidence: highest R but weaker fill history on comparable cases.",
+  "    Risk weight MODERATE (e.g. 25%) — keep meaningful participation without pretending fill is likely.",
+  "Why each price exists: map to observable structure (shelf, retest, prior low) — not round numbers.",
+  "Why weights differ: evidence ranks relative expectancy / fill tradeoff per layer — NOT a global template.",
+  "Apply JSON still uses limits[].price + allocationPercent (sum 100) + authorizedRiskAmount + commonStopPrice.",
+  "Human legend (below) translates allocationPercent × authorizedRisk into shares per layer.",
+  "Percentages in this example (20/55/25) are illustrative — evidence-supported plans may use any defensible split.",
+].join("\n");
+
+export const OLE_INSUFFICIENT_EVIDENCE_METHODOLOGY = [
+  "=== FILL EVIDENCE: INSUFFICIENT (methodology — not a default distribution) ===",
+  "When the defensible zone is known but relative layer ranking is NOT evidenced:",
+  "  1) Identify the defensible technical zone (do not widen for R).",
+  "  2) Acknowledge insufficient evidence to rank exact entries inside the zone.",
+  "  3) Distribute authorized risk REASONABLY across defensible layers — any split summing to 100% is valid.",
+  "  4) Avoid false precision (e.g. pretending one price is statistically optimal).",
+  "  5) Document reasoning in rationale / uncertaintyNote — do not claim optimization.",
+  "No fixed percentage distribution is mandatory.",
+  "PLAN-015 (AVGO-style) is the canonical insufficient-evidence exemplar in this contract (see below).",
+].join("\n");
+
+export const OLE_HUMAN_READABLE_LEGEND = [
+  "=== HUMAN-READABLE OLE LEGEND (execution explanation — not extra Apply fields) ===",
+  "Whenever enough information exists, explain the ladder for humans as:",
+  '  "X shares at $Y" per layer, plus:',
+  "  · risk allocated per layer ($)",
+  "  · total planned risk (authorizedRiskAmount)",
+  "  · full-fill average entry (weighted by shares)",
+  "  · full-fill reward and blended R:R when commonStopPrice + primaryTargetPrice are known",
+  "Derivation (risk_percent + common stop):",
+  "  layerRisk$ = authorizedRiskAmount × (allocationPercent / 100)",
+  "  riskPerShare = limitPrice − commonStopPrice (must be > 0)",
+  "  shares = floor(layerRisk$ / riskPerShare) — integer shares; total deployed risk may be slightly under budget.",
+  "These share lines are documentation / legend — do NOT invent JSON keys for shares on layered-entry-update unless schema adds them later.",
+].join("\n");
+
+/** PLAN-015 insufficient-evidence exemplar — human execution legend (matches init JSON example). */
+export const PLAN015_INSUFFICIENT_EXECUTION_LEGEND = [
+  "=== INSUFFICIENT-EVIDENCE EXEMPLAR — PLAN-015 human execution legend ===",
+  "Authorized risk: $100 · Common stop: $315 · Target: $370",
+  "Layer split (PLAN-015 exemplar only — not a universal rule): 325 → 30% · 323 → 40% · 320 → 30%",
+  "",
+  "Executable sizing (common stop $315):",
+  "  · $325 (30% → $30 risk): $30 / ($325−$315) = $30 / $10 = 3 shares",
+  "  · $323 (40% → $40 risk): $40 / ($323−$315) = $40 / $8 = 5 shares",
+  "  · $320 (30% → $30 risk): $30 / ($320−$315) = $30 / $5 = 6 shares",
+  "",
+  "If all layers fill:",
+  "  · Total shares: 14",
+  "  · Maximum planned risk: $100 (3×10 + 5×8 + 6×5)",
+  "  · Average entry ≈ (3×325 + 5×323 + 6×320) / 14 ≈ $322.14",
+  "  · Reward to $370 on 14 shares: 14 × ($370 − $322.14) ≈ $670",
+  "  · Blended R:R ≈ $670 / $100 = 6.70R (full-fill scenario; unfilled layers reduce realized exposure)",
+].join("\n");
 
 /** AVGO-style target semantics example — initialize OLE on an existing Plan (no fills). */
 export const LAYERED_ENTRY_UPDATE_INIT_EXAMPLE = {
@@ -343,6 +410,14 @@ export function validateLayeredEntryUpdateProposal(
 
 export function buildLayeredEntryUpdateContractText(): string {
   return [
+    OLE_EVIDENCE_SUPPORTED_METHODOLOGY,
+    "",
+    OLE_INSUFFICIENT_EVIDENCE_METHODOLOGY,
+    "",
+    OLE_HUMAN_READABLE_LEGEND,
+    "",
+    PLAN015_INSUFFICIENT_EXECUTION_LEGEND,
+    "",
     "=== LAYERED-ENTRY-UPDATE ===",
     "Create-or-update LayeredEntry on an EXISTING Scout Plan (planId required).",
     "Does NOT create a new Scout Plan. Does NOT create Trade / fills / accounting / capital reservation / MAF / Observation / realized P/L.",
@@ -381,15 +456,8 @@ export function buildLayeredEntryUpdateContractText(): string {
     "  Required: planId + filledThroughIndex OR status",
     "  filledThroughIndex: integer >= -1 (0-based inclusive; -1 = none / missed)",
     "",
-    "FILL EVIDENCE: INSUFFICIENT (methodology — uncertainty-distributed OLE):",
-    "  When the defensible zone is known but relative layer expectancy is NOT evidenced,",
-    "  use default weights 30% starter / 40% preferred / 30% deep_pullback.",
-    "  This is UNCERTAINTY-DISTRIBUTED LAYERING — NOT statistically optimized.",
-    "  Do not invent fill probabilities, concentrate risk without evidence, chase above starter,",
-    "  widen outside the technical zone, or change the tactical stop to manufacture R.",
-    "  AVGO 320–325 / stop 315 / target 370 currently belongs in this category.",
-    "",
-    "Canonical INITIALIZE example (PLAN-015 AVGO — no fills):",
+    "FILL EVIDENCE: INSUFFICIENT — see methodology sections above (no universal percentage default).",
+    "PLAN-015 initialize JSON (insufficient-evidence exemplar — no fills):",
     JSON.stringify(LAYERED_ENTRY_UPDATE_INIT_EXAMPLE, null, 2),
     "",
     "Fill-outcome example (only after real fills):",
@@ -398,7 +466,7 @@ export function buildLayeredEntryUpdateContractText(): string {
     "Also valid configure paths: decision-update.layeredEntry / scout-plan-create.layeredEntry.",
     "Prefer layered-entry-update initialize when the Scout Plan already exists and must not be duplicated.",
     "",
-    "Insufficient-evidence default weights object:",
-    JSON.stringify(INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS, null, 2),
+    "PLAN-015 insufficient-evidence exemplar weights (not a global default):",
+    JSON.stringify(INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR, null, 2),
   ].join("\n");
 }

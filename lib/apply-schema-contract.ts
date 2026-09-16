@@ -22,7 +22,7 @@ import {
   STOCK_CASE_SCOUT_ALLOWED_KEYS,
 } from "./stock-case-schema";
 import {
-  INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS,
+  INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR,
   LAYERED_ENTRY_UPDATE_ALLOWED_KEYS,
   LAYERED_ENTRY_UPDATE_CONFIDENCES,
   LAYERED_ENTRY_UPDATE_CONFIGURE_KEYS,
@@ -40,7 +40,7 @@ import {
 } from "./layered-entry-update-schema";
 
 /** Authoritative Apply schema freshness marker — Control → Apply copy row. */
-export const APPLY_SCHEMA_VERSION = "2026-09-15.mxt-15-21-ole-init";
+export const APPLY_SCHEMA_VERSION = "2026-09-16.mxt-15-35-ole-methodology";
 
 export {
   STOCK_CASE_CREATE_ALLOWED_KEYS,
@@ -121,7 +121,7 @@ export type ApplySchemaContract = {
     notes: string[];
     initExample: typeof LAYERED_ENTRY_UPDATE_INIT_EXAMPLE;
     fillExample: typeof LAYERED_ENTRY_UPDATE_FILL_EXAMPLE;
-    insufficientEvidenceDefault: typeof INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS;
+    insufficientEvidenceExemplarPlan015: typeof INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR;
   };
   examples: Partial<Record<AiBlockType, Record<string, unknown>>>;
 };
@@ -139,7 +139,7 @@ export function buildApplySchemaContract(): ApplySchemaContract {
       "stock-case-create REQUIRES initialScout.plannedEntry + stopPrice + targetPrice.",
       "scout-plan-create REQUIRES plannedEntry + stopPrice + targetPrice.",
       "layered-entry-update: create-or-update LayeredEntry on an EXISTING Scout Plan. Configure: planId + limits[] (flat canonical fields). Fill: planId + filledThroughIndex|status. Never creates a new Plan/Trade/MAF/Observation. Do not fabricate fills on initialize.",
-      "OLE FILL EVIDENCE: INSUFFICIENT → uncertainty-distributed default 30/40/30 (starter/preferred/deep_pullback); do not claim statistical optimization or extreme single-price concentration without evidence.",
+      "OLE: distinguish EVIDENCE-SUPPORTED layering (weights from evidence) vs FILL EVIDENCE: INSUFFICIENT (reasonable risk split across defensible zone — no universal % default; PLAN-015 exemplar in contract).",
       "plan-delete required: planId + reason (≥8). Contaminated Plan only (outcomeKind=duplicate_creation). Refuses Trade/MAF/accounting dependencies. Not general history editing.",
       "riskRules.invalidation must be an observable event string, not a bare price.",
       "Do not put Scout capital fields into technical-assessment.",
@@ -434,14 +434,15 @@ export function buildApplySchemaContract(): ApplySchemaContract {
         "Configure status must be planned (or omitted). Do not fabricate fills/partial/full on initialize.",
         "Canonical fields are flat on proposal (same names as LayeredEntryPlan) — not nested under layeredEntry.",
         "limits[] required keys: price, allocationPercent (sum 100). Optional: role, stopPrice, rationale, confidence, …",
-        "FILL EVIDENCE: INSUFFICIENT → default uncertainty weights 30/40/30; not statistically optimized.",
-        "Distinguish EVIDENCE-SUPPORTED OPTIMIZED LAYERING vs UNCERTAINTY-DISTRIBUTED LAYERING.",
+        "FILL EVIDENCE: INSUFFICIENT — distribute risk across defensible layers; no mandatory global split; see PLAN-015 exemplar + human legend.",
+        "EVIDENCE-SUPPORTED OLE — weights from technical/historical evidence; see methodology section in contract.",
+        "Human-readable OLE legend (shares at $Y) is documentation — not extra Apply JSON fields.",
         "Does not create Trade, reservation, accounting, MAF, Observation, or realized P/L.",
         "scout-plan-create.layeredEntry and decision-update.layeredEntry remain valid configure paths.",
       ],
       initExample: LAYERED_ENTRY_UPDATE_INIT_EXAMPLE,
       fillExample: LAYERED_ENTRY_UPDATE_FILL_EXAMPLE,
-      insufficientEvidenceDefault: INSUFFICIENT_EVIDENCE_OLE_DEFAULT_WEIGHTS,
+      insufficientEvidenceExemplarPlan015: INSUFFICIENT_EVIDENCE_PLAN015_EXEMPLAR,
     },
     examples: {
       "stock-case-create": AI_BLOCK_SAMPLES["stock-case-create"],
@@ -491,7 +492,7 @@ export function buildDataCorrectabilityContractText(): string {
     "  · Create-or-update LayeredEntry on an EXISTING Scout Plan (initialize when missing).",
     "  · Configure: planId + limits[] (flat keys). Fill: planId + filledThroughIndex|status.",
     "  · Does NOT create Plan/Trade/fills/accounting/reservation/MAF/Observation.",
-    "  · FILL EVIDENCE: INSUFFICIENT → default uncertainty 30/40/30 — not statistical optimization.",
+    "  · OLE methodology: evidence-supported vs insufficient-evidence (PLAN-015 exemplar); no universal percentage default.",
     "",
     "plan-delete (acceptedTypes MUST include this string):",
     "  · Contaminated Scout Plan DELETE only — not general historical editing.",

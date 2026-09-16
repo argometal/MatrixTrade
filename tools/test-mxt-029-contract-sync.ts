@@ -18,7 +18,7 @@ import { validatePlanOutcomeProposal } from "../lib/plan-outcome-validate";
 {
   const contract = buildApplySchemaContract();
   assert.equal(contract.schemaVersion, APPLY_SCHEMA_VERSION);
-  assert.equal(contract.schemaVersion, "2026-09-15.mxt-15-21-ole-init");
+  assert.equal(contract.schemaVersion, "2026-09-16.mxt-15-35-ole-methodology");
   assert.ok(
     contract.acceptedTypes.includes("thesis-t0"),
     "acceptedTypes missing thesis-t0"
@@ -59,7 +59,13 @@ import { validatePlanOutcomeProposal } from "../lib/plan-outcome-validate";
 
 {
   const text = buildApplySchemaContractText();
-  assert.match(text, /2026-09-15\.mxt-15-21-ole-init/);
+  assert.match(text, /2026-09-16\.mxt-15-35-ole-methodology/);
+  assert.match(text, /EVIDENCE-SUPPORTED OLE/);
+  assert.match(text, /322\.14/);
+  assert.match(text, /6\.70R/);
+  assert.match(text, /14 shares/);
+  assert.doesNotMatch(text, /default uncertainty 30\/40\/30/i);
+  assert.doesNotMatch(text, /default uncertainty weights 30\/40\/30/i);
   assert.doesNotMatch(
     text,
     /Freshness check: schemaVersion MUST be 2026-09-08\.mxt-035-plan-delete/
@@ -86,7 +92,7 @@ import { validatePlanOutcomeProposal } from "../lib/plan-outcome-validate";
   assert.match(correctability, /thesis-t0/);
   assert.match(correctability, /plan-delete/);
   assert.match(correctability, /layered-entry-update/);
-  assert.match(correctability, /2026-09-15\.mxt-15-21-ole-init/);
+  assert.match(correctability, /2026-09-16\.mxt-15-35-ole-methodology/);
   assert.match(correctability, /plan-outcome supersede/);
   const t0Section =
     correctability.split("plan-outcome supersede")[0] ?? correctability;
@@ -98,7 +104,7 @@ import { validatePlanOutcomeProposal } from "../lib/plan-outcome-validate";
   assert.ok(MATRIX_MECHANICS_REVISION >= 50);
   assert.match(mechanics, /DATA CORRECTABILITY/);
   assert.match(mechanics, /thesis-t0/);
-  assert.match(mechanics, /mxt-15-21-ole-init/);
+  assert.match(mechanics, /mxt-15-35-ole-methodology/);
   assert.doesNotMatch(mechanics, /Case\/T0 stay immutable/);
   assert.doesNotMatch(mechanics, /Does NOT rewrite frozen T0/);
   assert.match(mechanics, /Hindsight reconstruction/);

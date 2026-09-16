@@ -126,8 +126,9 @@ When fill evidence does **not** distinguish relative layer expectancy:
 | Rule | Detail |
 |------|--------|
 | Label | `FILL EVIDENCE: INSUFFICIENT` |
-| Default 3-layer weights | **30% starter · 40% preferred/middle · 30% deep_pullback** |
-| Meaning | Uncertainty management — **not** a claim that 30/40/30 is statistically optimal |
+| Distribution | **No fixed global %** — split authorized risk reasonably across defensible layers |
+| Meaning | Uncertainty management — **not** statistical optimization |
+| PLAN-015 exemplar | 30 / 40 / 30 at $325 / $323 / $320 (insufficient-evidence case only — see Apply contract legend) |
 | Family B | Starter remains ≤30%; middle gets only modest preference; deep layer keeps meaningful participation |
 | Override | Allowed when real evidence supports unequal concentration — preserve the reason |
 

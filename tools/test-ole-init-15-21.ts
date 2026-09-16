@@ -128,7 +128,7 @@ async function main() {
   {
     const contract = buildApplySchemaContract();
     assert.equal(contract.schemaVersion, APPLY_SCHEMA_VERSION);
-    assert.equal(contract.schemaVersion, "2026-09-15.mxt-15-21-ole-init");
+    assert.equal(contract.schemaVersion, "2026-09-16.mxt-15-35-ole-methodology");
     assert.ok(contract.layeredEntryUpdate);
     assert.ok(
       contract.layeredEntryUpdate.notes.some((n) =>
@@ -150,13 +150,18 @@ async function main() {
       "PLAN-015"
     );
     assert.deepEqual(
-      contract.layeredEntryUpdate.insufficientEvidenceDefault.weights.map(
+      contract.layeredEntryUpdate.insufficientEvidenceExemplarPlan015.weights.map(
         (w) => w.allocationPercent
       ),
       [30, 40, 30]
     );
     const text = buildApplySchemaContractText();
-    assert.match(text, /schemaVersion: 2026-09-15\.mxt-15-21-ole-init/);
+    assert.match(text, /schemaVersion: 2026-09-16\.mxt-15-35-ole-methodology/);
+    assert.match(text, /EVIDENCE-SUPPORTED OLE/);
+    assert.match(text, /PLAN-015 human execution legend/);
+    assert.match(text, /322\.14/);
+    assert.match(text, /6\.70R/);
+    assert.doesNotMatch(text, /default uncertainty 30\/40\/30/i);
     assert.doesNotMatch(
       text,
       /Freshness check: schemaVersion MUST be 2026-09-08\.mxt-035-plan-delete/
@@ -166,7 +171,7 @@ async function main() {
     assert.match(text, /FILL EVIDENCE: INSUFFICIENT/);
     assert.match(text, /Allowed proposal keys:/);
     assert.match(text, /Allowed limits\[\] keys:/);
-    assert.match(text, /UNCERTAINTY-DISTRIBUTED LAYERING/);
+    assert.match(text, /UNCERTAINTY-DISTRIBUTED OLE/);
     assert.match(text, /"planId": "PLAN-015"/);
     assert.match(text, /allocationPercent": 30/);
     assert.match(text, /allocationPercent": 40/);
