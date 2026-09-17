@@ -1,8 +1,8 @@
 /** User-facing copy only — internal types (case, evidence) unchanged in data model. */
 
 export const ARGUS_PRODUCT_NAME = "ARGUS";
-export const ARGUS_TAGLINE = "Work Tracker";
-export const ARGUS_SUBTITLE = "Track items, documents, and follow-ups.";
+export const ARGUS_TAGLINE = "Evidence organization";
+export const ARGUS_SUBTITLE = "Register evidence, link context, retrieve, and deliver.";
 
 export const ACTIVITY_EDIT = {
   title: "Edit & organize",
@@ -406,7 +406,7 @@ export const ENTITY_DETAIL = {
 } as const;
 
 /**
- * Topic Tags on the binder (`entity.linkedTags`) — same Tag system as Notes.
+ * Topic Tags on the binder (`entity.topicTags`, dual-write `linkedTags`) — same Tag system as Notes.
  * Used for search / inbox matching and appear in the Home Tag universe.
  */
 export const TOPIC_MATCH_TAGS = {
@@ -507,4 +507,32 @@ export const TESTING = {
   clearAllHint: "Removes all logs, inbox items, references, attachments, and files. For testing only.",
   clearAllConfirm:
     "Delete ALL ARGUS data? This removes every log, email, reference, and attachment. This cannot be undone.",
+} as const;
+
+/**
+ * Network Relationship — durable marks + conversation outcomes (N1–N3).
+ * Contact Value / My Value are marks, not per-talk outcomes.
+ */
+export const NETWORK_RELATIONSHIP = {
+  contactValueTitle: "Contact Value",
+  contactValueHint: "What this person brings to me (durable marks).",
+  myValueTitle: "My Value",
+  myValueHint: "What I bring to this person (durable marks).",
+  marksSummary: (contactN: string, myN: string) =>
+    `Contact Value ${contactN} · My Value ${myN}`,
+  saveMarks: "Save relationship marks",
+  outcomeHeading: "Conversation outcome",
+  outcomeHint:
+    "Log one conversation as a Note. Pick what you gained and what you gave — reuses Contact / My Value keys as evidence Tags.",
+  outcomeTopics: "Topics discussed",
+  outcomeTopicsPlaceholder: "e.g. deepwater contracts, mentorship…",
+  outcomeNotes: "Notes (optional)",
+  outcomeGained: "What I gained (Contact Value keys)",
+  outcomeGave: "What I gave (My Value keys)",
+  outcomeSave: "Save conversation Note",
+  leverageHeading: "Give ↔ receive",
+  leverageHint: "Derived from Contact Value vs My Value — not a CRM strength score.",
+  leverageReceived: "Received",
+  leverageGiven: "Given",
+  leverageAsymmetry: "Asymmetry",
 } as const;
