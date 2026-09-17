@@ -20,22 +20,19 @@ Verify the result.
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `rescue-12d-ui`
+Pinned revision: `main0917a`
 
-Ship commit: `d5aa448` (Production live — verify https://matrix-trade-theta.vercel.app/api/build)
+Ship commit: `8f8415c` (Production live — verify https://matrix-trade-theta.vercel.app/api/build)
 
 Includes:
-- Rescue tip from `mxt/12d-real-data-ontology` — Control Apply + schema + Start Here + plan-delete / thesis-t0
-- Build fix: client-safe `plan-delete-validate` (keeps Node `fs` out of client bundle)
-- Build fix: plan-delete sketch expectation `down` (was invalid `risk`)
+- PR #371 — Event + Topic Tags: Browse / search Tag universe and assign (avoid duplicate Tags)
+- Build fix: exclude `tools/probe-supabase-matrix-schema.ts` from Next typecheck
+- Prior `rescue-12d-ui` / `d5aa448`: Control Apply rescue UI tip
 - Prior `main0815o` / #359: Event Note Add ↔ Tags tab dual-write
 - Prior `main0815n` / #356–#358: Home Tags manager + Pattern counts
 - Prior `main0815m` / #354–#355: Runbook check → Use as tag…
 - Prior `main0815l` / #350–#353: Events → Tags branch drag onto Linked
 - Prior `main0815k` / #351–#352: Neighborhood graph size stable on scroll
-- Prior `main0815j` / #348–#349: 16-0E Scout Case multi-plan selector
-- Prior `main0815i` / #347: 16-08 Scout trim & convergence + 16-07 audit
-- Prior `main0815h` / #341–#342: A06 Topics scroll / no pinned detail chrome
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
@@ -44,8 +41,6 @@ IA handoffs: [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md) · [`.
 Sync:
 ```bash
 git fetch origin --tags
-git checkout cursor/mxt-deploy-rescue-ui-a1e2
-# after merge to main:
 git checkout main
 git reset --hard origin/main
 ```
