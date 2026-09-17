@@ -7,21 +7,23 @@
 
 ---
 
-## A. Networking — SEALED next increments (not built)
+## A. Networking — SEALED next increments
 
-Goal: optimize networking value with metrics; maximize results. Inspired by industry/research (Dex follow-through, Grant give/take, weak/bridging ties) — **not** a port of MXT Kelly/OLE/MAF.
+| # | Item | Status |
+|---|------|--------|
+| N1 | **Outcome log** — Conversation Note (gained/gave + topics) | **Shipped** (this wave) |
+| N2 | **Give↔receive matrix** — derived on Person + browse chip Δ | **Shipped** (this wave) |
+| N3 | **Attention priority** — smart view **Give ↔ receive** | **Shipped** (this wave) |
 
-| # | Item | Meaning | Status |
-|---|------|---------|--------|
-| N1 | **Outcome log** | After a conversation: topics + what I gained / what I gave (short tags; no heavy NLP) | Pending |
-| N2 | **Give↔receive matrix** | Who gives me more positive value vs whom I can give value to — rank/view from outcomes + existing `contactValue` / `myValue` | Pending |
-| N3 | **Attention priority** | Follow-ups ordered by asymmetry + recency (“Kelly-lite” as metaphor only) | Pending |
+**Already had:** who/when (Active/Dormant/Hot), crude “what”, durable Contact Value / My Value marks.
 
-**Already have (not pending):** who/when (Active/Dormant/Hot), crude “what” (notes/topics/emails), manual value checkboxes, follow-up triage.
+**Still out of scope:** CRM strength scores; Affinity firm graph; auto email/cal scrape; MXT formula port.
 
-**Explicitly out of scope for this seal:** CRM strength scores; Affinity-class firm graph; auto email/calendar scrape; full MXT formula port.
+**Related ON HOLD:** Network Core tier — `md/argus/network-core-tier-plan.md`.
 
-**Related ON HOLD (separate):** Network Core tier + Touch Base import — `md/argus/network-core-tier-plan.md`.
+### Vocabulary seal (same wave)
+
+Homogenized: Topic Tags → `topicTags`; Contact Value / My Value / Conversation outcome / Network Hot vs Tags Hot; Save relationship **marks** (not “outcomes”); ARGUS tagline no longer “Work Tracker”. See `vocabulary-policy.md` Network section.
 
 ---
 
@@ -58,6 +60,7 @@ Goal: optimize networking value with metrics; maximize results. Inspired by indu
 
 | Item | Pin / PR |
 |------|----------|
+| Networking N1–N3 + Network vocabulary homogenization | this wave (pre-deploy) |
 | Event + Topic Tags: Browse / search Tag universe → assign | `main0917a` / #371–#372 |
 | Event Note Add ↔ Tags dual-write | `main0815o` / #359 |
 | Home Tags manager + Pattern counts | `main0815n` |
