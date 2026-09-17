@@ -411,10 +411,11 @@ export const ENTITY_DETAIL = {
  */
 export const TOPIC_MATCH_TAGS = {
   heading: "Topic Tags",
-  hint: "Tags linked to this Topic binder. Same Tag names as Notes — Flag as Tracker from Trackers or Home → Tags.",
+  hint: "Search the Tag universe to reuse existing Tags, or type a new one. Save attaches to this Topic.",
   placeholder: "Add a tag…",
   add: "Add",
   save: "Save Tags",
+  browseUniverse: "Browse / search universe",
   empty: "No tags linked to this Topic yet — add one below.",
   removeAria: (item: string) => `Remove ${item} from Topic Tags`,
 } as const;
@@ -425,10 +426,11 @@ export const TOPIC_ALIASES = TOPIC_MATCH_TAGS;
 /** Event binder classification Tags (`Entity.eventTags`) — not Note evidence, not Trackers. */
 export const EVENT_MATCH_TAGS = {
   heading: "Event Tags",
-  hint: "Tags on this Event. Saving also writes a Note Tag so Patterns stay aligned — same as Add on the Note tab.",
+  hint: "Search the Tag universe to reuse existing Tags, or type a new one. Save attaches to this Event (and Note evidence when needed).",
   placeholder: "Add a tag…",
   add: "Add",
   save: "Save Tags",
+  browseUniverse: "Browse / search universe",
   empty: "No tags linked to this Event yet — add one below.",
   removeAria: (item: string) => `Remove ${item} from Event Tags`,
 } as const;

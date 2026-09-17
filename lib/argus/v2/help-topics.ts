@@ -240,6 +240,10 @@ const SECTIONS: HelpSection[] = [
         body: "Add Tag + Save Tags attaches to this Event and creates a lightweight Note Tag when missing — so Patterns and Home counts see it. Evidence already on Notes appears under Attach from Notes until you Save Tags.",
       },
       {
+        title: "Browse / search universe",
+        body: "Opens a search picker over the full Tag universe (not only this Event’s Notes). Select existing Tags to reuse — avoids duplicate names — then Save Tags. Idle list stays short; type to search everything.",
+      },
+      {
         title: "Tags in this branch",
         body: "Evidence Tags on this Event’s Notes, plus Tags from structurally linked Topics and Projects. Drag ⠿ onto Linked to this Event to attach (then Save Tags). Neighborhood rows are suggestions — they do not make this Event Watched.",
       },
@@ -268,6 +272,10 @@ const SECTIONS: HelpSection[] = [
       {
         title: "Topic Tags",
         body: "Binder Tags on this Topic (topicTags). Add Tag + Save attaches here. Flag never deletes a binder Tag.",
+      },
+      {
+        title: "Browse / search universe",
+        body: "Search the full Tag universe from this Topic’s Tags tab. Pick existing Tags to reuse (avoids duplicates), then Save Tags. Does not dump the whole universe into the list — type to find.",
       },
       {
         title: "Tags in this Topic",

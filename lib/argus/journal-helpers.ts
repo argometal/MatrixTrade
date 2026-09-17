@@ -1,8 +1,10 @@
 import type { ArgusData, Entity, JournalKind, Log } from "./types";
 import { TAG_PICKER_SUGGESTION_LIMIT } from "./tag-limits";
 import {
+  collectKnownTagVocabulary,
   collectTagsForBuckets,
   normalizeTagDisplay,
+  normalizeTagList,
   tagKey,
   type TagBucketOptions,
   type TagRole,
@@ -152,7 +154,12 @@ export function buildTagBuckets(
     .map(([key]) => canonical.get(key)!)
     .slice(0, TAG_PICKER_SUGGESTION_LIMIT);
 
-  const all = [...canonical.values()].sort((a, b) => a.localeCompare(b));
+  /** Full Tag universe for search: evidence + binders + global + Trackers. Idle UI stays capped. */
+  const all = normalizeTagList([
+    ...canonical.values(),
+    ...collectKnownTagVocabulary(data),
+    ...(data.signalTags ?? []),
+  ]);
 
   return { recent, frequent, all };
 }
