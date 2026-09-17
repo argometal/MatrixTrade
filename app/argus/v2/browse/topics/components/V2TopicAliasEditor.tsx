@@ -3,6 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { updateTopicAliasesAction } from "@/app/argus/actions";
+import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { TOPIC_MATCH_TAGS } from "@/lib/argus/ux-copy";
 import { V2VocabularyListEditor } from "@/app/argus/v2/components/V2VocabularyListEditor";
 import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "@/app/argus/v2/components/tag-manage-list";
@@ -35,9 +37,11 @@ export function V2TopicAliasEditor({
   signalTags?: string[];
 }) {
   const router = useRouter();
+  const { tagBuckets } = useArgusAdd();
   const [matchTags, setMatchTags] = useState<string[]>(initialAliases);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     setMatchTags(initialAliases);
@@ -66,6 +70,29 @@ export function V2TopicAliasEditor({
     }
     return out.sort((a, b) => a.localeCompare(b));
   }, [suggestedFromNotes, attachedKeys]);
+
+  const universeBuckets = useMemo(() => {
+    const seen = new Set<string>();
+    const merge = (...lists: string[][]) => {
+      const out: string[] = [];
+      for (const list of lists) {
+        for (const raw of list) {
+          const tag = normalizeDisplayTag(raw);
+          const key = tagKey(tag);
+          if (!tag || !key || seen.has(key)) continue;
+          seen.add(key);
+          out.push(tag);
+        }
+      }
+      return out;
+    };
+    const recentSeed = merge(suggestions, tagBuckets.recent).slice(0, 10);
+    return {
+      recent: recentSeed,
+      frequent: recentSeed,
+      all: merge(tagBuckets.all, suggestions, matchTags, signalTags),
+    };
+  }, [tagBuckets, suggestions, matchTags, signalTags]);
 
   function addMatchTag() {
     const next = normalizeDisplayTag(draft);
@@ -116,6 +143,19 @@ export function V2TopicAliasEditor({
 
   return (
     <div className={compact ? undefined : "rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4"}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] leading-snug text-zinc-500">
+          Search the Tag universe to reuse names — then Save Tags.
+        </p>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="shrink-0 rounded-lg border border-teal-500/40 bg-teal-950/40 px-3 py-1.5 text-xs font-semibold text-teal-200 hover:bg-teal-900/50"
+        >
+          {TOPIC_MATCH_TAGS.browseUniverse}
+        </button>
+      </div>
+
       <V2VocabularyListEditor
         items={matchTags}
         draft={draft}
@@ -149,36 +189,47 @@ export function V2TopicAliasEditor({
             {suggestions.map((tag) => {
               const tracked = trackedKeys.has(tagKey(tag));
               return (
-              <li key={tag}>
-                <button
-                  type="button"
-                  onClick={() => attachSuggestion(tag)}
-                  className={`${tracked ? "flex w-full items-center gap-4 rounded-xl border border-amber-400/40 bg-rose-950/30 px-4 py-3 text-left text-sm hover:border-sky-500/40" : TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
-                >
-                  <span
-                    className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
-                      tracked ? "bg-amber-500/20 text-amber-100" : "bg-sky-600/20 text-sky-100"
-                    }`}
-                    aria-hidden
+                <li key={tag}>
+                  <button
+                    type="button"
+                    onClick={() => attachSuggestion(tag)}
+                    className={`${tracked ? "flex w-full items-center gap-4 rounded-xl border border-amber-400/40 bg-rose-950/30 px-4 py-3 text-left text-sm hover:border-sky-500/40" : TAG_MANAGE_ROW_CLASS} hover:border-sky-500/40`}
                   >
-                    {tracked ? "⚑" : "#"}
-                  </span>
-                  <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
-                  {tracked ? (
-                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
-                      Tracked
+                    <span
+                      className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                        tracked ? "bg-amber-500/20 text-amber-100" : "bg-sky-600/20 text-sky-100"
+                      }`}
+                      aria-hidden
+                    >
+                      {tracked ? "⚑" : "#"}
                     </span>
-                  ) : null}
-                  <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-300/90">
-                    Attach
-                  </span>
-                </button>
-              </li>
-            );
+                    <span className="min-w-0 flex-1 truncate font-semibold text-zinc-100">{tag}</span>
+                    {tracked ? (
+                      <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-amber-200/90">
+                        Tracked
+                      </span>
+                    ) : null}
+                    <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-sky-300/90">
+                      Attach
+                    </span>
+                  </button>
+                </li>
+              );
             })}
           </ul>
         </div>
       ) : null}
+
+      <TagPickerModal
+        open={pickerOpen}
+        buckets={universeBuckets}
+        selectedTags={matchTags}
+        onChange={setMatchTags}
+        onClose={() => setPickerOpen(false)}
+        mode="note"
+        topicContextTags={suggestions}
+        topicContextLabel="On this Topic / Notes"
+      />
     </div>
   );
 }

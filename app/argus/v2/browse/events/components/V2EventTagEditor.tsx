@@ -9,6 +9,8 @@ import {
   useState,
 } from "react";
 import { updateEventTagsAction } from "@/app/argus/actions";
+import { TagPickerModal } from "@/app/argus/components/TagPickerModal";
+import { useArgusAdd } from "@/app/argus/components/ArgusAddProvider";
 import { EVENT_MATCH_TAGS } from "@/lib/argus/ux-copy";
 import { V2VocabularyListEditor } from "@/app/argus/v2/components/V2VocabularyListEditor";
 import { TAG_MANAGE_LIST_CLASS, TAG_MANAGE_ROW_CLASS } from "@/app/argus/v2/components/tag-manage-list";
@@ -52,9 +54,11 @@ export const V2EventTagEditor = forwardRef<
   ref
 ) {
   const router = useRouter();
+  const { tagBuckets } = useArgusAdd();
   const [matchTags, setMatchTags] = useState<string[]>(initialTags);
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
+  const [pickerOpen, setPickerOpen] = useState(false);
 
   useEffect(() => {
     setMatchTags(initialTags);
@@ -83,6 +87,29 @@ export const V2EventTagEditor = forwardRef<
     }
     return out.sort((a, b) => a.localeCompare(b));
   }, [suggestedFromNotes, attachedKeys]);
+
+  const universeBuckets = useMemo(() => {
+    const seen = new Set<string>();
+    const merge = (...lists: string[][]) => {
+      const out: string[] = [];
+      for (const list of lists) {
+        for (const raw of list) {
+          const tag = normalizeDisplayTag(raw);
+          const key = tagKey(tag);
+          if (!tag || !key || seen.has(key)) continue;
+          seen.add(key);
+          out.push(tag);
+        }
+      }
+      return out;
+    };
+    const recentSeed = merge(suggestions, tagBuckets.recent).slice(0, 10);
+    return {
+      recent: recentSeed,
+      frequent: recentSeed,
+      all: merge(tagBuckets.all, suggestions, matchTags, signalTags),
+    };
+  }, [tagBuckets, suggestions, matchTags, signalTags]);
 
   function attachSuggestion(tag: string) {
     const next = normalizeDisplayTag(tag);
@@ -144,6 +171,19 @@ export const V2EventTagEditor = forwardRef<
 
   return (
     <div className={compact ? undefined : "rounded-2xl border border-zinc-800/80 bg-zinc-900/30 p-4"}>
+      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+        <p className="text-[11px] leading-snug text-zinc-500">
+          Search the Tag universe to reuse names — then Save Tags.
+        </p>
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="shrink-0 rounded-lg border border-teal-500/40 bg-teal-950/40 px-3 py-1.5 text-xs font-semibold text-teal-200 hover:bg-teal-900/50"
+        >
+          {EVENT_MATCH_TAGS.browseUniverse}
+        </button>
+      </div>
+
       <V2VocabularyListEditor
         items={matchTags}
         draft={draft}
@@ -207,6 +247,17 @@ export const V2EventTagEditor = forwardRef<
           </ul>
         </div>
       ) : null}
+
+      <TagPickerModal
+        open={pickerOpen}
+        buckets={universeBuckets}
+        selectedTags={matchTags}
+        onChange={setMatchTags}
+        onClose={() => setPickerOpen(false)}
+        mode="note"
+        topicContextTags={suggestions}
+        topicContextLabel="On this Event / Notes"
+      />
     </div>
   );
 });
