@@ -20,19 +20,15 @@ Verify the result.
 
 Production: https://matrix-trade-theta.vercel.app
 
-Pinned revision: `main0917a`
+Pinned revision: `main0917b`
 
-Ship commit: `8f8415c` (Production live — verify https://matrix-trade-theta.vercel.app/api/build)
+Ship commit: `568b110` (Production live — verify https://matrix-trade-theta.vercel.app/api/build)
 
 Includes:
-- PR #371 — Event + Topic Tags: Browse / search Tag universe and assign (avoid duplicate Tags)
-- Build fix: exclude `tools/probe-supabase-matrix-schema.ts` from Next typecheck
+- PR #374 — Network N1–N3 (conversation outcome, give↔receive matrix, leverage smart view) + vocabulary homogenization
+- Prior `main0917a` / #371–#373: Event/Topic Tag universe search + sealed pending inventory
 - Prior `rescue-12d-ui` / `d5aa448`: Control Apply rescue UI tip
 - Prior `main0815o` / #359: Event Note Add ↔ Tags tab dual-write
-- Prior `main0815n` / #356–#358: Home Tags manager + Pattern counts
-- Prior `main0815m` / #354–#355: Runbook check → Use as tag…
-- Prior `main0815l` / #350–#353: Events → Tags branch drag onto Linked
-- Prior `main0815k` / #351–#352: Neighborhood graph size stable on scroll
 
 **Terminology:** In ArgusForge docs, **MTA** = matrix/time engine (`argusforge-contract.md` §10). Trading product = **MatrixTrade**. See [`../argusforge/IA-HANDOFF.md`](../argusforge/IA-HANDOFF.md).
 
