@@ -8,7 +8,7 @@ const geist = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "ArgusForge",
-  description: "Coordination environment — ArgusForge / MTA system shell",
+  description: "Coordination environment — ArgusForge",
 };
 
 export const viewport: Viewport = {

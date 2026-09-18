@@ -1,0 +1,60 @@
+/* AlgoApp-equivalent chrome for Chaos surfaces. Ontology stays AF03. */
+
+.algo-app {
+  color: #1e293b;
+  background: #f4f6f8;
+}
+
+.algo-app input,
+.algo-app textarea,
+.algo-app select,
+.algo-app button {
+  font-family: inherit;
+}
+
+/* Leftover zinc utilities inside dump/composer: invert to AlgoApp light. */
+.algo-app :where(.bg-zinc-950, .bg-zinc-950\/95, .bg-zinc-950\/90, .bg-zinc-950\/80, .bg-zinc-950\/50, .bg-zinc-950\/40, .bg-zinc-900, .bg-zinc-900\/80, .bg-zinc-900\/60, .bg-zinc-900\/30, .bg-zinc-800, .bg-zinc-800\/80) {
+  background-color: #ffffff;
+}
+
+.algo-app :where(.border-zinc-800, .border-zinc-800\/90, .border-zinc-800\/80, .border-zinc-800\/70, .border-zinc-700, .border-zinc-700\/50, .divide-zinc-800) {
+  border-color: #e2e8f0;
+}
+
+.algo-app :where(.text-zinc-50, .text-zinc-100, .text-zinc-200) {
+  color: #0f172a;
+}
+
+.algo-app :where(.text-zinc-300, .text-zinc-400) {
+  color: #475569;
+}
+
+.algo-app :where(.text-zinc-500, .text-zinc-600) {
+  color: #64748b;
+}
+
+.algo-app :where(.placeholder\:text-zinc-500, .placeholder\:text-zinc-600)::placeholder {
+  color: #94a3b8;
+}
+
+.algo-app :where(.hover\:bg-zinc-900:hover, .hover\:bg-zinc-800:hover) {
+  background-color: #f1f5f9;
+}
+
+.algo-app :where(.text-sky-400, .text-sky-300) {
+  color: #2f80ed;
+}
+
+.algo-app button.bg-zinc-100,
+.algo-app a.bg-zinc-100 {
+  background-color: #2f80ed;
+  color: #ffffff;
+}
+
+/* Next.js dev "N" badge sits on top of Save — hide on Chaos chrome. */
+nextjs-portal,
+[data-next-badge-root],
+[data-nextjs-dev-overlay-button],
+[data-nextjs-toast] {
+  display: none !important;
+}

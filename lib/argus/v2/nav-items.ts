@@ -25,6 +25,7 @@ const NAV_ICONS: Record<string, string> = {
   Diagnostics: "⚙",
   Help: "?",
   Security: "🛡",
+  "Training Lab": "🧠",
 };
 
 export function navIcon(label: string): string {
@@ -53,6 +54,7 @@ export function isV2NavItemActive(pathname: string, item: V2NavLinkItem): boolea
   }
   if (item.label === "Help") return pathname.startsWith("/argus/v2/help");
   if (item.label === "Security") return pathname.startsWith("/argus/v2/settings");
+  if (item.label === "Training Lab") return pathname.startsWith("/argus/v2/lab");
   return isBrowseNavActive(pathname, item.href, item.label);
 }
 
@@ -71,6 +73,11 @@ export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
       items: [
         // Home lives on the Logo / A mark — not duplicated here.
         { href: "/argus/v2/inbox", label: "Inbox", icon: navIcon("Inbox"), signal: signals.inbox },
+        {
+          href: "/argus/v2/lab",
+          label: "Training Lab",
+          icon: navIcon("Training Lab"),
+        },
       ],
     },
     {
@@ -99,6 +106,7 @@ export function buildV2NavSections(signals: V2NavCounts): V2NavSection[] {
 export function getV2NavPageLabel(pathname: string): string {
   if (isArgusHomePath(pathname)) return "Home";
   if (pathname.startsWith("/argus/v2/inbox")) return "Inbox";
+  if (pathname.startsWith("/argus/v2/lab")) return "Training Lab";
   if (pathname.startsWith("/argus/search")) return "Search";
   if (
     pathname.startsWith("/argus/v2/browse/organizations") ||

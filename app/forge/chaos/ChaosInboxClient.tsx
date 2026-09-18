@@ -366,8 +366,8 @@ export function ChaosInboxClient() {
         aria-labelledby={`${formId}-material`}
         className="flex min-h-0 flex-1 flex-col gap-2"
       >
-        <h2 id={`${formId}-material`} className="text-sm font-medium text-zinc-300">
-          Material
+        <h2 id={`${formId}-material`} className="text-[22px] font-semibold tracking-tight text-slate-900">
+          Inbox
         </h2>
         {expanded ? (
           <p className="rounded-xl border border-dashed border-zinc-800 px-3 py-6 text-center text-xs text-zinc-600">

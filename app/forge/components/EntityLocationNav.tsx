@@ -99,7 +99,6 @@ export function FragmentModeSwitch({
   mode: FragmentEditorMode;
 }) {
   const modes: { id: FragmentEditorMode; label: string }[] = [
-    { id: "viewer", label: "Viewer" },
     { id: "classic", label: "Classic" },
     { id: "builder", label: "Builder" },
   ];
@@ -107,7 +106,7 @@ export function FragmentModeSwitch({
     <div
       role="group"
       aria-label="Fragment mode"
-      className="flex rounded-lg border border-zinc-800 p-0.5 text-[11px]"
+      className="flex shrink-0 rounded-lg border border-slate-200 bg-white p-0.5 text-[11px]"
     >
       {modes.map((m) => {
         const active = mode === m.id;
@@ -116,8 +115,8 @@ export function FragmentModeSwitch({
             key={m.id}
             href={fragmentModeHref(deckId, fragmentId, m.id)}
             aria-current={active ? "page" : undefined}
-            className={`min-h-9 rounded-md px-2.5 font-semibold focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-              active ? "bg-zinc-800 text-zinc-100" : `${AF_TEXT.metadata} hover:text-zinc-200`
+            className={`min-h-9 rounded-md px-2.5 font-semibold ${
+              active ? "bg-[#e8f2ff] text-[#2f80ed]" : "text-slate-400 hover:text-slate-700"
             }`}
           >
             {m.label}

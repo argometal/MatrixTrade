@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from "react";
 import {
-  readSelectedSystem,
   readVaultMode,
   writeSelectedSystem,
   writeVaultMode,
@@ -34,7 +33,8 @@ export function ForgeSystemProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    setSystemState(readSelectedSystem());
+    writeSelectedSystem("argusforge");
+    setSystemState("argusforge");
     setVaultModeState(readVaultMode());
     setReady(true);
   }, []);

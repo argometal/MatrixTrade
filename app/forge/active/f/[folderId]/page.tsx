@@ -9,7 +9,7 @@ export default async function ForgeActiveFolderPage({ params }: Props) {
   const { folderId } = await params;
   return (
     <SystemScopedSection section="active">
-      <RepositoryView view="active" folderId={folderId} />
+      <RepositoryView view="active" folderId={folderId} rootHref="/forge" />
     </SystemScopedSection>
   );
 }

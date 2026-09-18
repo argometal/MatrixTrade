@@ -22,8 +22,8 @@ type Props = {
 };
 
 const FOLDER_ACTIONS: { id: CreateAction; label: string; available: boolean }[] = [
-  { id: "folder", label: "New Realm", available: true },
-  { id: "deck", label: "New Chaos Deck", available: true },
+  { id: "folder", label: "New folder", available: true },
+  { id: "deck", label: "New deck", available: true },
   { id: "import", label: "Import content", available: false },
 ];
 

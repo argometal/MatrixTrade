@@ -39,6 +39,8 @@ type Props = {
   menuWidthPx?: number;
   triggerClassName?: string;
   trigger?: ReactNode;
+  /** Light panel for AlgoApp-equivalent Chaos chrome. */
+  variant?: "dark" | "light";
 };
 
 function readSafeAreaBottom(): number {
@@ -61,6 +63,7 @@ export function ForgeOverflowMenu({
   menuWidthPx = DEFAULT_MENU_WIDTH_PX,
   triggerClassName,
   trigger,
+  variant = "dark",
 }: Props) {
   const [menuBox, setMenuBox] = useState<MenuBox | null>(null);
   const [mounted, setMounted] = useState(false);
@@ -170,15 +173,25 @@ export function ForgeOverflowMenu({
               maxHeight: menuBox.maxHeight,
               zIndex: 100,
             }}
-            className="overflow-y-auto overscroll-contain rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-xl"
+            className={
+              variant === "light"
+                ? "overflow-y-auto overscroll-contain rounded-lg border border-slate-200 bg-white py-1 shadow-xl"
+                : "overflow-y-auto overscroll-contain rounded-lg border border-zinc-700 bg-zinc-900 py-1 shadow-xl"
+            }
           >
             {items.map((item) => (
               <button
                 key={item.id}
                 type="button"
                 role="menuitem"
-                className={`block w-full px-3 py-2.5 text-left text-sm hover:bg-zinc-800 ${
-                  item.danger ? "text-rose-300" : "text-zinc-200"
+                className={`block w-full px-3 py-2.5 text-left text-sm ${
+                  variant === "light"
+                    ? item.danger
+                      ? "text-rose-600 hover:bg-slate-50"
+                      : "text-slate-700 hover:bg-slate-50"
+                    : item.danger
+                      ? "text-rose-300 hover:bg-zinc-800"
+                      : "text-zinc-200 hover:bg-zinc-800"
                 }`}
                 onClick={() => {
                   onOpenChange(false);

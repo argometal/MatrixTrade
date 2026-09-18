@@ -4,7 +4,7 @@ import { RepositoryView } from "../components/RepositoryView";
 export default function ForgeActiveRootPage() {
   return (
     <SystemScopedSection section="active">
-      <RepositoryView view="active" folderId={null} />
+      <RepositoryView view="active" folderId={null} rootHref="/forge" />
     </SystemScopedSection>
   );
 }

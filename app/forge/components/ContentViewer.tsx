@@ -14,31 +14,15 @@ import {
   viewHref,
 } from "@/lib/argusforge/af03-repo-store";
 import type { Af03RepoState } from "@/lib/argusforge/af03-repo-types";
-import { Af03RepoDisclosure } from "./Af03RepoDisclosure";
+import { fragmentModeHref } from "@/lib/argusforge/af03-entity-path";
 import { ChaosAssetImage } from "./ChaosAssetImage";
-import {
-  EntityLocationBreadcrumb,
-  FragmentModeSwitch,
-} from "./EntityLocationNav";
-import { ForgeOverflowMenu } from "./ForgeOverflowMenu";
+import { FragmentModeSwitch } from "./EntityLocationNav";
 import { SimpleMarkdown } from "./SimpleMarkdown";
-import { AF_TEXT } from "@/lib/argusforge/af03-visible-ontology";
 
 type Props = {
   deckId: string;
   itemId: string;
 };
-
-function formatTime(iso: string): string {
-  try {
-    return new Intl.DateTimeFormat(undefined, {
-      dateStyle: "medium",
-      timeStyle: "short",
-    }).format(new Date(iso));
-  } catch {
-    return iso;
-  }
-}
 
 /**
  * AF03 §9 — Clear Viewer (not Alexandria).
@@ -46,7 +30,6 @@ function formatTime(iso: string): string {
  */
 export function ContentViewer({ deckId, itemId }: Props) {
   const [state, setState] = useState<Af03RepoState | null>(null);
-  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     setState(emptyOrSeedRepo());
@@ -90,52 +73,32 @@ export function ContentViewer({ deckId, itemId }: Props) {
   const hasAssetImages = imageBlocks.length > 0;
 
   return (
-    <div className="min-w-0 space-y-5">
-      <Af03RepoDisclosure compact />
-      <EntityLocationBreadcrumb state={state} deckId={deckId} fragmentId={itemId} />
-
-      <div className="flex items-start justify-between gap-2">
-        <div className="min-w-0">
-          <h2 className="text-2xl font-bold tracking-tight text-zinc-50">{item.title}</h2>
-          <p className={`mt-1 text-[11px] uppercase tracking-wide ${AF_TEXT.metadata}`}>
-            {item.markedForLater ? "Marked for later" : "Fragment"}
+    <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col gap-5">
+      <header className="flex items-center gap-2">
+        <Link
+          href={deckHref(deckId)}
+          className="flex h-10 w-10 items-center justify-center rounded-full text-lg text-slate-500 hover:bg-white"
+          aria-label="Back to deck"
+        >
+          ‹
+        </Link>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-[11px] font-medium uppercase tracking-wide text-slate-400">
+            {deck?.title ?? "Deck"}
           </p>
+          <h2 className="truncate text-[18px] font-semibold text-slate-900">{item.title}</h2>
         </div>
-        <div className="flex shrink-0 flex-col items-end gap-2">
-          <FragmentModeSwitch deckId={deckId} fragmentId={itemId} mode="viewer" />
-          <ForgeOverflowMenu
-            open={menuOpen}
-            onOpenChange={setMenuOpen}
-            label="Viewer menu"
-            triggerClassName="min-h-10 min-w-10 rounded-lg border border-zinc-800 text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
-            items={[
-              {
-                id: "edit",
-                label: "Builder",
-                onClick: () => {
-                  window.location.href = itemHref(deckId, itemId);
-                },
-              },
-              {
-                id: "back",
-                label: "Back to Deck",
-                onClick: () => {
-                  window.location.href = deckHref(deckId);
-                },
-              },
-            ]}
-          />
-        </div>
-      </div>
+        <FragmentModeSwitch deckId={deckId} fragmentId={itemId} mode="viewer" />
+      </header>
 
       {item.unsupported ? (
-        <p role="status" className="rounded-lg border border-amber-900/50 bg-amber-950/30 px-3 py-2 text-sm text-amber-100/90">
-          Stub — {item.unsupportedReason || "binary not stored"}. Source preserved
-          {item.sourceRef ? `: ${item.sourceRef}` : ""}.
+        <p role="status" className="rounded-xl bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          Stub — {item.unsupportedReason || "binary not stored"}.
         </p>
       ) : null}
 
-      <article className="min-h-[12rem] space-y-4 rounded-xl border border-zinc-800/80 bg-zinc-950/50 px-4 py-5">
+      <article className="min-h-[min(70vh,40rem)] space-y-4 rounded-2xl bg-white px-6 py-8 shadow-sm">
+        <h3 className="text-2xl font-semibold leading-snug text-slate-900">{item.title}</h3>
         {hasAssetImages ? (
           <>
             {textBlocks.length > 0 || item.body.trim() ? (
@@ -194,35 +157,24 @@ export function ContentViewer({ deckId, itemId }: Props) {
         )}
       </article>
 
-      <dl className="grid grid-cols-2 gap-2 text-xs text-zinc-500">
-        <div>
-          <dt>Created</dt>
-          <dd className="text-zinc-300">{formatTime(item.createdAt)}</dd>
-        </div>
-        <div>
-          <dt>Modified</dt>
-          <dd className="text-zinc-300">{formatTime(item.updatedAt)}</dd>
-        </div>
-      </dl>
-
       <nav aria-label="Adjacent content" className="flex items-center justify-between gap-2">
         {prev ? (
           <Link
             href={viewHref(deckId, prev.id)}
-            className="min-h-11 rounded-lg border border-zinc-800 px-3 text-sm text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            className="min-h-11 rounded-xl bg-white px-4 text-sm font-medium text-slate-700 shadow-sm"
           >
             ‹ Prev
           </Link>
         ) : (
           <span />
         )}
-        <span className="text-xs text-zinc-600">
+        <span className="text-xs text-slate-400">
           {idx + 1} / {siblings.length}
         </span>
         {next ? (
           <Link
             href={viewHref(deckId, next.id)}
-            className="min-h-11 rounded-lg border border-zinc-800 px-3 text-sm text-zinc-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+            className="min-h-11 rounded-xl bg-[#2f80ed] px-4 text-sm font-semibold text-white"
           >
             Next ›
           </Link>
@@ -233,14 +185,20 @@ export function ContentViewer({ deckId, itemId }: Props) {
 
       <div className="flex flex-wrap gap-2">
         <Link
-          href={itemHref(deckId, itemId)}
-          className="inline-flex min-h-11 items-center rounded-lg border border-zinc-700 px-4 text-sm font-medium text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          href={fragmentModeHref(deckId, itemId, "classic")}
+          className="inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-medium text-slate-800 shadow-sm"
         >
-          Edit
+          Classic
+        </Link>
+        <Link
+          href={itemHref(deckId, itemId)}
+          className="inline-flex min-h-11 items-center rounded-xl bg-white px-4 text-sm font-medium text-slate-800 shadow-sm"
+        >
+          Builder
         </Link>
         <Link
           href={deckHref(deckId)}
-          className="inline-flex min-h-11 items-center rounded-lg border border-zinc-800 px-4 text-sm text-zinc-400 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+          className="inline-flex min-h-11 items-center px-4 text-sm text-slate-400"
         >
           Deck
         </Link>

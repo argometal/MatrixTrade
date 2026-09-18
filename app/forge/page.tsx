@@ -1,15 +1,11 @@
 "use client";
 
-import { SystemScopedSection } from "./components/SystemScopedSection";
-import { ForgeHomeDashboard } from "./components/ForgeHomeDashboard";
+import { RepositoryView } from "./components/RepositoryView";
 
 /**
- * AF03 Home — overview when ArgusForge is selected; MTA overview when MTA is selected.
+ * Forge home = My Decks list (AlgoApp-equivalent chrome).
+ * Same AF03 repo as /forge/active — UI only.
  */
 export default function ForgeHomePage() {
-  return (
-    <SystemScopedSection section="home">
-      <ForgeHomeDashboard />
-    </SystemScopedSection>
-  );
+  return <RepositoryView view="active" folderId={null} rootHref="/forge" />;
 }

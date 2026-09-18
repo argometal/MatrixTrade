@@ -53,15 +53,15 @@ export function ChaosDeckList({
   return (
     <section aria-labelledby="chaos-decks-heading" className="space-y-2">
       <div className="flex items-center justify-between gap-2">
-        <h3 id="chaos-decks-heading" className="text-sm font-semibold uppercase tracking-wide text-zinc-400">
-          Chaos Decks
+        <h3 id="chaos-decks-heading" className="text-sm font-semibold text-slate-500">
+          Decks
         </h3>
-        <div className="flex rounded-lg border border-zinc-800 p-0.5 text-xs" role="group" aria-label="Deck layout">
+        <div className="flex rounded-lg border border-slate-200 bg-white p-0.5 text-xs" role="group" aria-label="Deck layout">
           <button
             type="button"
             aria-pressed={layout === "list"}
-            className={`min-h-9 rounded-md px-2.5 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-              layout === "list" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+            className={`min-h-9 rounded-md px-2.5 font-medium ${
+              layout === "list" ? "bg-slate-100 text-slate-900" : "text-slate-400"
             }`}
             onClick={() => onLayoutChange("list")}
           >
@@ -70,8 +70,8 @@ export function ChaosDeckList({
           <button
             type="button"
             aria-pressed={layout === "grid"}
-            className={`min-h-9 rounded-md px-2.5 font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400 ${
-              layout === "grid" ? "bg-zinc-800 text-zinc-100" : "text-zinc-500 hover:text-zinc-300"
+            className={`min-h-9 rounded-md px-2.5 font-medium ${
+              layout === "grid" ? "bg-slate-100 text-slate-900" : "text-slate-400"
             }`}
             onClick={() => onLayoutChange("grid")}
           >
@@ -85,18 +85,18 @@ export function ChaosDeckList({
       ) : layout === "grid" ? (
         <ul className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {decks.map((d) => (
-            <li key={d.id} className="relative flex flex-col overflow-hidden rounded-lg border border-zinc-800 bg-zinc-950">
+            <li key={d.id} className="relative flex flex-col overflow-hidden rounded-xl bg-white shadow-sm">
               <Link
                 href={deckHref(d.id)}
-                className="flex min-h-[7.5rem] flex-1 flex-col px-3 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
+                className="flex min-h-[7.5rem] flex-1 flex-col px-3 py-3"
               >
-                <span className="text-[10px] font-medium uppercase tracking-wide text-zinc-500">
+                <span className="text-[10px] font-medium uppercase tracking-wide text-slate-400">
                   {statusLabel(d)}
                 </span>
-                <span className="mt-1 font-medium text-zinc-100">{d.title}</span>
-                <span className="mt-2 line-clamp-2 flex-1 text-xs text-zinc-500">{d.preview}</span>
-                <span className="mt-2 text-xs text-zinc-600">
-                  {d.contentCount} items · {formatTime(d.updatedAt)}
+                <span className="mt-1 font-medium text-slate-900">{d.title}</span>
+                <span className="mt-2 line-clamp-2 flex-1 text-xs text-slate-500">{d.preview}</span>
+                <span className="mt-2 text-xs text-slate-400">
+                  {d.contentCount} cards · {formatTime(d.updatedAt)}
                 </span>
               </Link>
               <div className="absolute right-1 top-1">
@@ -114,25 +114,25 @@ export function ChaosDeckList({
           ))}
         </ul>
       ) : (
-        <ul className="divide-y divide-zinc-800 overflow-hidden rounded-lg border border-zinc-800">
+        <ul className="divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-sm">
           {decks.map((d) => (
-            <li key={d.id} className="flex items-stretch bg-zinc-950">
+            <li key={d.id} className="flex items-stretch">
               <Link
                 href={deckHref(d.id)}
-                className="min-w-0 flex-1 px-3 py-3 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400"
+                className="min-w-0 flex-1 px-3 py-3"
               >
                 <div className="flex items-center gap-2">
-                  <p className="truncate font-medium text-zinc-100">{d.title}</p>
-                  <span className="shrink-0 rounded border border-zinc-800 px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-zinc-500">
+                  <p className="truncate font-medium text-slate-900">{d.title}</p>
+                  <span className="shrink-0 rounded px-1.5 py-0.5 text-[10px] uppercase tracking-wide text-slate-400">
                     {statusLabel(d)}
                   </span>
                 </div>
-                <p className="mt-0.5 truncate text-xs text-zinc-500">
-                  {d.contentCount} items · {formatTime(d.updatedAt)}
+                <p className="mt-0.5 truncate text-xs text-slate-400">
+                  {d.contentCount} cards · {formatTime(d.updatedAt)}
                 </p>
-                <p className="mt-1 truncate text-xs text-zinc-600">{d.preview}</p>
+                <p className="mt-1 truncate text-xs text-slate-500">{d.preview}</p>
               </Link>
-              <div className="border-l border-zinc-800">
+              <div>
                 <DeckMenu
                   deck={d}
                   view={view}
@@ -173,7 +173,8 @@ function DeckMenu({
       open={open}
       onOpenChange={onOpenChange}
       label={`Menu for deck ${deck.title}`}
-      triggerClassName="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-zinc-400 hover:text-zinc-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-zinc-400"
+      triggerClassName="flex h-full min-h-11 min-w-11 items-center justify-center px-3 text-slate-400 hover:text-slate-700"
+      variant="light"
       items={[
         {
           id: "open",
