@@ -16,9 +16,9 @@ import {
 import { isArgusSessionPath } from "../lib/auth/argus-session-path";
 import type { TrainingLabPair } from "../lib/argus/lab/types";
 
-assert.equal(isArgusSessionPath("/argus/v2/lab"), true, "lab is an Argus session path");
-assert.equal(isArgusSessionPath("/forge/deck/abc"), true, "Chaos decks stay on Argus auth");
-assert.notEqual("/argus/v2/lab", "/forge/deck", "lab route is not Chaos");
+assert.equal(isArgusSessionPath("/forge/lab"), true, "Training Lab uses Forge session (Argus auth)");
+assert.equal(isArgusSessionPath("/forge/deck/abc"), true, "Chaos decks stay on Forge auth");
+assert.notEqual("/forge/lab", "/forge/deck", "Training Lab route is not Chaos deck");
 
 assert.deepEqual([...K_PARCOUR_FIB_DAYS], [1, 2, 3, 5, 8, 13, 21, 34, 55, 89, 144, 233, 377]);
 assert.equal(fibDaysAtIndex(0), 1);

@@ -1,7 +1,6 @@
-import { getTrainingLabDataAction } from "@/app/argus/lab/actions";
-import { TrainingLabShell } from "./components/TrainingLabShell";
+import { redirect } from "next/navigation";
 
-export default async function TrainingLabPage() {
-  const data = await getTrainingLabDataAction();
-  return <TrainingLabShell initial={data} />;
+/** Training Lab lives under Argus Forge — not Argus Work Tracker. */
+export default function LegacyArgusLabRedirect() {
+  redirect("/forge/lab");
 }

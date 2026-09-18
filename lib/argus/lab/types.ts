@@ -1,4 +1,4 @@
-/** Argus Training Lab — experimental; separate from Chaos decks and main Argus journal. */
+/** Argus Forge Training Lab — experimental; separate from Chaos decks and Argus journal. */
 
 export const TRAINING_LAB_SCHEMA_VERSION = 1;
 

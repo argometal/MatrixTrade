@@ -6,6 +6,7 @@ import { useEffect, useId, useRef, useState } from "react";
 export type ForgeSystemId =
   | "argus"
   | "matrixtrade"
+  | "traininglab"
   | "alexandria"
   | "praxis"
   | "vault"
@@ -41,6 +42,15 @@ export const FORGE_SYSTEMS: ForgeSystem[] = [
     status: "ready",
     statusLabel: "Ready",
     tone: "green",
+  },
+  {
+    id: "traininglab",
+    name: "Training Lab",
+    description: "Memory training · match decks & sequences",
+    href: "/forge/lab",
+    status: "ready",
+    statusLabel: "Experimental",
+    tone: "orange",
   },
   {
     id: "argusforge",
@@ -281,7 +291,46 @@ export function ForgeQuickNavMenu({
                 ) : null}
               </Link>
             </li>
-            {FORGE_SYSTEMS.filter((s) => s.status !== "planned").map((system) => {
+            {(() => {
+              const training = FORGE_SYSTEMS.find((s) => s.id === "traininglab");
+              if (!training) return null;
+              const active = currentId === training.id;
+              return (
+                <li key={training.id}>
+                  <Link
+                    href={training.href}
+                    role="menuitem"
+                    onClick={() => setOpen(false)}
+                    className={
+                      dark
+                        ? `flex items-center gap-3 px-3.5 py-2.5 text-sm transition hover:bg-zinc-800/80 ${
+                            active ? "bg-zinc-800" : ""
+                          }`
+                        : `flex items-center gap-3 px-3.5 py-2.5 text-sm transition hover:bg-zinc-50 ${
+                            active ? "bg-blue-50/80" : ""
+                          }`
+                    }
+                  >
+                    <ForgeHexIcon tone={training.tone} label={training.name} size={28} />
+                    <span className="min-w-0 flex-1">
+                      <span className={`block font-medium ${dark ? "text-zinc-100" : "text-zinc-900"}`}>
+                        {training.name}
+                      </span>
+                      <span className={`block truncate text-[11px] ${dark ? "text-zinc-500" : "text-zinc-500"}`}>
+                        {training.description}
+                      </span>
+                    </span>
+                    {active ? (
+                      <span className="flex items-center gap-1 text-[10px] font-semibold text-emerald-500">
+                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" aria-hidden />
+                        Active
+                      </span>
+                    ) : null}
+                  </Link>
+                </li>
+              );
+            })()}
+            {FORGE_SYSTEMS.filter((s) => s.status !== "planned" && s.id !== "traininglab").map((system) => {
               const active = currentId === system.id;
               return (
                 <li key={system.id}>

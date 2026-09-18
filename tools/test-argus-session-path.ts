@@ -4,7 +4,7 @@ import { isArgusSessionPath } from "../lib/auth/argus-session-path";
 assert.equal(isArgusSessionPath("/argus/login"), false);
 assert.equal(isArgusSessionPath("/argus/v2"), true);
 assert.equal(isArgusSessionPath("/argus/v2/inbox"), true);
-assert.equal(isArgusSessionPath("/argus/v2/lab"), true);
+assert.equal(isArgusSessionPath("/forge/lab"), true);
 assert.equal(isArgusSessionPath("/forge"), true);
 assert.equal(isArgusSessionPath("/forge/chaos"), true);
 assert.equal(isArgusSessionPath("/forge/deck/abc"), true);

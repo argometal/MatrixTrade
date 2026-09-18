@@ -9,7 +9,7 @@ import {
   getTrainingLabDataAction,
   renameTrainingDeckAction,
   seedMockTrainingDeckAction,
-} from "@/app/argus/lab/actions";
+} from "@/app/forge/lab/actions";
 import { loadDeckOverview } from "@/lib/argus/lab/match-logic";
 import type { TrainingLabData } from "@/lib/argus/lab/types";
 import { MatchSessionView } from "./MatchSessionView";
@@ -242,7 +242,7 @@ export function MatchDecksTab({
               <li key={p.id} className="flex items-center gap-3 px-3 py-2">
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/api/argus/lab/image/${p.id}`}
+                  src={`/api/forge/lab/image/${p.id}`}
                   alt=""
                   className="h-12 w-12 rounded object-cover bg-zinc-800"
                 />

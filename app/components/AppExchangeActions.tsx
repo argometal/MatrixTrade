@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { ForgeQuickNavMenu, type ForgeSystemId } from "@/app/apps/components/ForgePortalNav";
 
 const actionClass =
@@ -19,11 +20,18 @@ export function AppExchangeActions({
   inboxCount?: number;
   className?: string;
 }) {
+  const pathname = usePathname() ?? "";
   const showInbox = app === "matrix" || app === "argus";
   const inboxHref = app === "matrix" ? "/mxt/inbox" : "/argus/v2/inbox";
   const inboxLabel = app === "matrix" ? "Proposals" : "Inbox";
   const currentId: ForgeSystemId =
-    app === "matrix" ? "matrixtrade" : app === "argus" ? "argus" : "argusforge";
+    app === "matrix"
+      ? "matrixtrade"
+      : app === "argus"
+        ? "argus"
+        : pathname.startsWith("/forge/lab")
+          ? "traininglab"
+          : "argusforge";
 
   return (
     <div className={`flex items-center gap-1.5 ${className}`}>

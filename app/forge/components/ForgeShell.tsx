@@ -21,6 +21,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/argus/units")) return "Argus units";
   if (pathname.startsWith("/forge/argus")) return "Argus";
   if (pathname.startsWith("/forge/focus")) return "Focus";
+  if (pathname.startsWith("/forge/lab")) return "Training Lab";
   if (pathname.startsWith("/forge/chaos")) return "Chaos Dumping";
   if (pathname.startsWith("/forge/task")) return "Task";
   if (pathname.startsWith("/forge/workshop")) return "Workshop";
@@ -90,6 +91,7 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
   }
 
   const title = sectionTitle(pathname, "ArgusForge");
+  const isTrainingLab = pathname.startsWith("/forge/lab");
   const hideChromeTitle = pathname === "/forge" || pathname === "/forge/";
   const onHome = pathname === "/forge" || pathname === "/forge/";
   const onChaos = pathname.startsWith("/forge/chaos");
@@ -102,7 +104,11 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
     "flex min-h-14 w-full flex-col items-center justify-center gap-0.5 px-1 focus:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-zinc-400";
 
   return (
-    <div className="mx-auto flex min-h-screen w-full max-w-lg flex-col overflow-x-hidden bg-zinc-950 lg:max-w-3xl">
+    <div
+      className={`mx-auto flex min-h-screen w-full flex-col overflow-x-hidden bg-zinc-950 ${
+        isTrainingLab ? "max-w-5xl" : "max-w-lg lg:max-w-3xl"
+      }`}
+    >
       <header className="sticky top-0 z-20 border-b border-zinc-800 bg-zinc-950/95 px-3 pb-2.5 pt-[max(0.75rem,env(safe-area-inset-top))] backdrop-blur">
         <div className="flex items-center justify-between gap-2">
           <div className="min-w-0">
@@ -133,7 +139,9 @@ function ForgeShellInner({ children }: { children: ReactNode }) {
         {children}
       </main>
 
-      <div className="fixed inset-x-0 bottom-0 z-40 mx-auto max-w-lg lg:max-w-3xl">
+      <div
+        className={`fixed inset-x-0 bottom-0 z-40 mx-auto ${isTrainingLab ? "max-w-5xl" : "max-w-lg lg:max-w-3xl"}`}
+      >
         <nav
           aria-label="ArgusForge primary"
           className="border-t border-zinc-800 bg-zinc-950/95 pb-[env(safe-area-inset-bottom)] backdrop-blur"

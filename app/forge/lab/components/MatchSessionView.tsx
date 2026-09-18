@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
-import { recordTrainingMatchOutcomeAction } from "@/app/argus/lab/actions";
+import { recordTrainingMatchOutcomeAction } from "@/app/forge/lab/actions";
 import { pickPairsForSession } from "@/lib/argus/lab/match-logic";
 import type { TrainingLabDeck, TrainingLabPair, TrainingLabPairState } from "@/lib/argus/lab/types";
 
@@ -200,7 +200,7 @@ export function MatchSessionView({
               {t.isImage ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={`/api/argus/lab/image/${t.pairId}`}
+                  src={`/api/forge/lab/image/${t.pairId}`}
                   alt=""
                   className="h-full w-full object-cover"
                 />

@@ -61,6 +61,6 @@ export function TrainingLabShell({ initial }: { initial: TrainingLabData }) {
 }
 
 async function refresh(setData: (d: TrainingLabData) => void) {
-  const { getTrainingLabDataAction } = await import("@/app/argus/lab/actions");
+  const { getTrainingLabDataAction } = await import("@/app/forge/lab/actions");
   setData(await getTrainingLabDataAction());
 }

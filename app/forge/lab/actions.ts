@@ -13,7 +13,7 @@ import {
 } from "@/lib/argus/lab/storage";
 import type { TrainingLabData, TrainingLabSequenceMetric } from "@/lib/argus/lab/types";
 
-const LAB_PATH = "/argus/v2/lab";
+const LAB_PATH = "/forge/lab";
 
 function revalidateLab() {
   revalidatePath(LAB_PATH);

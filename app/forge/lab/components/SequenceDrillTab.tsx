@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState, useTransition } from "react";
-import { saveSequenceMetricAction } from "@/app/argus/lab/actions";
+import { saveSequenceMetricAction } from "@/app/forge/lab/actions";
 import {
   computeScoreFromSlots,
   expectedRecallHint,
