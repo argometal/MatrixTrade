@@ -9,6 +9,7 @@ export type ForgeSystemId =
   | "alexandria"
   | "praxis"
   | "vault"
+  | "workshop"
   | "argusforge";
 
 export type ForgeSystem = {
@@ -55,6 +56,15 @@ export const FORGE_SYSTEMS: ForgeSystem[] = [
     name: "Vault",
     description: "Prepared output & handoff",
     href: "/forge/vault",
+    status: "ready",
+    statusLabel: "Ready",
+    tone: "indigo",
+  },
+  {
+    id: "workshop",
+    name: "Workshop",
+    description: "Toolbox · Mouse · local agents",
+    href: "/forge/workshop",
     status: "ready",
     statusLabel: "Ready",
     tone: "indigo",

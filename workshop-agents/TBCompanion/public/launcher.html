@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TBC — Companion grid</title>
+  <link rel="stylesheet" href="/css/tbc.css" />
+  <style>
+    .sd-wrap { max-width: 960px; margin: 0 auto; }
+    .sd-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 14px 16px;
+      margin-bottom: 14px;
+    }
+    .sd-grid {
+      display: grid;
+      gap: 10px;
+      min-height: 40px;
+    }
+    .sd-cell {
+      min-height: 76px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: var(--surface2);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 8px;
+      text-align: center;
+      cursor: default;
+    }
+    .sd-cell.empty { opacity: 0.45; }
+    .sd-cell.filled { cursor: pointer; }
+    .sd-cell.filled:hover { box-shadow: inset 0 0 0 1px var(--accent); }
+    .sd-ico { font-size: 22px; line-height: 1.2; }
+    .sd-lab { font-size: 11px; font-family: var(--mono); color: var(--text); margin-top: 4px; word-break: break-word; }
+    .sd-slot { font-size: 10px; font-family: var(--mono); color: var(--muted); opacity: 0.85; margin-bottom: 2px; }
+    .sd-err { color: #ef5350; font-size: 13px; display: none; margin-top: 8px; }
+    .sd-err.show { display: block; }
+    .sd-toplinks { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .sd-toplinks a { color: var(--accent); text-decoration: none; font-size: 0.9rem; }
+    .sd-toplinks a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="tbc-app">
+    <header class="tbc-topbar">
+      <div class="tbc-brand">
+        <span class="tbc-logo" aria-hidden="true">▣</span>
+        <div>
+          <h1>Companion grid</h1>
+          <p class="tbc-tagline">Quick buttons for your companion actions.</p>
+        </div>
+      </div>
+      <div class="tbc-topbar-right sd-toplinks">
+        <a href="/?configure=1">Edit layout</a>
+        <a href="/">← Main launcher</a>
+      </div>
+    </header>
+
+    <div class="sd-wrap">
+      <div class="sd-panel">
+        <div id="sdMount" class="sd-grid"></div>
+        <p id="sdErr" class="sd-err"></p>
+      </div>
+    </div>
+  </div>
+
+  <div id="tbcToast" class="tbc-toast" role="status" aria-live="polite"></div>
+
+  <script>
+(function () {
+  var toastEl = document.getElementById('tbcToast');
+  function toast(msg, isErr) {
+    toastEl.textContent = msg;
+    toastEl.style.borderColor = isErr ? '#c62828' : 'var(--border)';
+    toastEl.classList.add('show');
+    clearTimeout(toast._t);
+    toast._t = setTimeout(function () { toastEl.classList.remove('show'); }, 2800);
+  }
+
+  async function runSlot(slot) {
+    var r = await fetch('/api/launcher/run', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ slot: slot })
+    });
+    var j = await r.json().catch(function () { return {}; });
+    if (!r.ok || !j.ok) {
+      toast((j && j.error) || 'Request failed', true);
+      return;
+    }
+    toast('OK');
+  }
+
+  function render(cfg) {
+    var el = document.getElementById('sdMount');
+    var err = document.getElementById('sdErr');
+    if (!el) return;
+    el.innerHTML = '';
+    if (err) { err.classList.remove('show'); err.textContent = ''; }
+
+    var layout = cfg.launcherGrid || {};
+    var cols = Math.max(1, parseInt(layout.columns, 10) || 5);
+    var rows = Math.max(1, parseInt(layout.rows, 10) || 2);
+    var cells = layout.cells || [];
+    var total = cols * rows;
+    el.style.gridTemplateColumns = 'repeat(' + cols + ', minmax(72px, 1fr))';
+
+    var byId = {};
+    (cfg.tiles || []).forEach(function (t) { byId[t.id] = t; });
+
+    for (var i = 0; i < total; i++) {
+      (function (slot, cref) {
+        var wrap = document.createElement('div');
+        wrap.className = 'sd-cell';
+        if (!cref || !cref.tileId || !byId[cref.tileId]) {
+          wrap.className += ' empty';
+          var es = document.createElement('div');
+          es.className = 'sd-slot';
+          es.textContent = '#' + slot;
+          wrap.appendChild(es);
+          wrap.appendChild(document.createElement('span'));
+          wrap.lastChild.className = 'sd-lab';
+          wrap.lastChild.style.opacity = '0.7';
+          wrap.lastChild.textContent = '—';
+          el.appendChild(wrap);
+          return;
+        }
+        var t = byId[cref.tileId];
+        wrap.className += ' filled';
+        wrap.title = (t.label || '') + ' → ' + (t.id || '');
+        wrap.onclick = function () { runSlot(slot); };
+        var sn = document.createElement('div');
+        sn.className = 'sd-slot';
+        sn.textContent = '#' + slot;
+        wrap.appendChild(sn);
+        var icon = document.createElement('div');
+        icon.className = 'sd-ico';
+        icon.textContent = t.icon || '▸';
+        var lab = document.createElement('div');
+        lab.className = 'sd-lab';
+        lab.textContent = t.label || t.id;
+        wrap.appendChild(icon);
+        wrap.appendChild(lab);
+        el.appendChild(wrap);
+      })(i, cells[i]);
+    }
+  }
+
+  fetch('/api/launcher')
+    .then(function (r) { return r.json(); })
+    .then(render)
+    .catch(function () {
+      var err = document.getElementById('sdErr');
+      if (err) {
+        err.classList.add('show');
+        err.textContent = 'Could not load /api/launcher';
+      }
+    });
+})();
+  </script>
+</body>
+</html>

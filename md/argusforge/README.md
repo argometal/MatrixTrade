@@ -77,6 +77,7 @@ Full sealed text: [`argusforge-contract.md`](argusforge-contract.md).
 | `/forge/active` | Active **list** — administrative folder/deck management (secondary) |
 | `/forge/archive` | Archive **list** — administrative (secondary) |
 | `/forge/vault` | Vault shell + **Vault \| Alexandria** selector (Alexandria frozen disclosure) |
+| `/forge/workshop` | **Workshop** — TBC toolbox UI, Mouse profiles, local agent downloads ([contract](workshop-local-tools-contract.md)) |
 | `/forge/deck/[deckId]` | Chaos Deck — Fragments + B0 builder entry + exchange export (24-1C) |
 | `/forge/deck/[deckId]/item/[itemId]/view` | Content Viewer |
 | `/forge/deck/[deckId]/item/[itemId]` | **Fragment builder B0** (text/image blocks); `?legacy=1` classic editor |

@@ -1,0 +1,253 @@
+{
+  "version": 2,
+  "name": "TBC Toolbox Companion",
+  "port": 4010,
+  "description": "Edit macros for your PC. {{MACRO}} in targets. On startup, TBC_ROOT is set to this install folder. Override any macro with env TBC_MACRO_NAME (e.g. TBC_MACRO_STARTUP_TOOLS=D:\\\\tools\\\\Startup_tools).",
+  "macros": {
+    "STARTUP_TOOLS": "C:\\Startup_tools\\",
+    "WELL_ROOT": "C:\\Users\\SLB-DD-Developer\\Desktop\\Petronas_Developer_Sur_2025\\Roystonea-2_Petronas_Developer",
+    "SAC_ROOT": "C:\\Users\\SLB-DD-Developer\\Desktop\\Petronas_Developer_Sur_2025\\SAC-1_Petronas_Developer",
+    "LOCI_ROOT": "C:\\Startup_Loci\\RAZ_LOCI_DEV\\Raz_slb_6.0",
+    "PRINT_SERVER": "\\\\10.65.196.214\\d\\prints",
+    "REMOTE_MR": "\\\\10.65.196.214\\d\\Well Folder\\01_O.1007810.06_Roystonea-2\\Section D - DD\\08.- Daily Reports",
+    "TBC_ROOT": "C:\\Tools\\1776998963733_TBCompanion-delivery"
+  },
+  "pages": [
+    {
+      "id": "apps",
+      "title": "Apps",
+      "subtitle": "Daily applications (from startup_tools menu 1)",
+      "tiles": [
+        {
+          "id": "outlook",
+          "label": "Outlook",
+          "icon": "📧",
+          "kind": "open",
+          "accent": "#0078d4",
+          "target": "OUTLOOK.EXE"
+        },
+        {
+          "id": "excel",
+          "label": "Excel",
+          "icon": "📊",
+          "kind": "open",
+          "accent": "#217346",
+          "target": "EXCEL.EXE"
+        },
+        {
+          "id": "word",
+          "label": "Word",
+          "icon": "📝",
+          "kind": "open",
+          "accent": "#2b579a",
+          "target": "WINWORD.EXE"
+        },
+        {
+          "id": "onenote",
+          "label": "OneNote",
+          "icon": "📓",
+          "kind": "open",
+          "accent": "#7719aa",
+          "target": "ONENOTE.EXE"
+        },
+        {
+          "id": "freefilesync",
+          "label": "FreeFileSync",
+          "icon": "🔄",
+          "kind": "open",
+          "accent": "#00a86b",
+          "target": "C:\\Program Files\\FreeFileSync\\FreeFileSync.exe"
+        },
+        {
+          "id": "checklist_local",
+          "label": "Checklist-No sleep",
+          "icon": "☑",
+          "kind": "multi",
+          "accent": "#43a047",
+          "targets": [
+            "{{STARTUP_TOOLS}}\\Apps\\checklist_local.html",
+            "C:\\Tools\\1776998963733_TBCompanion-delivery\\presentationsettings.bat"
+          ]
+        },
+        {
+          "id": "shift_pack",
+          "label": "Shift pack",
+          "icon": "🌅",
+          "kind": "multi",
+          "hint": "Outlook + OneNote + Hand Over template",
+          "accent": "#5c6bc0",
+          "targets": [
+            "OUTLOOK.EXE",
+            "ONENOTE.EXE",
+            "{{STARTUP_TOOLS}}\\EmailTemplates\\00 Hand Over Template.oft",
+            "C:\\Tools\\1776998963733_TBCompanion-delivery\\presentationsettings.bat"
+          ]
+        },
+        {
+          "id": "daily_stack",
+          "label": "Daily stack",
+          "icon": "🚀",
+          "kind": "multi",
+          "hint": "Outlook, Excel, OneNote, DontSleep, Osprey, SP, Interact, template",
+          "accent": "#ff6f00",
+          "targets": [
+            "OUTLOOK.EXE",
+            "EXCEL.EXE",
+            "ONENOTE.EXE",
+            "{{STARTUP_TOOLS}}\\Apps\\DontSleep.exe",
+            "C:\\Program Files\\Schlumberger\\DOX 2.10 x64\\OspreyShell.exe",
+            "https://slb001.sharepoint.com",
+            "https://interact.slb.com",
+            "{{STARTUP_TOOLS}}\\EmailTemplates\\00 Hand Over Template.oft"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "portals",
+      "title": "Portals",
+      "subtitle": "Corporate sites (menu 4)",
+      "tiles": [
+        {
+          "id": "slb",
+          "label": "slb.com",
+          "icon": "🌐",
+          "kind": "multi",
+          "accent": "#001489",
+          "targets": [
+            "https://slb001.sharepoint.com/",
+            "https://ace.slb.com/#/dashboard",
+            "https://www.slb.com",
+            "https://quest.slb.com/quest/",
+            "https://slb001.sharepoint.com/sites/learning",
+            "https://mypcp.slb.com/certifications",
+            "https://degreed.com/",
+            "https://slb001.sharepoint.com/sites/MH-informationtechnology/SitePages/My-AI-New.aspx",
+            "C:\\Tools\\1776998963733_TBCompanion-delivery\\presentationsettings.bat"
+          ]
+        },
+        {
+          "id": "sp",
+          "label": "SharePoint",
+          "icon": "🏢",
+          "kind": "url",
+          "accent": "#038387",
+          "target": "https://slb001.sharepoint.com"
+        },
+        {
+          "id": "interact",
+          "label": "Interact",
+          "icon": "💬",
+          "kind": "url",
+          "accent": "#6264a7",
+          "target": "https://interact.slb.com"
+        },
+        {
+          "id": "esm",
+          "label": "ESM",
+          "icon": "📋",
+          "kind": "url",
+          "accent": "#ca5010",
+          "target": "https://esm.slb.com"
+        }
+      ]
+    },
+    {
+      "id": "files",
+      "title": "Folders",
+      "subtitle": "Work paths (menu 2)",
+      "tiles": [
+        {
+          "id": "handover_oft",
+          "label": "Hand Over template",
+          "icon": "✉",
+          "kind": "open",
+          "accent": "#7e57c2",
+          "target": "{{STARTUP_TOOLS}}\\EmailTemplates\\00 Hand Over Template.oft"
+        },
+        {
+          "id": "tile_1778286511689",
+          "label": "New tile",
+          "icon": "📌",
+          "kind": "open",
+          "accent": "#444444",
+          "target": "C:\\Users\\vmartinez9\\Documents\\001 GTD"
+        }
+      ]
+    },
+    {
+      "id": "page_1780055743852",
+      "title": "Working Routine",
+      "subtitle": "",
+      "tiles": [
+        {
+          "id": "tile_1780055760975",
+          "label": "Mouse Sim",
+          "icon": "📌",
+          "kind": "open",
+          "accent": "#444444",
+          "target": "C:\\Tools\\dist-build\\win-unpacked\\MouseSimSL.exe"
+        },
+        {
+          "id": "tile_1780063228534",
+          "label": "Data-Notes",
+          "icon": "📌",
+          "kind": "open",
+          "accent": "#444444",
+          "target": "C:\\Tools\\DataTransfer-1.0.0\\Start-Silent.vbs"
+        }
+      ]
+    }
+  ],
+  "launcherGrid": {
+    "columns": 5,
+    "rows": 3,
+    "cells": [
+      {
+        "tileId": "outlook"
+      },
+      {
+        "tileId": "excel"
+      },
+      {
+        "tileId": "word"
+      },
+      {
+        "tileId": "onenote"
+      },
+      {
+        "tileId": "freefilesync"
+      },
+      {
+        "tileId": "checklist_local"
+      },
+      {
+        "tileId": "shift_pack"
+      },
+      {
+        "tileId": "daily_stack"
+      },
+      {
+        "tileId": "sp"
+      },
+      {
+        "tileId": "interact"
+      },
+      {
+        "tileId": "esm"
+      },
+      {
+        "tileId": "slb"
+      },
+      {
+        "tileId": "handover_oft"
+      },
+      {
+        "tileId": "tile_1778286511689"
+      },
+      {
+        "tileId": "tile_1780055760975"
+      }
+    ]
+  }
+}

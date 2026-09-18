@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TBC — Toolbox Companion</title>
+  <link rel="stylesheet" href="/css/tbc.css" />
+</head>
+<body>
+  <div class="tbc-app">
+    <header class="tbc-topbar">
+      <div class="tbc-brand">
+        <span class="tbc-logo" aria-hidden="true">▣</span>
+        <div>
+          <h1>TBC Toolbox Companion</h1>
+          <p class="tbc-tagline">Quick launcher — <strong>Configure</strong> for pages, tiles, macros, and the companion grid. <strong>Companion grid</strong> opens the slot view.</p>
+        </div>
+      </div>
+      <div class="tbc-topbar-right">
+        <a href="/launcher" class="tbc-btn-ghost">Companion grid</a>
+        <button type="button" id="tbcBtnConfigure" class="tbc-btn-config">Configure</button>
+        <span id="tbcStatus" class="tbc-status" data-state="ok">Ready</span>
+      </div>
+    </header>
+
+    <div class="tbc-body">
+      <nav class="tbc-sidebar" id="tbcNav" aria-label="Pages"></nav>
+      <main class="tbc-main">
+        <div class="tbc-page-head">
+          <h2 id="tbcPageTitle">—</h2>
+          <p id="tbcPageSub" class="tbc-page-sub"></p>
+        </div>
+        <div class="tbc-deck" id="tbcDeck"></div>
+      </main>
+    </div>
+
+    <div id="tbcToast" class="tbc-toast" role="status" aria-live="polite"></div>
+  </div>
+
+  <!-- Configure overlay -->
+  <div id="tbcConfigOverlay" class="tbc-overlay" hidden>
+    <div class="tbc-overlay-backdrop"></div>
+    <div class="tbc-overlay-panel" role="dialog" aria-modal="true" aria-labelledby="tbcConfigHeading">
+      <div class="tbc-overlay-head">
+        <div>
+          <h2 id="tbcConfigHeading">Configure</h2>
+          <p class="tbc-overlay-sub">Saved on this computer as <code>tbc.config.json</code>. Editing from another machine is not supported.</p>
+        </div>
+        <div class="tbc-overlay-actions">
+          <button type="button" id="tbcConfigClose" class="tbc-btn-ghost">Cancel</button>
+          <button type="button" id="tbcConfigSave" class="tbc-btn-primary">Save</button>
+        </div>
+      </div>
+
+      <label class="tbc-editor-appname">
+        <span>App name</span>
+        <input type="text" id="tbcAppNameIn" class="tbc-editor-inp wide" autocomplete="off" />
+      </label>
+
+      <div class="tbc-overlay-grid">
+        <section class="tbc-config-section">
+          <h3>Pages</h3>
+          <div id="tbcPageList" class="tbc-page-list"></div>
+          <button type="button" id="tbcAddPage" class="tbc-btn-secondary">+ Add page</button>
+        </section>
+
+        <section class="tbc-config-section">
+          <h3>Current page</h3>
+          <div class="tbc-editor-fields">
+            <label>
+              <span>Page id</span>
+              <input type="text" id="tbcPageIdIn" class="tbc-editor-inp" autocomplete="off" title="Letters, numbers, dashes" />
+            </label>
+            <label>
+              <span>Title</span>
+              <input type="text" id="tbcPageTitleIn" class="tbc-editor-inp wide" autocomplete="off" />
+            </label>
+            <label>
+              <span>Subtitle</span>
+              <input type="text" id="tbcPageSubIn" class="tbc-editor-inp wide" autocomplete="off" />
+            </label>
+          </div>
+          <h4 class="tbc-tiles-heading">Tiles on this page</h4>
+          <div id="tbcTileList" class="tbc-tile-list"></div>
+          <button type="button" id="tbcAddTile" class="tbc-btn-secondary">+ Add tile</button>
+        </section>
+
+        <section class="tbc-config-section tbc-config-macros">
+          <h3>Path macros</h3>
+          <p class="tbc-hint">Use <code>{{NAME}}</code> in tile targets. Change paths here once instead of every tile.</p>
+          <div id="tbcMacroList"></div>
+          <button type="button" id="tbcAddMacro" class="tbc-btn-secondary">+ Add macro</button>
+        </section>
+
+        <section class="tbc-config-section tbc-config-launcher">
+          <h3>Companion grid</h3>
+          <p class="tbc-hint">Layout for <code>/launcher</code> and for <code>{"slot":N}</code> shortcuts. Slot 0 is top-left.</p>
+          <label class="tbc-lg-custom-toggle">
+            <input type="checkbox" id="tbcLgCustomEnabled" />
+            <span>Custom grid (save positions to <code>tbc.config.json</code>)</span>
+          </label>
+          <div id="tbcLgEditorBody" class="tbc-lg-editor-body" hidden>
+            <div class="tbc-lg-toolbar">
+              <label>
+                <span>Columns</span>
+                <input type="number" id="tbcLgCols" class="tbc-editor-inp" min="1" max="16" value="5" />
+              </label>
+              <label>
+                <span>Rows</span>
+                <input type="number" id="tbcLgRows" class="tbc-editor-inp" min="1" max="16" value="2" />
+              </label>
+              <button type="button" id="tbcLgApplyDims" class="tbc-btn-secondary">Apply size</button>
+              <button type="button" id="tbcLgAutoFill" class="tbc-btn-secondary">Fill from all tiles</button>
+              <button type="button" id="tbcLgClear" class="tbc-btn-ghost">Use automatic grid</button>
+            </div>
+            <div id="tbcLgCellGrid" class="tbc-lg-cell-grid" aria-label="Slot assignment"></div>
+          </div>
+          <p id="tbcLgAutoHint" class="tbc-hint">Automatic: tiles appear in page order, 5 columns (no <code>launcherGrid</code> in the file).</p>
+        </section>
+      </div>
+    </div>
+  </div>
+
+  <!-- Tile edit modal -->
+  <div id="tbcTileModal" class="tbc-modal" hidden>
+    <div class="tbc-modal-backdrop"></div>
+    <div class="tbc-modal-panel">
+      <h3>Edit tile</h3>
+      <div class="tbc-editor-fields">
+        <label>
+          <span>Tile id</span>
+          <input type="text" id="tbcTileIdIn" class="tbc-editor-inp wide" autocomplete="off" />
+        </label>
+        <label>
+          <span>Label</span>
+          <input type="text" id="tbcTileLabelIn" class="tbc-editor-inp wide" autocomplete="off" />
+        </label>
+        <label>
+          <span>Icon (emoji or text)</span>
+          <input type="text" id="tbcTileIconIn" class="tbc-editor-inp" maxlength="8" autocomplete="off" />
+        </label>
+        <label>
+          <span>Action type</span>
+          <select id="tbcTileKindIn" class="tbc-editor-inp">
+            <option value="open">Open file / program / folder</option>
+            <option value="url">Open in browser (URL)</option>
+            <option value="multi">Multiple actions (one per line)</option>
+          </select>
+        </label>
+        <div id="tbcTileTargetWrap">
+          <label>
+            <span>URL or path</span>
+            <input type="text" id="tbcTileTargetIn" class="tbc-editor-inp wide" autocomplete="off" placeholder="https://… or C:\… or {{MACRO}}\file" />
+          </label>
+        </div>
+        <div id="tbcTileTargetsWrap" style="display:none">
+          <label>
+            <span>Targets (one per line)</span>
+            <textarea id="tbcTileTargetsIn" class="tbc-editor-ta" rows="6" placeholder="OUTLOOK.EXE&#10;C:\path\to\file"></textarea>
+          </label>
+        </div>
+        <div id="tbcMacroInsertWrap" class="tbc-macro-insert-wrap">
+          <span class="tbc-macro-insert-label">Insert macro (adds <code>{{NAME}}</code> at the cursor)</span>
+          <div id="tbcMacroInsertBar" class="tbc-macro-insert-bar" aria-label="Insert macro"></div>
+        </div>
+        <label>
+          <span>Hint (optional)</span>
+          <input type="text" id="tbcTileHintIn" class="tbc-editor-inp wide" autocomplete="off" />
+        </label>
+        <label>
+          <span>Accent color</span>
+          <input type="color" id="tbcTileAccentIn" value="#444444" />
+        </label>
+      </div>
+      <div class="tbc-modal-actions">
+        <button type="button" id="tbcTileModalCancel" class="tbc-btn-ghost">Cancel</button>
+        <button type="button" id="tbcTileModalSave" class="tbc-btn-primary">Apply</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/tbc.js"></script>
+  <script src="/js/tbc-editor.js"></script>
+  <script>TbcEditor.init();</script>
+</body>
+</html>

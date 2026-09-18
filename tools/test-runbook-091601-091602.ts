@@ -14,7 +14,8 @@ const panel = readFileSync(join(root, "app/argus/v2/components/V2RunbookWorkPane
 const actions = readFileSync(join(root, "app/argus/actions.ts"), "utf8");
 const globals = readFileSync(join(root, "app/globals.css"), "utf8");
 
-assert.match(tab, /projectCustomize/, "project customize toggle state");
+assert.match(tab, /showProjectCustomizeToggle/, "customize toggle inside runbook panel");
+assert.match(tab, /runbook:\$\{runbookId\}/, "per-runbook customize storage");
 assert.match(tab, /organizationLibraryDestructive=\{isLibrary\}/, "org-only destructive flag");
 assert.match(tab, /onOpenLinkedRunbook/, "child runbook navigation");
 

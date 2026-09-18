@@ -27,6 +27,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/archive")) return "Archive list";
   if (pathname.startsWith("/forge/active")) return "Active list";
   if (pathname.startsWith("/forge/library")) return "Active list";
+  if (pathname.startsWith("/forge/workshop")) return "Workshop";
   if (pathname === "/forge" || pathname === "/forge/") return "Explorer";
   return systemLabel;
 }

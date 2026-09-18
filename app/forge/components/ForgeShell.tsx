@@ -23,6 +23,7 @@ function sectionTitle(pathname: string, systemLabel: string): string {
   if (pathname.startsWith("/forge/focus")) return "Focus";
   if (pathname.startsWith("/forge/chaos")) return "Chaos Dumping";
   if (pathname.startsWith("/forge/task")) return "Task";
+  if (pathname.startsWith("/forge/workshop")) return "Workshop";
   if (pathname.startsWith("/forge/vault")) return "Prepared output";
   if (pathname.startsWith("/forge/archive")) return "Archive list";
   if (pathname.startsWith("/forge/active")) return "Active list";

@@ -1,6 +1,8 @@
 # dependencies
 /node_modules
 /apps/*/node_modules
+/workshop-agents/TBCompanion-electron/node_modules/
+/workshop-agents/TBCompanion-electron/dist/
 /.pnp
 .pnp.*
 .yarn/*

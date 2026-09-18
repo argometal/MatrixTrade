@@ -68,7 +68,10 @@ export function V2EntityRunbooksTab({
   const fromRunbookId = searchParams.get("fromRunbook") ?? "";
   const returnToRaw = searchParams.get("returnTo");
   const isProjectLevel = level === "project";
-  const customizeStorageKey = `argus-v2-runbooks-customize:project:${entityId}`;
+  const customizeStorageKey = useCallback(
+    (runbookId: string) => `argus-v2-runbooks-customize:project:${entityId}:runbook:${runbookId}`,
+    [entityId]
+  );
   const [projectCustomize, setProjectCustomize] = useState(false);
   const returnToProjectHref =
     level === "organization" && returnToRaw && returnToRaw.startsWith("/argus/")
@@ -99,18 +102,21 @@ export function V2EntityRunbooksTab({
   }, [viewStorageKey]);
 
   useEffect(() => {
-    if (!isProjectLevel) return;
-    try {
-      setProjectCustomize(localStorage.getItem(customizeStorageKey) === "1");
-    } catch {
-      /* ignore */
+    if (!isProjectLevel || !selectedId) {
+      setProjectCustomize(false);
+      return;
     }
-  }, [customizeStorageKey, isProjectLevel]);
+    try {
+      setProjectCustomize(localStorage.getItem(customizeStorageKey(selectedId)) === "1");
+    } catch {
+      setProjectCustomize(false);
+    }
+  }, [customizeStorageKey, isProjectLevel, selectedId]);
 
-  function setProjectCustomizePersist(next: boolean) {
+  function setProjectCustomizePersist(next: boolean, runbookId: string) {
     setProjectCustomize(next);
     try {
-      localStorage.setItem(customizeStorageKey, next ? "1" : "0");
+      localStorage.setItem(customizeStorageKey(runbookId), next ? "1" : "0");
     } catch {
       /* quota */
     }
@@ -309,6 +315,9 @@ export function V2EntityRunbooksTab({
           organizationName ? `Back to project` : "Back to project"
         }
         tagVocabulary={tagVocabulary}
+        showProjectCustomizeToggle={isProjectLevel}
+        projectCustomize={projectCustomize}
+        onProjectCustomizeChange={(next) => setProjectCustomizePersist(next, displayRunbook.id)}
       />
     );
   }
@@ -331,26 +340,11 @@ export function V2EntityRunbooksTab({
             {isLibrary
               ? "Organization library — create checklists, then link them to projects, topics, or events. Copy or move lists between organizations."
               : isProjectLevel
-                ? projectCustomize
-                  ? "Customize mode — checklist structure edits the shared template (all linked projects/topics/events). Progress stays on this project. Turn off Customize to run checks only."
-                  : "Run mode — checks and closed state are saved for this project. Turn on Customize for full editing (same tools as organization)."
+                ? "Open a runbook to run checks or customize its template (Customize toggle inside each runbook)."
                 : "Checklists linked here. Progress (checks / closed) is saved only for this level. Edit the shared template on the organization. Matching tags suggest runbooks — assign stays explicit."}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {isProjectLevel ? (
-            <button
-              type="button"
-              onClick={() => setProjectCustomizePersist(!projectCustomize)}
-              className={`rounded-xl border px-3 py-1.5 text-xs font-semibold ${
-                projectCustomize
-                  ? "border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20"
-                  : "border-zinc-700 bg-zinc-900/60 text-zinc-300 hover:border-lime-500/30 hover:text-lime-300"
-              }`}
-            >
-              {projectCustomize ? "Customize on" : "Customize off"}
-            </button>
-          ) : null}
           {linkedRunbooks.length > 0 ? (
             <div className="flex items-center gap-1 rounded-xl border border-zinc-800 bg-zinc-950/60 p-0.5">
               {(

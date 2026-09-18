@@ -59,6 +59,13 @@ export function AppExchangeActions({
       external: false,
     },
     {
+      id: "workshop",
+      name: "Workshop",
+      description: "Toolbox (TBC) · Mouse · local agents",
+      href: "/forge/workshop",
+      external: false,
+    },
+    {
       id: "argus",
       name: "ARGUS",
       description: "Intelligence (external)",

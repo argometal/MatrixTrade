@@ -77,6 +77,7 @@ Modes (not ancestors): Viewer ⇄ Classic ⇄ Builder. Fullscreen = capture over
 | `/forge/argus/units` | Units / molecular graph |
 | `/forge/realm/[realmId]` | Realm graph UI |
 | `/forge/vault` | Prepared output |
+| `/forge/workshop` | TBC + Mouse config; local Windows agents ([workshop-local-tools-contract.md](workshop-local-tools-contract.md)) |
 
 Living capability table: `md/argusforge/capability-map.md`. Consolidation history: `md/argusforge/change-24-47.md`.
 

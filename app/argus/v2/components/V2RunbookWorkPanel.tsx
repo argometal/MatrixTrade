@@ -335,6 +335,9 @@ export function V2RunbookWorkPanel({
   returnToProjectHref,
   returnToProjectLabel = "Back to project",
   tagVocabulary = [],
+  showProjectCustomizeToggle = false,
+  projectCustomize = false,
+  onProjectCustomizeChange,
 }: {
   runbook: Runbook;
   onBack?: () => void;
@@ -357,6 +360,10 @@ export function V2RunbookWorkPanel({
   returnToProjectLabel?: string;
   /** Existing ARGUS tag strings for classification suggestions. */
   tagVocabulary?: string[];
+  /** Project runbooks — toggle full template edit without returning to the list. */
+  showProjectCustomizeToggle?: boolean;
+  projectCustomize?: boolean;
+  onProjectCustomizeChange?: (next: boolean) => void;
 }) {
   const router = useRouter();
   const { openLinkModal, buckets } = useArgusAdd();
@@ -886,6 +893,27 @@ export function V2RunbookWorkPanel({
               #{tag}
             </span>
           ))}
+        </div>
+      ) : null}
+
+      {showProjectCustomizeToggle ? (
+        <div className="runbook-no-print flex flex-wrap items-center justify-between gap-2 rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-2">
+          <p className="text-xs text-zinc-300">
+            {projectCustomize
+              ? "Customize on — editing the shared checklist (bulk, sections, links)."
+              : "Run mode — checks only. Turn on Customize to edit the template here."}
+          </p>
+          <button
+            type="button"
+            onClick={() => onProjectCustomizeChange?.(!projectCustomize)}
+            className={`shrink-0 rounded-xl border px-3 py-1.5 text-xs font-semibold ${
+              projectCustomize
+                ? "border-amber-500/40 bg-amber-500/15 text-amber-200 hover:bg-amber-500/20"
+                : "border-lime-500/35 bg-lime-500/10 text-lime-200 hover:bg-lime-500/15"
+            }`}
+          >
+            {projectCustomize ? "Customize on" : "Customize off"}
+          </button>
         </div>
       ) : null}
 

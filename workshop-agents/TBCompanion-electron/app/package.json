@@ -1,0 +1,11 @@
+{
+  "name": "tb-companion",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Toolbox Companion — Electron + HTTP local (sin cmd/PowerShell en runtime)",
+  "main": "main.cjs",
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {}
+}

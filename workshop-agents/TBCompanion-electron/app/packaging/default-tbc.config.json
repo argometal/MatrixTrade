@@ -1,0 +1,24 @@
+{
+  "version": 2,
+  "name": "TBC Toolbox Companion",
+  "port": 4010,
+  "description": "Editar tiles y macros en Configurar. TBC_ROOT apunta a la carpeta del ejecutable (portable) o a datos.",
+  "macros": {},
+  "pages": [
+    {
+      "id": "principal",
+      "title": "Principal",
+      "subtitle": "Ejemplo — añade tus tiles en Configurar",
+      "tiles": [
+        {
+          "id": "ejemplo_web",
+          "label": "Ejemplo web",
+          "icon": "🔗",
+          "kind": "url",
+          "accent": "#0b5fff",
+          "target": "https://example.com"
+        }
+      ]
+    }
+  ]
+}
