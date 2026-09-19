@@ -10,8 +10,8 @@ import {
   renameTrainingDeckAction,
   seedMockTrainingDeckAction,
 } from "@/app/forge/lab/actions";
-import { loadDeckOverview } from "@/lib/argus/lab/match-logic";
-import type { TrainingLabData } from "@/lib/argus/lab/types";
+import { loadDeckOverview } from "@/lib/argusforge/training-lab/match-logic";
+import type { TrainingLabData } from "@/lib/argusforge/training-lab/types";
 import { MatchSessionView } from "./MatchSessionView";
 
 export function MatchDecksTab({

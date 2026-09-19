@@ -16,6 +16,7 @@ import {
   removeBlock,
   removeImageAndMergeParagraphs,
   updateTextBlock,
+  type ImageInsertCaret,
 } from "@/lib/argusforge/af03-builder-store";
 import {
   chaosAssetsAvailability,
@@ -133,7 +134,7 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
     setBusy(true);
     setNotice(null);
     let repo = state;
-    let at = split ?? caret.current;
+    let at: ImageInsertCaret | null = split ?? caret.current;
     for (const file of files) {
       if (!file.type.startsWith("image/")) continue;
       const result = await insertImageBlockFromFile(repo, itemId, file, at);
@@ -155,6 +156,7 @@ export function FragmentBuilder({ deckId, itemId }: Props) {
   }
 
   function deleteImage(blockId: string) {
+    if (!state) return;
     const result = removeImageAndMergeParagraphs(state, blockId);
     setState(result.state);
     const focusId = result.mergedTextBlockId;

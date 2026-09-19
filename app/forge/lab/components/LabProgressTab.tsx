@@ -1,8 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { loadDeckOverview } from "@/lib/argus/lab/match-logic";
-import type { TrainingLabData } from "@/lib/argus/lab/types";
+import { loadDeckOverview } from "@/lib/argusforge/training-lab/match-logic";
+import type { TrainingLabData } from "@/lib/argusforge/training-lab/types";
 
 export function LabProgressTab({ data }: { data: TrainingLabData }) {
   const deckStats = useMemo(

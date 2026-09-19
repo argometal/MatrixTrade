@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import type { TrainingLabData } from "@/lib/argus/lab/types";
+import type { TrainingLabData } from "@/lib/argusforge/training-lab/types";
 import { LabProgressTab } from "./LabProgressTab";
 import { MatchDecksTab } from "./MatchDecksTab";
 import { SequenceDrillTab } from "./SequenceDrillTab";

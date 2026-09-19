@@ -2,8 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { recordTrainingMatchOutcomeAction } from "@/app/forge/lab/actions";
-import { pickPairsForSession } from "@/lib/argus/lab/match-logic";
-import type { TrainingLabDeck, TrainingLabPair, TrainingLabPairState } from "@/lib/argus/lab/types";
+import { pickPairsForSession } from "@/lib/argusforge/training-lab/match-logic";
+import type { TrainingLabDeck, TrainingLabPair, TrainingLabPairState } from "@/lib/argusforge/training-lab/types";
 
 type Tile = {
   key: string;

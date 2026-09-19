@@ -1,11 +1,9 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
-import { ARGUS_AUTH } from "@/lib/auth/cookies";
-import { readTrainingLab, readTrainingLabImageBytes, mimeFromBasename } from "@/lib/argus/lab/storage";
+import { hasArgusSession } from "@/lib/auth/cookies";
+import { readTrainingLab, readTrainingLabImageBytes, mimeFromBasename } from "@/lib/argusforge/training-lab/storage";
 
 export async function GET(_request: Request, { params }: { params: Promise<{ pairId: string }> }) {
-  const jar = await cookies();
-  if (jar.get(ARGUS_AUTH)?.value !== "1") {
+  if (!(await hasArgusSession())) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

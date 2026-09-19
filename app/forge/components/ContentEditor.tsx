@@ -9,6 +9,7 @@ import {
   listBlocksForFragment,
   removeImageAndMergeParagraphs,
   updateTextBlock,
+  type ImageInsertCaret,
 } from "@/lib/argusforge/af03-builder-store";
 import {
   deckHref,
@@ -125,7 +126,7 @@ export function ContentEditor({ deckId, itemId }: Props) {
     setImageBusy(true);
     setImageNotice(null);
     let repo = ensureFragmentTextBlock(state, itemId, "");
-    let splitCaret = caret.current;
+    let splitCaret: ImageInsertCaret | null = caret.current;
     if (atBlockId && atEl) {
       splitCaret = { textBlockId: atBlockId, offset: atEl.selectionStart };
     }

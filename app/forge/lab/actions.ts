@@ -2,16 +2,16 @@
 
 import { revalidatePath } from "next/cache";
 import { requireArgusSession } from "@/lib/auth/require-session";
-import { getPairState, recordMatchOutcome } from "@/lib/argus/lab/match-logic";
-import { seedMockLociInto } from "@/lib/argus/lab/mock-seed";
+import { getPairState, recordMatchOutcome } from "@/lib/argusforge/training-lab/match-logic";
+import { seedMockLociInto } from "@/lib/argusforge/training-lab/mock-seed";
 import {
   mimeFromBasename,
   newId,
   readTrainingLab,
   writeTrainingLab,
   writeTrainingLabImage,
-} from "@/lib/argus/lab/storage";
-import type { TrainingLabData, TrainingLabSequenceMetric } from "@/lib/argus/lab/types";
+} from "@/lib/argusforge/training-lab/storage";
+import type { TrainingLabData, TrainingLabSequenceMetric } from "@/lib/argusforge/training-lab/types";
 
 const LAB_PATH = "/forge/lab";
 

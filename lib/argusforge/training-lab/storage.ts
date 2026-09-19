@@ -1,14 +1,20 @@
 import { promises as fs } from "fs";
 import path from "path";
-import { ensureArgusStorageReady, getArgusStoragePaths } from "../storage";
+import { getTrainingLabStoragePaths } from "./paths";
 import { TRAINING_LAB_SCHEMA_VERSION, type TrainingLabData } from "./types";
 
+async function ensureTrainingLabDirs(): Promise<void> {
+  const { metaDir, filesDir } = getTrainingLabStoragePaths();
+  await fs.mkdir(metaDir, { recursive: true });
+  await fs.mkdir(path.join(filesDir, "training-lab"), { recursive: true });
+}
+
 function labFilePath(): string {
-  return path.join(getArgusStoragePaths().metaDir, "training-lab.json");
+  return path.join(getTrainingLabStoragePaths().metaDir, "training-lab.json");
 }
 
 export function trainingLabImagesDir(): string {
-  return path.join(getArgusStoragePaths().filesDir, "training-lab");
+  return path.join(getTrainingLabStoragePaths().filesDir, "training-lab");
 }
 
 function emptyLab(): TrainingLabData {
@@ -24,7 +30,7 @@ function emptyLab(): TrainingLabData {
 }
 
 export async function readTrainingLab(): Promise<TrainingLabData> {
-  await ensureArgusStorageReady();
+  await ensureTrainingLabDirs();
   const file = labFilePath();
   try {
     const raw = await fs.readFile(file, "utf-8");
@@ -50,9 +56,7 @@ export async function readTrainingLab(): Promise<TrainingLabData> {
 }
 
 export async function writeTrainingLab(data: TrainingLabData): Promise<void> {
-  await ensureArgusStorageReady();
-  await fs.mkdir(getArgusStoragePaths().metaDir, { recursive: true });
-  await fs.mkdir(trainingLabImagesDir(), { recursive: true });
+  await ensureTrainingLabDirs();
   const file = labFilePath();
   const tmp = `${file}.tmp`;
   await fs.writeFile(tmp, JSON.stringify(data, null, 2), "utf-8");
@@ -63,9 +67,8 @@ export async function writeTrainingLabImage(
   basename: string,
   bytes: Buffer,
 ): Promise<void> {
-  await ensureArgusStorageReady();
+  await ensureTrainingLabDirs();
   const dir = trainingLabImagesDir();
-  await fs.mkdir(dir, { recursive: true });
   const safe = path.basename(basename);
   await fs.writeFile(path.join(dir, safe), bytes);
 }

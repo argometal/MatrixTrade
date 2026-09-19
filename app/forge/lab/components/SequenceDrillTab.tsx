@@ -10,8 +10,8 @@ import {
   parseDigitsInput,
   type ParsedSlot,
   type SequenceStimulus,
-} from "@/lib/argus/lab/sequence-logic";
-import type { TrainingLabData } from "@/lib/argus/lab/types";
+} from "@/lib/argusforge/training-lab/sequence-logic";
+import type { TrainingLabData } from "@/lib/argusforge/training-lab/types";
 
 type Phase =
   | "setup"

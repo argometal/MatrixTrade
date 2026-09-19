@@ -1,20 +1,20 @@
 import assert from "node:assert/strict";
-import { solidColorPng } from "../lib/argus/lab/mock-png";
-import { fibDaysAtIndex, K_PARCOUR_FIB_DAYS, maxFibIndex } from "../lib/argus/lab/fib";
+import { solidColorPng } from "../lib/argusforge/training-lab/mock-png";
+import { fibDaysAtIndex, K_PARCOUR_FIB_DAYS, maxFibIndex } from "../lib/argusforge/training-lab/fib";
 import {
   getPairState,
   loadDeckOverview,
   pickPairsForSession,
   recordMatchOutcome,
-} from "../lib/argus/lab/match-logic";
+} from "../lib/argusforge/training-lab/match-logic";
 import {
   computeScoreFromSlots,
   generateStimulusSequence,
   parseCardsInput,
   parseDigitsInput,
-} from "../lib/argus/lab/sequence-logic";
+} from "../lib/argusforge/training-lab/sequence-logic";
 import { isArgusSessionPath } from "../lib/auth/argus-session-path";
-import type { TrainingLabPair } from "../lib/argus/lab/types";
+import type { TrainingLabPair } from "../lib/argusforge/training-lab/types";
 
 assert.equal(isArgusSessionPath("/forge/lab"), true, "Training Lab uses Forge session (Argus auth)");
 assert.equal(isArgusSessionPath("/forge/deck/abc"), true, "Chaos decks stay on Forge auth");
