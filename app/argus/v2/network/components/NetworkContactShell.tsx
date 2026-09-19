@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useMemo, useState, useTransition } from "react";
 import type { Entity } from "@/lib/argus/types";
 import type { EntityPickerBuckets } from "@/app/argus/components/ReferencePickerModal";
-import { updateRelationshipMetricsAction } from "@/app/argus/actions";
+import { appendNetworkConversationOutcomeAction, updateRelationshipMetricsAction } from "@/app/argus/actions";
 import { EntityEditForm } from "@/app/argus/components/EntityEditForm";
 import { formatDate } from "@/app/argus/components/ui";
 import {
@@ -18,6 +18,8 @@ import {
   relationshipReasonLabel,
   type DerivedRelationshipAttention,
 } from "@/lib/argus/network-relationship-metrics";
+import { networkLeverageForPerson } from "@/lib/argus/network-leverage";
+import { NETWORK_RELATIONSHIP } from "@/lib/argus/ux-copy";
 import type {
   NetworkContactPageData,
   NetworkContactRelatedOrg,
@@ -365,7 +367,8 @@ function RelationshipTab({
   attention,
   hasContact,
   isPending,
-  onSave,
+  onSaveMarks,
+  onSaveOutcome,
 }: {
   entity: Entity;
   contactValue: string[];
@@ -374,8 +377,11 @@ function RelationshipTab({
   attention: DerivedRelationshipAttention;
   hasContact: boolean;
   isPending: boolean;
-  onSave: (formData: FormData) => void;
+  onSaveMarks: (formData: FormData) => void;
+  onSaveOutcome: (formData: FormData) => void;
 }) {
+  const leverage = networkLeverageForPerson({ entity });
+
   if (!hasContact) {
     return (
       <V2Card className="p-5">
@@ -388,48 +394,163 @@ function RelationshipTab({
   }
 
   return (
-    <section>
-      <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Relationship</h2>
+    <section className="space-y-8">
+      <div>
+        <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-xs font-bold uppercase tracking-[0.18em] text-zinc-500">Relationship</h2>
+          </div>
+          <p className="text-xs tabular-nums text-zinc-500">
+            {NETWORK_RELATIONSHIP.marksSummary(countOfFive(contactValue), countOfFive(myValue))}
+          </p>
         </div>
-        <p className="text-xs tabular-nums text-zinc-500">
-          Contact value {countOfFive(contactValue)} · Yours {countOfFive(myValue)}
-        </p>
+        <form action={onSaveMarks}>
+          <input type="hidden" name="entityId" value={entity.id} />
+          <div className="grid gap-4 lg:grid-cols-3">
+            <ValueCheckboxList
+              title={NETWORK_RELATIONSHIP.contactValueTitle}
+              options={CONTACT_VALUE_OPTIONS}
+              icons={CONTACT_VALUE_ICONS}
+              fieldName="contactValue"
+              selected={contactValue}
+              footerLabel={NETWORK_RELATIONSHIP.contactValueTitle}
+              footerTone="blue"
+            />
+            <ValueCheckboxList
+              title={NETWORK_RELATIONSHIP.myValueTitle}
+              options={MY_VALUE_OPTIONS}
+              icons={MY_VALUE_ICONS}
+              fieldName="myValue"
+              selected={myValue}
+              footerLabel={NETWORK_RELATIONSHIP.myValueTitle}
+              footerTone="green"
+            />
+            <AttentionPanel networkStatus={networkStatus} attention={attention} />
+          </div>
+          <div className="mt-4 flex justify-end">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
+            >
+              {isPending ? "Saving…" : NETWORK_RELATIONSHIP.saveMarks}
+            </button>
+          </div>
+        </form>
       </div>
-      <form action={onSave}>
-        <input type="hidden" name="entityId" value={entity.id} />
-        <div className="grid gap-4 lg:grid-cols-3">
-          <ValueCheckboxList
-            title="Contact Value"
-            options={CONTACT_VALUE_OPTIONS}
-            icons={CONTACT_VALUE_ICONS}
-            fieldName="contactValue"
-            selected={contactValue}
-            footerLabel="Contact value"
-            footerTone="blue"
-          />
-          <ValueCheckboxList
-            title="My Value"
-            options={MY_VALUE_OPTIONS}
-            icons={MY_VALUE_ICONS}
-            fieldName="myValue"
-            selected={myValue}
-            footerLabel="My Value"
-            footerTone="green"
-          />
-          <AttentionPanel networkStatus={networkStatus} attention={attention} />
-        </div>
-        <div className="mt-4 flex justify-end">
-          <button
-            type="submit"
-            disabled={isPending}
-            className="rounded-xl bg-violet-600 px-4 py-2 text-sm font-semibold text-white hover:bg-violet-500 disabled:opacity-50"
-          >
-            {isPending ? "Saving…" : "Save relationship outcomes"}
-          </button>
-        </div>
-      </form>
+
+      <V2Card className="p-5">
+        <h3 className="text-sm font-semibold text-zinc-100">{NETWORK_RELATIONSHIP.leverageHeading}</h3>
+        <p className="mt-1 text-xs text-zinc-500">{NETWORK_RELATIONSHIP.leverageHint}</p>
+        <dl className="mt-4 grid gap-3 sm:grid-cols-3">
+          <div className="rounded-xl border border-sky-500/25 bg-sky-950/20 px-3 py-3">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-sky-200/80">
+              {NETWORK_RELATIONSHIP.leverageReceived}
+            </dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums text-sky-100">
+              {leverage.receivedCount}
+            </dd>
+            <dd className="mt-1 text-[11px] text-zinc-500">
+              {leverage.received.length ? leverage.received.join(" · ") : "—"}
+            </dd>
+          </div>
+          <div className="rounded-xl border border-emerald-500/25 bg-emerald-950/20 px-3 py-3">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-emerald-200/80">
+              {NETWORK_RELATIONSHIP.leverageGiven}
+            </dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums text-emerald-100">
+              {leverage.givenCount}
+            </dd>
+            <dd className="mt-1 text-[11px] text-zinc-500">
+              {leverage.given.length ? leverage.given.join(" · ") : "—"}
+            </dd>
+          </div>
+          <div className="rounded-xl border border-violet-500/25 bg-violet-950/20 px-3 py-3">
+            <dt className="text-[10px] font-semibold uppercase tracking-wide text-violet-200/80">
+              {NETWORK_RELATIONSHIP.leverageAsymmetry}
+            </dt>
+            <dd className="mt-1 text-2xl font-semibold tabular-nums text-violet-100">
+              {leverage.asymmetry > 0 ? `+${leverage.asymmetry}` : leverage.asymmetry}
+            </dd>
+            <dd className="mt-1 text-[11px] text-zinc-500">
+              {leverage.asymmetry > 0
+                ? "They bring more to you"
+                : leverage.asymmetry < 0
+                  ? "You give more than you receive"
+                  : "Balanced marks"}
+            </dd>
+          </div>
+        </dl>
+      </V2Card>
+
+      <V2Card className="p-5">
+        <h3 className="text-sm font-semibold text-zinc-100">{NETWORK_RELATIONSHIP.outcomeHeading}</h3>
+        <p className="mt-1 text-xs text-zinc-500">{NETWORK_RELATIONSHIP.outcomeHint}</p>
+        <form action={onSaveOutcome} className="mt-4 space-y-4">
+          <input type="hidden" name="entityId" value={entity.id} />
+          <label className="block">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+              {NETWORK_RELATIONSHIP.outcomeTopics}
+            </span>
+            <input
+              name="topics"
+              placeholder={NETWORK_RELATIONSHIP.outcomeTopicsPlaceholder}
+              className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
+            />
+          </label>
+          <fieldset>
+            <legend className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+              {NETWORK_RELATIONSHIP.outcomeGained}
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {CONTACT_VALUE_OPTIONS.map((opt) => (
+                <label
+                  key={opt.key}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:border-sky-500/40"
+                >
+                  <input type="checkbox" name="gained" value={opt.key} className="accent-sky-500" />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <fieldset>
+            <legend className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+              {NETWORK_RELATIONSHIP.outcomeGave}
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {MY_VALUE_OPTIONS.map((opt) => (
+                <label
+                  key={opt.key}
+                  className="inline-flex cursor-pointer items-center gap-1.5 rounded-lg border border-zinc-700 px-2.5 py-1.5 text-xs text-zinc-300 hover:border-emerald-500/40"
+                >
+                  <input type="checkbox" name="gave" value={opt.key} className="accent-emerald-500" />
+                  {opt.label}
+                </label>
+              ))}
+            </div>
+          </fieldset>
+          <label className="block">
+            <span className="text-[11px] font-medium uppercase tracking-wide text-zinc-500">
+              {NETWORK_RELATIONSHIP.outcomeNotes}
+            </span>
+            <textarea
+              name="notes"
+              rows={3}
+              className="mt-1.5 w-full rounded-xl border border-zinc-700 bg-zinc-950 px-3 py-2 text-sm text-zinc-100 placeholder:text-zinc-600"
+            />
+          </label>
+          <div className="flex justify-end">
+            <button
+              type="submit"
+              disabled={isPending}
+              className="rounded-xl border border-teal-500/40 bg-teal-950/40 px-4 py-2 text-sm font-semibold text-teal-100 hover:bg-teal-900/50 disabled:opacity-50"
+            >
+              {isPending ? "Saving…" : NETWORK_RELATIONSHIP.outcomeSave}
+            </button>
+          </div>
+        </form>
+      </V2Card>
     </section>
   );
 }
@@ -498,6 +619,13 @@ export function NetworkContactShell({
   function saveMetrics(formData: FormData) {
     startTransition(async () => {
       await updateRelationshipMetricsAction(formData);
+      router.refresh();
+    });
+  }
+
+  function saveOutcome(formData: FormData) {
+    startTransition(async () => {
+      await appendNetworkConversationOutcomeAction(formData);
       router.refresh();
     });
   }
@@ -658,7 +786,8 @@ export function NetworkContactShell({
           attention={page.attention}
           hasContact={hasContact}
           isPending={isPending}
-          onSave={saveMetrics}
+          onSaveMarks={saveMetrics}
+          onSaveOutcome={saveOutcome}
         />
       ) : null}
 

@@ -1296,6 +1296,63 @@ export async function updateRelationshipMetricsAction(formData: FormData): Promi
   revalidatePath("/argus/v2/browse/network");
 }
 
+/**
+ * N1 — Conversation outcome Note on a person.
+ * Evidence Tags = discussion topics + Contact Value / My Value keys.
+ * Also unions durable contactValue / myValue marks on the person.
+ */
+export async function appendNetworkConversationOutcomeAction(
+  formData: FormData
+): Promise<void> {
+  await requireArgusSession();
+  const entityId = String(formData.get("entityId") ?? "").trim();
+  const person = await getEntity(entityId);
+  if (!person || person.type !== "person" || person.deletedAt) {
+    throw new Error("Person not found");
+  }
+
+  const gained = normalizeContactValueKeys(formData.getAll("gained").map(String));
+  const gave = normalizeMyValueKeys(formData.getAll("gave").map(String));
+  const topicRaw = String(formData.get("topics") ?? "");
+  const discussionTopics = topicRaw
+    .split(/[,;\n]/)
+    .map((t) => t.trim().replace(/\s+/g, " "))
+    .filter(Boolean);
+  const notes = String(formData.get("notes") ?? "").trim();
+  const today = new Date().toISOString().slice(0, 10);
+
+  const topics = [...new Set([...discussionTopics, ...gained, ...gave])];
+  const bodyLines = [
+    gained.length ? `Gained: ${gained.join(", ")}` : "Gained: —",
+    gave.length ? `Gave: ${gave.join(", ")}` : "Gave: —",
+    notes ? `\n${notes}` : "",
+  ];
+  const body = bodyLines.filter(Boolean).join("\n").trim() || "Conversation outcome.";
+  const title = `Conversation · ${today}`;
+
+  await createLog({
+    kind: "log",
+    date: today,
+    title: title || autoTitleFromBody(body),
+    body,
+    entityIds: [entityId],
+    topics,
+    source: "manual",
+    private: false,
+    attachmentIds: [],
+    classificationStatus: "classified",
+  });
+
+  const nextContact = normalizeContactValueKeys([...(person.contactValue ?? []), ...gained]);
+  const nextMine = normalizeMyValueKeys([...(person.myValue ?? []), ...gave]);
+  await updateEntity(entityId, { contactValue: nextContact, myValue: nextMine });
+
+  revalidateArgus();
+  revalidatePath(`/argus/v2/network/${entityId}`);
+  revalidatePath("/argus/v2/browse/network");
+  revalidatePath("/argus/v2");
+}
+
 const NETWORK_LAST_CONTACT_TITLE = "Last contact";
 
 /** Quick touch date from Network browse — upserts one follow-up record per person. */

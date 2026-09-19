@@ -468,7 +468,11 @@ const SECTIONS: HelpSection[] = [
     items: [
       {
         title: "Status",
-        body: "Active / Dormant / Archived from linked emails, records, follow-ups, and projects. Hot is a priority filter inside Active. Use 📅 on a card to log last contact.",
+        body: "Active / Dormant / Archived from linked emails, records, follow-ups, and projects. Hot is a Network priority filter (recent + dense evidence) — not Tags Treemap Hot. Use 📅 on a card to log last contact.",
+      },
+      {
+        title: "Give ↔ receive",
+        body: "Smart view ranks people by Contact Value vs My Value asymmetry (+ recency). Open a person → Relationship for the matrix and Conversation outcome Notes.",
       },
       {
         title: "Board & reorder",

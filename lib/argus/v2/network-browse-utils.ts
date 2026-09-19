@@ -5,6 +5,7 @@ import { buildEntityIntelligence, computeRelationshipHealth, contactValueWeight 
 import { browseEntitiesByKind, entitiesByKind, personEvidenceScope } from "./hierarchy";
 import { relativeActivityLabel } from "./timeline-builders";
 import { countTopicsAndEventsInScope } from "./scope-node-counts";
+import { networkAttentionScore, networkLeverageForPerson } from "../network-leverage";
 
 /**
  * Simplified Network status (auto-derived — do not manually maintain for 1000 contacts).
@@ -31,6 +32,9 @@ export interface V2NetworkBrowseCard {
    * Filter/sort aid — never a 4th status chip.
    */
   isHot: boolean;
+  /** Give↔receive leverage (derived) — N2/N3; not a CRM strength KPI. */
+  leverageScore: number;
+  leverageAsymmetry: number;
   lastInteraction: {
     label: string;
     timeLabel: string;
@@ -79,7 +83,8 @@ export type V2NetworkSmartView =
   | "recent-activity"
   | "high-value-network"
   | "dormant"
-  | "hot";
+  | "hot"
+  | "leverage";
 
 /** Migrate legacy board pins / prefs (New→Active, Lost→Dormant). */
 export function normalizeNetworkBrowseStatus(
@@ -310,6 +315,11 @@ export function buildV2NetworkBrowseCards(
         journalEvents
       );
 
+      const leverage = networkLeverageForPerson({
+        entity: person,
+        daysSinceLastInteraction: daysSinceLast,
+      });
+
       return {
         id: person.id,
         name: person.name,
@@ -331,6 +341,8 @@ export function buildV2NetworkBrowseCards(
           },
           today
         ),
+        leverageScore: networkAttentionScore(leverage),
+        leverageAsymmetry: leverage.asymmetry,
         lastInteraction,
         relationshipSince: formatRelationshipSince(sinceIso),
         relationshipSinceIso: sinceIso,
@@ -406,6 +418,11 @@ const TECHNICAL_KEYWORDS =
 export function applyNetworkSmartView(cards: V2NetworkBrowseCard[], view: V2NetworkSmartView): V2NetworkBrowseCard[] {
   if (view === "all") return cards;
   if (view === "hot") return cards.filter((c) => c.isHot);
+  if (view === "leverage") {
+    return [...cards]
+      .filter((c) => c.leverageScore > 0)
+      .sort((a, b) => b.leverageScore - a.leverageScore || a.name.localeCompare(b.name));
+  }
   if (view === "dormant") return cards.filter((c) => c.status === "Dormant");
   if (view === "recent-activity") return cards.filter((c) => c.status === "Active");
   if (view === "high-value-network") {

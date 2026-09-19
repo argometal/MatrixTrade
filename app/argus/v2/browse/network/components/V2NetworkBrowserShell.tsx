@@ -61,6 +61,11 @@ const STATUS_TABS: { key: V2NetworkBrowseStatus | "all" | "hot"; label: string }
 
 const SMART_VIEWS: { key: V2NetworkSmartView; label: string; description: string }[] = [
   { key: "hot", label: "Hot relationships", description: "Recent + denser evidence (Affinity-style priority)" },
+  {
+    key: "leverage",
+    label: "Give ↔ receive",
+    description: "Rank by Contact Value vs My Value asymmetry + recency",
+  },
   { key: "key-influencers", label: "Key influencers", description: "Strong ties with shared project history" },
   { key: "decision-makers", label: "Decision makers", description: "Roles and topics tied to authority" },
   { key: "technical-experts", label: "Technical experts", description: "Capability tags from evidence" },
@@ -317,6 +322,14 @@ function PersonCard({
               {card.isHot ? (
                 <span className="rounded-full bg-rose-500/15 px-1.5 py-0.5 text-[9px] font-medium text-rose-200 ring-1 ring-rose-500/30">
                   Hot
+                </span>
+              ) : null}
+              {card.leverageScore > 0 ? (
+                <span
+                  className="rounded-full bg-violet-500/15 px-1.5 py-0.5 text-[9px] font-medium text-violet-200 ring-1 ring-violet-500/30"
+                  title="Give ↔ receive asymmetry (Contact Value − My Value)"
+                >
+                  Δ{card.leverageAsymmetry > 0 ? `+${card.leverageAsymmetry}` : card.leverageAsymmetry}
                 </span>
               ) : null}
             </div>

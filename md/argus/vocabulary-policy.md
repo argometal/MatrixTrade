@@ -55,3 +55,25 @@ No binder Tags by default — use structural links. Do not write `linkedTags` as
 | IDs stored as Tags | **Forbidden** |
 
 Nav badge counts are **not** Trackers (`buildV2NavCounts`) — triage debt only.
+
+## Network (people) — sealed vocabulary
+
+| UI term | Storage / derivation | Meaning |
+|---------|----------------------|---------|
+| **Contact Value** | `Entity.contactValue[]` | Durable marks: what **they** bring to me |
+| **My Value** | `Entity.myValue[]` | Durable marks: what **I** bring to them |
+| **Conversation outcome** | `Log` Note on the person (`entityIds`) | Per-talk evidence: topics + gained/gave keys in `Log.topics` + body |
+| **Give↔receive / leverage** | **Derived** only | Compare Contact Value vs My Value (+ outcomes); not a CRM strength score |
+| **Network status** | Derived Active / Dormant / Archived | Who needs retrieval attention |
+| **Hot** (Network) | Priority filter on people | Recent + dense evidence — **not** the Tags Treemap Hot |
+| **Attention reason** | Derived (`follow_up_pending`, …) | Explainability — not a second status enum |
+
+**Forbidden in Network UI:** Healthy as product status; calling durable marks “outcomes”; mixing Hot (Tags) with Hot (Network) without saying which.
+
+### How to use (Network)
+
+| Intent | Where |
+|--------|--------|
+| Durable give/receive marks | Person → Relationship → Contact Value / My Value → Save relationship marks |
+| Log one conversation | Person → Relationship → Conversation outcome → Save Note |
+| See leverage rank | Network browse → smart view **Leverage**, or Person → Relationship matrix |
