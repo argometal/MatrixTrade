@@ -53,12 +53,14 @@ Coordination / capture shell under `/forge`. Local-first repo (`localStorage` + 
 ### Visible ontology
 
 ```text
-Realm (root folder)
-└── Folder (nested, optional)
-    └── Chaos Deck
-        └── Fragment
-            └── Block
+Realm (root folder)     — practical location only
+└── Folder (nested)     — practical location only
+    └── Chaos Deck      — multi-Fragment container (no topic/Parcour implied)
+        └── Fragment    — raw capture
+            └── Block   — optional internal structure
 ```
+
+**CHANGE 24-50:** Home Global Find uses full Fragment haystack → **Viewer** (Deck shown as provenance only). Do not assume Deck↔Parcour or Fragment↔Locus.
 
 Modes (not ancestors): Viewer ⇄ Classic ⇄ Builder. Fullscreen = capture overlay, not a route.
 

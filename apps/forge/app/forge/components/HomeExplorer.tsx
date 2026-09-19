@@ -321,7 +321,7 @@ export function HomeExplorer() {
         }}
       >
         <label htmlFor="home-explorer-search" className="sr-only">
-          Search Realms, Decks, Fragments
+          Global Find — Fragments, Decks, Realms
         </label>
         <span
           className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500"
@@ -334,7 +334,7 @@ export function HomeExplorer() {
           type="search"
           value={queryDraft}
           onChange={(e) => scheduleSearch(e.target.value)}
-          placeholder="Search Realms, Decks, Fragments…"
+          placeholder="Find Fragments (and Decks / Realms)…"
           className="min-h-11 w-full rounded-xl border border-zinc-800 bg-zinc-900/80 py-2.5 pl-9 pr-3 text-base text-zinc-100 placeholder:text-zinc-500 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500/50"
         />
       </form>
@@ -431,7 +431,7 @@ export function HomeExplorer() {
           </h3>
           {searchHits.length === 0 ? (
             <EmptyPanel
-              title="No matching Realms or Chaos Decks"
+              title="No matching Fragments, Decks, or Realms"
               primaryLabel="Clear search"
               onPrimary={() => {
                 setQueryDraft("");
@@ -460,10 +460,17 @@ export function HomeExplorer() {
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <p className="truncate font-medium text-zinc-100">{hit.title}</p>
+                        {hit.objectType === "fragment" ? (
+                          <span className="shrink-0 rounded-full border border-zinc-700 px-1.5 py-0.5 text-[10px] font-medium uppercase tracking-wide text-zinc-400">
+                            Viewer
+                          </span>
+                        ) : null}
                         {showStatusBadges ? <StatusBadge status={hit.status} /> : null}
                       </div>
                       <p className="truncate text-xs text-zinc-500">
-                        {hit.parentRealmTitle} · {formatRelativeAgo(hit.updatedAt)}
+                        {hit.objectType === "fragment" && hit.deckTitle
+                          ? `In ${hit.deckTitle} · provenance · ${formatRelativeAgo(hit.updatedAt)}`
+                          : `${hit.parentRealmTitle} · ${formatRelativeAgo(hit.updatedAt)}`}
                       </p>
                     </div>
                   </Link>

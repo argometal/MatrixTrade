@@ -1,6 +1,8 @@
 /**
  * CHANGE 24-39 — Chaos Deck full-content search (literal, not semantic).
+ * CHANGE 24-50 — Same haystack reused by Home Global Find (Fragment → Viewer).
  * Searches the entire Deck, not only what is on screen.
+ * Deck membership is convenience containment — not topic or Alexandria structure.
  */
 
 import type {

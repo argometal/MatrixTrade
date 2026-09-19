@@ -1,11 +1,22 @@
 /**
  * CHANGE 24-1E — Home Explorer queries (search / filter / sort / builder signals).
+ * CHANGE 24-50 — Global Find uses full Fragment haystack → Viewer (Deck = provenance only).
  * Uses existing AF03 repo; no parallel tree.
+ *
+ * Chaos semantics (sealed): Fragment = raw capture; Deck = multi-Fragment container
+ * without implied topic/Parcour/coherence; Blocks = optional internal structure.
  */
 
+import { fragmentDisplayTitle, fragmentMatchesQuery } from "./af03-deck-search";
 import type { Af03ChaosDeck, Af03Folder, Af03RepoState } from "./af03-repo-types";
 import { UNASSIGNED_REALM_ID } from "./af03-repo-types";
-import { folderBreadcrumb, getFolder, listChildFolders, listDecksAt } from "./af03-repo-store";
+import {
+  folderBreadcrumb,
+  getFolder,
+  listChildFolders,
+  listDecksAt,
+  viewHref,
+} from "./af03-repo-store";
 
 export type ExplorerStatusFilter = "all" | "active" | "archive" | "empty";
 export type ExplorerSortKey =
@@ -41,6 +52,11 @@ export type ExplorerSearchHit = {
   objectType: "realm" | "chaos_deck" | "fragment";
   title: string;
   parentRealmTitle: string;
+  /**
+   * Fragment hits only: Deck title as capture provenance / convenience container.
+   * Does not imply topic, study unit, Parcour, or Alexandria structure.
+   */
+  deckTitle: string | null;
   status: "active" | "archive";
   updatedAt: string;
   href: string;
@@ -243,6 +259,12 @@ export function filterAndSortRealms(
   });
 }
 
+/**
+ * Global Find across Realms, Decks, and Fragments.
+ * Fragment matching reuses Deck-search haystack (title, body, blocks, captions,
+ * filenames, tags). Fragment hits open Viewer — not Editor. Finding must not
+ * require prior correct organization.
+ */
 export function searchExplorer(state: Af03RepoState, query: string): ExplorerSearchHit[] {
   const q = query.trim().toLowerCase();
   if (!q) return [];
@@ -255,6 +277,7 @@ export function searchExplorer(state: Af03RepoState, query: string): ExplorerSea
         objectType: "realm",
         title: folder.title,
         parentRealmTitle: realmTitle(state, folder.parentId),
+        deckTitle: null,
         status: folder.view === "archive" ? "archive" : "active",
         updatedAt: folder.updatedAt,
         href: homeExplorerHref({ realmId: folder.id, status: folder.view }),
@@ -271,6 +294,7 @@ export function searchExplorer(state: Af03RepoState, query: string): ExplorerSea
         objectType: "chaos_deck",
         title: deck.title,
         parentRealmTitle: realmTitle(state, deck.folderId),
+        deckTitle: null,
         status: deck.view === "archive" ? "archive" : "active",
         updatedAt: deck.updatedAt,
         href: `/forge/deck/${deck.id}`,
@@ -279,18 +303,17 @@ export function searchExplorer(state: Af03RepoState, query: string): ExplorerSea
   }
 
   for (const item of state.items) {
-    const tags = (item.tags ?? []).join(" ").toLowerCase();
-    const hay = `${item.title} ${item.body} ${tags}`.toLowerCase();
-    if (!hay.includes(q)) continue;
+    if (!fragmentMatchesQuery(state, item, query)) continue;
     const deck = state.decks.find((d) => d.id === item.deckId);
     hits.push({
       id: item.id,
       objectType: "fragment",
-      title: item.title || "Untitled fragment",
+      title: fragmentDisplayTitle(item),
       parentRealmTitle: deck ? realmTitle(state, deck.folderId) : "—",
+      deckTitle: deck?.title ?? "Unknown Deck",
       status: deck?.view === "archive" ? "archive" : "active",
       updatedAt: item.updatedAt,
-      href: `/forge/deck/${item.deckId}/item/${item.id}`,
+      href: viewHref(item.deckId, item.id),
     });
   }
 

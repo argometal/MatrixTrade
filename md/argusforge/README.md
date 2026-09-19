@@ -18,6 +18,7 @@
 | [IA-HANDOFF.md](IA-HANDOFF.md) | **Living — IA / agents** | Apps map, auth, Forge ontology, open debt |
 | [PRODUCT-OWNERSHIP.md](PRODUCT-OWNERSHIP.md) | **Living — MTA 010** | Product boundaries + lint guardrails (no apps/* yet) |
 | [capability-map.md](capability-map.md) | **Living** | Capability × status vocabulary |
+| [change-24-50-chaos-semantic-global-find.md](change-24-50-chaos-semantic-global-find.md) | **Active — 24-50** | Chaos semantics + Global Find → Viewer |
 | [argusforge-contract.md](argusforge-contract.md) | **Canonical — SEALED** | Vision, mission, formation transfer, component duties, success criteria |
 | [perpetual-evolution-contract.md](perpetual-evolution-contract.md) | **Canonical — SEALED addendum** | Perpetual evolution; evidence; reversible change; user agency |
 | [af03-chaos-interface-contract.md](af03-chaos-interface-contract.md) | **Working contract — checklist** | Minimal Chaos interfaces → Vault boundary; completion Definition of Done |
