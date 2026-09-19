@@ -18,6 +18,7 @@ import {
   TAG_ROLES,
 } from "../tag-ontology";
 import { buildTagPatternsForScope } from "./tag-patterns";
+import { evidenceTagKeysForEntity } from "./tag-pipeline";
 import {
   directEvidenceTagsForEntity,
   watchedTrackerTagsOnEntity,
@@ -549,17 +550,29 @@ export function buildV2FocusTagPortfolio(
   const topics = entitiesByKind(data).topics;
   for (const topic of topics) {
     for (const tag of readTagsForRole(data, "topic", { entityId: topic.id })) {
-      ensure(tag, "topic");
+      const row = ensure(tag, "topic");
+      const key = tagKey(tag);
+      if (row && key && !evidenceTagKeysForEntity(data, topic.id).has(key)) {
+        row.dates.push((topic.updatedAt || topic.createdAt).slice(0, 10));
+      }
     }
   }
   for (const project of entitiesByKind(data).projects) {
     for (const tag of readTagsForRole(data, "project", { entityId: project.id })) {
-      ensure(tag, "project");
+      const row = ensure(tag, "project");
+      const key = tagKey(tag);
+      if (row && key && !evidenceTagKeysForEntity(data, project.id).has(key)) {
+        row.dates.push((project.updatedAt || project.createdAt).slice(0, 10));
+      }
     }
   }
   for (const event of entitiesByKind(data).events) {
     for (const tag of readTagsForRole(data, "event", { entityId: event.id })) {
-      ensure(tag, "event");
+      const row = ensure(tag, "event");
+      const key = tagKey(tag);
+      if (row && key && !evidenceTagKeysForEntity(data, event.id).has(key)) {
+        row.dates.push((event.updatedAt || event.createdAt || event.startDate || today).slice(0, 10));
+      }
     }
   }
   for (const tag of readTagsForRole(data, "global")) {
@@ -586,10 +599,7 @@ export function buildV2FocusTagPortfolio(
       recencyScore: scored.recencyScore,
       lastSeen: scored.lastSeen,
       isFocus: focusKeys.has(key),
-      isPattern:
-        row.roles.has("evidence") &&
-        row.dates.length >= TAG_PATTERN_MIN_COUNT &&
-        recentFresh >= 1,
+      isPattern: row.dates.length >= TAG_PATTERN_MIN_COUNT && recentFresh >= 1,
       href: intelligenceTagHref(row.display, findTopicEntityIdForTag(topics, row.display)),
       roles,
     } satisfies V2FocusTagStat & { key: string };

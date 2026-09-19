@@ -83,7 +83,7 @@ export type V2BinderTagsTabProps = {
   onBrowseBranch?: () => void;
   browseBranchLabel?: string;
   /**
-   * Topic Tags provenance layout: Tags in this Topic + By Event (Event Tags / On Notes).
+   * Topic Tags provenance layout: Tags in this Topic + By Event (one linked Tag list per Event).
    * Replaces the flat branch section when provided.
    */
   provenance?: V2BinderTagProvenance;
@@ -170,6 +170,22 @@ function groupAccent(tone: V2BinderBranchGroup["tone"]): string {
   if (tone === "topic") return "border-emerald-500/30 bg-emerald-950/15";
   if (tone === "project") return "border-orange-500/30 bg-orange-950/15";
   return "border-zinc-800 bg-zinc-900/40";
+}
+
+function mergeProvenanceTags(
+  eventTags: V2BinderBranchTag[],
+  noteTags: V2BinderBranchTag[]
+): V2BinderBranchTag[] {
+  const byKey = new Map<string, V2BinderBranchTag>();
+  for (const row of [...eventTags, ...noteTags]) {
+    const key = signalTagKey(row.tag);
+    if (!key) continue;
+    const prev = byKey.get(key);
+    if (!prev || (row.count ?? 0) > (prev.count ?? 0)) byKey.set(key, row);
+  }
+  return [...byKey.values()].sort(
+    (a, b) => (b.count ?? 0) - (a.count ?? 0) || a.tag.localeCompare(b.tag)
+  );
 }
 
 function TagManageRows({
@@ -585,7 +601,8 @@ export function V2BinderTagsTab({
                 ) : null}
                 {provenance.events.map((event) => {
                   const open = expandedEventIds.has(event.id);
-                  const tagCount = event.eventTags.length + event.noteTags.length;
+                  const linkedTags = mergeProvenanceTags(event.eventTags, event.noteTags);
+                  const tagCount = linkedTags.length;
                   return (
                     <div
                       key={event.id}
@@ -621,22 +638,12 @@ export function V2BinderTagsTab({
                         <div className="mt-3 space-y-3 border-t border-violet-500/20 pt-3">
                           <div>
                             <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                              Event Tags
+                              Tags
                             </p>
                             <TagManageRows
-                              tags={event.eventTags}
+                              tags={linkedTags}
                               focusKeys={focusKeys}
-                              emptyHint="No Event Tags on this binder."
-                            />
-                          </div>
-                          <div>
-                            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-zinc-400">
-                              On Notes
-                            </p>
-                            <TagManageRows
-                              tags={event.noteTags}
-                              focusKeys={focusKeys}
-                              emptyHint="No Tags on Notes for this Event."
+                              emptyHint="No Tags on this Event yet."
                             />
                           </div>
                         </div>

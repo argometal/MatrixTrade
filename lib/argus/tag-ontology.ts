@@ -236,5 +236,6 @@ export function collectKnownTagVocabulary(data: ArgusData): string[] {
     ...collectAllBinderTags(data, "event"),
     ...readTagsForRole(data, "global"),
     ...readTagsForRole(data, "evidence"),
+    ...(data.signalTags ?? []),
   ]);
 }

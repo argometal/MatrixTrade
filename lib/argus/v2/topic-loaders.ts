@@ -15,6 +15,7 @@ import {
 } from "./evidence-stream";
 import { buildTagPatternsForScope } from "./tag-patterns";
 import { readTagsForRole } from "../tag-ontology";
+import { linkedTagsForEntity } from "./tag-pipeline";
 import {
   collectNeighborEntityIds,
   countTopicsAndEventsInScope,
@@ -429,7 +430,7 @@ function topicRowFilterMeta(
 
   return {
     // Topic Tags (binder) — prefer topicTags, dual-read linkedTags (ORDER 001).
-    aliases: readTagsForRole(data, "topic", { entityId: topic.id }),
+    aliases: linkedTagsForEntity(data, topic.id),
     evidenceTags: evidenceTagCounts.map((row) => row.tag),
     patternCount: tagPatterns.length,
     eventCount: nodeCounts.eventCount,
@@ -550,7 +551,7 @@ export function buildV2TopicDetails(
       neighborEntityIds: [...neighborIds],
       linkedEntities,
       linkedEvents,
-      aliases: readTagsForRole(data, "topic", { entityId: topic.id }),
+      aliases: linkedTagsForEntity(data, topic.id),
       lifecycleStatus: topic.lifecycleStatus,
       hasPrivateEvidence: entityHasPrivateEvidence(data, inboxItems, topic.id),
       deleteRequiresAuthenticator: entityDeleteRequiresAuthenticator(topic),

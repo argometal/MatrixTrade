@@ -62,7 +62,7 @@ export interface Entity {
   projectTags?: string[];
   /** Topic classification tags (`TagRole: topic`). Dual-writes linkedTags during migration. */
   topicTags?: string[];
-  /** Event binder classification (`TagRole: event`). Not evidence Tags; not legacy Signals. */
+  /** Event binder classification (`TagRole: event`). Kept in sync with Note Tags via the Tag pipeline. */
   eventTags?: string[];
   /** active | completed (project past end) | archived (hidden from metrics) */
   lifecycleStatus?: EntityLifecycleStatus;

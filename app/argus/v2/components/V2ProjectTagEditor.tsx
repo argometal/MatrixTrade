@@ -20,12 +20,15 @@ export function V2ProjectTagEditor({
   initialTags,
   returnTo,
   suggestedFromNotes = [],
+  signalTags = [],
 }: {
   projectId: string;
   projectName: string;
   initialTags: string[];
   returnTo: string;
   suggestedFromNotes?: string[];
+  /** Journal Trackers — passive ⚑ on binder rows (Home Tags watch list). */
+  signalTags?: string[];
 }) {
   const router = useRouter();
   const [matchTags, setMatchTags] = useState<string[]>(initialTags);
@@ -40,6 +43,11 @@ export function V2ProjectTagEditor({
   const attachedKeys = useMemo(
     () => new Set(matchTags.map(tagKey).filter(Boolean)),
     [matchTags]
+  );
+
+  const trackedKeys = useMemo(
+    () => new Set(signalTags.map(tagKey).filter(Boolean)),
+    [signalTags]
   );
 
   const suggestions = useMemo(() => {
@@ -108,6 +116,7 @@ export function V2ProjectTagEditor({
           removeAria: (item) => `Remove ${item} from Project Tags`,
         }}
         orientation="stack"
+        trackedKeys={trackedKeys}
         inputAriaLabel={`Add Project Tag for ${projectName}`}
         footer={
           <button

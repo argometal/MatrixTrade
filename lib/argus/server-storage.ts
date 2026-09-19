@@ -24,6 +24,16 @@ import type {
 } from "./types";
 import { resolveClassificationStatus } from "./normalize";
 import { normalizeTagList, normalizeTagDisplay, tagKey } from "./tag-ontology";
+import {
+  applyBinderTagSync,
+  diffTagLists,
+  ensureTagsInPipeline as ensureTagsInPipelineSync,
+  mergeEvidenceTagsIntoBinders,
+  pruneBinderTagsMissingEvidence,
+  reconcileTagPipeline,
+  registerHomeVocabulary,
+  type TagPipelineResult,
+} from "./v2/tag-pipeline";
 import { inboxStatusAfterLinkChange } from "./v2/inbox-loaders";
 import {
   filterLinkIdsForSource,
@@ -80,17 +90,33 @@ async function ensureFilesDir(): Promise<void> {
   await fs.mkdir(paths().filesDir, { recursive: true });
 }
 
+function applyJournalMigrations(data: ArgusData): { data: ArgusData; changed: boolean } {
+  const linked = reconcileTagPipeline(data, {
+    nowIso: new Date().toISOString(),
+    newId: generateId,
+  });
+  return { data, changed: linked.changed };
+}
+
 async function readRawJournal(): Promise<ArgusData> {
   if (isCloudJournalStore()) {
     const cloud = await cloudJournal.readJournalFromSupabase();
-    if (cloud) return cloud;
+    if (cloud) {
+      const needsSignal = journalNeedsSignalTagsMigration(cloud);
+      const migrated = migrateToV3(cloud);
+      const { changed } = applyJournalMigrations(migrated);
+      if (needsSignal || changed) await writeArgus(migrated, "bootstrap");
+      return migrated;
+    }
 
     await ensureArgusStorageReady();
     const p = paths();
     try {
       const raw = JSON.parse(await fs.readFile(p.journalFile, "utf-8")) as ArgusData;
+      const needsSignal = journalNeedsSignalTagsMigration(raw);
       const migrated = migrateToV3(raw);
-      await writeArgus(migrated, "bootstrap");
+      const { changed } = applyJournalMigrations(migrated);
+      if (needsSignal || changed) await writeArgus(migrated, "bootstrap");
       return migrated;
     } catch (err) {
       const code = (err as NodeJS.ErrnoException).code;
@@ -104,9 +130,10 @@ async function readRawJournal(): Promise<ArgusData> {
 
   try {
     const raw = JSON.parse(await fs.readFile(p.journalFile, "utf-8")) as ArgusData;
-    const needsPersist = journalNeedsSignalTagsMigration(raw);
+    const needsSignal = journalNeedsSignalTagsMigration(raw);
     const migrated = migrateToV3(raw);
-    if (needsPersist) await writeArgus(migrated, "bootstrap");
+    const { changed } = applyJournalMigrations(migrated);
+    if (needsSignal || changed) await writeArgus(migrated, "bootstrap");
     return migrated;
   } catch (err) {
     const code = (err as NodeJS.ErrnoException).code;
@@ -486,6 +513,7 @@ export async function createLog(input: LogInput): Promise<Log> {
     const entity = data.entities.find((e) => e.id === eid);
     if (entity) entity.updatedAt = now;
   }
+  mergeEvidenceTagsIntoBinders(data, log.entityIds, log.topics ?? []);
   try {
     await writeArgus(data);
   } catch (err) {
@@ -546,6 +574,8 @@ export async function updateLog(
   const log = data.logs.find((l) => l.id === id);
   if (!log) throw new Error("Journal entry not found");
 
+  const prevTopics = [...(log.topics ?? [])];
+  const prevEntityIds = [...(log.entityIds ?? [])];
   const now = new Date().toISOString();
   log.title = input.title.trim() || log.title;
   log.body = input.body;
@@ -557,6 +587,10 @@ export async function updateLog(
   if (input.private !== undefined) log.private = input.private;
   log.classificationStatus = resolveClassificationStatus(input.entityIds);
   log.updatedAt = now;
+  const { added, removed } = diffTagLists(prevTopics, input.topics);
+  const linkedIds = [...new Set([...prevEntityIds, ...input.entityIds])];
+  if (added.length > 0) mergeEvidenceTagsIntoBinders(data, input.entityIds, added);
+  if (removed.length > 0) pruneBinderTagsMissingEvidence(data, linkedIds, removed);
 
   for (const eid of input.entityIds) {
     const entity = data.entities.find((e) => e.id === eid);
@@ -870,14 +904,44 @@ export type InboxTriagePatch = {
   subject?: string;
 };
 
+function applyEvidenceTopicChange(
+  data: ArgusData,
+  entityIds: string[],
+  prevTopics: string[] | undefined,
+  nextTopics: string[] | undefined
+) {
+  const { added, removed } = diffTagLists(prevTopics, nextTopics);
+  if (added.length > 0) mergeEvidenceTagsIntoBinders(data, entityIds, added);
+  if (removed.length > 0) pruneBinderTagsMissingEvidence(data, entityIds, removed);
+}
+
 export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch): Promise<InboxItem> {
-  if (isCloudInboxStore()) return cloudInbox.updateInboxTriage(inboxId, patch);
+  if (isCloudInboxStore()) {
+    const before = await cloudInbox.getInboxItem(inboxId);
+    const updated = await cloudInbox.updateInboxTriage(inboxId, patch);
+    if (patch.topics !== undefined && before) {
+      const data = await readArgus();
+      applyEvidenceTopicChange(
+        data,
+        updated.linkedEntityIds ?? before.linkedEntityIds ?? [],
+        before.topics,
+        updated.topics
+      );
+      await writeArgus(data);
+    }
+    return updated;
+  }
 
   const data = await readArgus();
   const idx = data.inboxItems.findIndex((i) => i.id === inboxId);
   if (idx === -1) throw new Error("Inbox item not found");
   const inbox = data.inboxItems[idx];
   if (inbox.status === "archived") throw new Error("Inbox item is archived");
+
+  const nextTopics =
+    patch.topics !== undefined
+      ? [...new Set(patch.topics.map((tag) => tag.trim()).filter(Boolean))]
+      : inbox.topics;
 
   data.inboxItems[idx] = {
     ...inbox,
@@ -888,12 +952,12 @@ export async function updateInboxTriage(inboxId: string, patch: InboxTriagePatch
         : patch.followUpDate !== undefined
           ? patch.followUpDate.slice(0, 10)
           : inbox.followUpDate,
-    topics:
-      patch.topics !== undefined
-        ? [...new Set(patch.topics.map((tag) => tag.trim()).filter(Boolean))]
-        : inbox.topics,
+    topics: nextTopics,
     subject: patch.subject !== undefined ? patch.subject.trim() || undefined : inbox.subject,
   };
+  if (patch.topics !== undefined) {
+    applyEvidenceTopicChange(data, inbox.linkedEntityIds ?? [], inbox.topics, nextTopics);
+  }
   await writeArgus(data);
   return data.inboxItems[idx];
 }
@@ -1120,8 +1184,40 @@ export async function toggleSignalTag(tag: string): Promise<{ signalTags: string
   data.signalTags = exists
     ? current.filter((t) => signalTagKey(t) !== key)
     : normalizeSignalTags([...current, display]);
+  if (!exists) {
+    registerHomeVocabulary(data, [display]);
+  }
   await writeArgus(data);
   return { signalTags: data.signalTags ?? [], active: !exists };
+}
+
+function pipelineIds() {
+  return {
+    nowIso: new Date().toISOString(),
+    newId: generateId,
+  };
+}
+
+/** Replace binder Tags and sync Notes + Home vocabulary in one write. */
+export async function applyBinderTagPipeline(
+  entityId: string,
+  nextTags: string[]
+): Promise<TagPipelineResult> {
+  const data = await readArgus();
+  const result = applyBinderTagSync(data, entityId, nextTags, pipelineIds());
+  await writeArgus(data);
+  return result;
+}
+
+/** Merge Tags onto binder + Notes + Home vocabulary (create path). */
+export async function ensureTagsInPipeline(
+  entityId: string,
+  tags: string[]
+): Promise<TagPipelineResult> {
+  const data = await readArgus();
+  const result = ensureTagsInPipelineSync(data, entityId, tags, pipelineIds());
+  await writeArgus(data);
+  return result;
 }
 
 /** Rename a tag string. Pass `role` to limit scope (ORDER 001); omit = all tag surfaces. */

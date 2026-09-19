@@ -680,7 +680,7 @@ export function V2EventDetailPanel({
               <V2BinderTagsTab
                 attachedHeading="Linked to this Event"
                 attachedBadge="Linked"
-                attachedHint="These Tags are saved on this Event binder — not Note Tags."
+                attachedHint="Same Tag system as Notes — add or remove here and it updates Notes on this Event."
                 attachedTags={selected.eventTags}
                 attachedTagHref={(tag) =>
                   `/argus/v2/browse/events?selected=${encodeURIComponent(selected.id)}&tag=${encodeURIComponent(tag)}&focus=1&from=tags`
